@@ -47,6 +47,7 @@ input,select{padding:8px;font-size:16px;border-radius:4px;border:1px solid #555;
 <input type="text" id="input-home-logo" class="cfg-input" placeholder="Logo Gospodarzy (URL)" oninput="updateSettings()"><br>
 <input type="text" id="input-away-name" class="cfg-input" placeholder="Goście" oninput="updateSettings()">
 <input type="text" id="input-away-logo" class="cfg-input" placeholder="Logo Gości (URL)" oninput="updateSettings()">
+<br><button class="control-btn btn-warning" onclick="swapSides()">⇄ ZAMIEŃ DRUŻYNY STRONAMI</button>
 </div>
 <div class="panel-grid">
 <div class="section"><h3 id="panel-home-title">GOSPODARZE</h3><button class="control-btn" onclick="changeScore('home',1)">+1 Punkt</button><button class="control-btn btn-danger" onclick="changeScore('home',-1)">-1</button></div>
@@ -186,6 +187,13 @@ function sendSub(){
     document.getElementById('sub-in-num').value='';
 }
 
+function swapSides(){
+    const tmpName=state.homeName; state.homeName=state.awayName; state.awayName=tmpName;
+    const tmpLogo=state.homeLogo; state.homeLogo=state.awayLogo; state.awayLogo=tmpLogo;
+    const tmpScore=state.homeScore; state.homeScore=state.awayScore; state.awayScore=tmpScore;
+    sendState();
+}
+
 function toggleTimer(){
     isRunning=!isRunning;
     if(isRunning){
@@ -195,7 +203,11 @@ function toggleTimer(){
             const limit=(parseInt(document.getElementById('input-target-time').value)||12)*60;
             if(state.time>=limit){
                 clearInterval(timer);isRunning=false;state.time=limit;sendState();
-                setTimeout(()=>{state.time=0;state.period=(state.period||1)+1;sendState()},3000);
+                setTimeout(()=>{
+                    state.time=0;
+                    state.period=(state.period||1)+1;
+                    swapSides();
+                },3000);
             }else{sendState()}
         },1000);
     }else{clearInterval(timer)}
