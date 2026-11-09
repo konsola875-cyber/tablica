@@ -5,11 +5,14 @@
 <title>PZS 4 AV - Zmiany</title>
 <style>
 body{margin:0;font-family:sans-serif;background:transparent;overflow:hidden;color:#fff;font-weight:700}
-#sub-box{display:none;margin:15px;background:rgba(20,35,60,.95);border-left:5px solid #fc0;border-bottom:2px solid #fc0;border-radius:6px;padding:10px 18px;box-shadow:0 4px 12px rgba(0,0,0,.5);width:fit-content;animation:slideIn .3s ease-out}
-.sub-header{font-size:11px;color:#fc0;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
-.sub-row{display:flex;align-items:center;gap:14px;font-size:18px}
-.sub-out{background:#f33;padding:4px 10px;border-radius:4px}
-.sub-in{background:#0a5;padding:4px 10px;border-radius:4px}
+#sub-box{display:none;margin:15px;background:rgba(20,35,60,.95);border-left:5px solid #fc0;border-bottom:2px solid #fc0;border-radius:6px;padding:10px 16px;box-shadow:0 4px 12px rgba(0,0,0,.5);width:fit-content;animation:slideIn .3s ease-out}
+.sub-header{font-size:11px;color:#fc0;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.sub-row{display:flex;align-items:center;gap:12px;font-size:16px}
+.sub-out,.sub-in{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:4px}
+.sub-out{background:#f33}
+.sub-in{background:#0a5}
+.sub-label{font-size:11px;letter-spacing:0.5px;opacity:0.95}
+.sub-num{font-size:19px}
 @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
 </style>
 </head>
@@ -17,8 +20,8 @@ body{margin:0;font-family:sans-serif;background:transparent;overflow:hidden;colo
 <div id="sub-box">
 <div class="sub-header" id="sub-team">ZMIANA</div>
 <div class="sub-row">
-<span class="sub-out">▼ <span id="num-out">0</span></span>
-<span class="sub-in">▲ <span id="num-in">0</span></span>
+<span class="sub-out">▼ <span class="sub-label">SCHODZI</span> <span class="sub-num" id="num-out">0</span></span>
+<span class="sub-in">▲ <span class="sub-label">WCHODZI</span> <span class="sub-num" id="num-in">0</span></span>
 </div>
 </div>
 <script>
@@ -31,7 +34,7 @@ document.getElementById('num-out').innerText=data.outNum;
 document.getElementById('num-in').innerText=data.inNum;
 box.style.display='block';
 clearTimeout(hideTimer);
-hideTimer=setTimeout(()=>{box.style.display='none'},10000);
+hideTimer=setTimeout(()=>{box.style.display='none'},12000);
 }
 const lib=document.createElement('script');
 lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
