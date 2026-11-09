@@ -54,139 +54,47 @@ input,select{padding:8px;font-size:16px;border-radius:4px;border:1px solid #555;
 </div>
 <div class="section" style="margin-top:15px">
 <h3>⏱️ CZAS I POŁOWA</h3>
-Auto-stop: <input type="number" id="input-target-time" class="small-input" value="12" onchange="updateSettings()"> min 
+Auto-stop: <input type="number" id="input-target-time" class="small-input" value="12" onchange="updateSettings()"> min | 
 Połowa: <button class="control-btn" style="padding:6px 12px" onclick="changePeriod(-1)">-</button> <span id="panel-period-val" style="font-size:20px;color:var(--yel);margin:0 5px">1</span> <button class="control-btn" style="padding:6px 12px" onclick="changePeriod(1)">+</button><br>
 <button class="control-btn btn-success" onclick="toggleTimer()">START / PAUZA</button>
-<button class="control-btn btn-warning" onclick="resetTimerOnly()">RESET CZASU (+1 POŁOWA)</button>
+<button class="control-btn btn-warning" onclick="resetTimerOnly()">RESET CZASU</button>
 <button class="control-btn btn-danger" onclick="resetAll()">RESET MECZU</button>
 </div>
 <div class="section" style="margin-top:15px;border:1px solid #f33">
-<h3 style="color:#f33;margin-top:0">🟥 KARY CZASOWE (2 MIN)</h3>
+<h3 style="color:#f33;margin-top:0">🟥 KARY CZASOWE</h3>
 Drużyna: <select id="pen-team"><option value="home" id="opt-home">GOSPODARZE</option><option value="away" id="opt-away">GOŚCIE</option></select>
-Nr zaw.: <input type="number" id="pen-num" class="small-input" placeholder="Nr">
-Minuty: <input type="number" id="pen-mins" class="small-input" value="2">
+Nr: <input type="number" id="pen-num" class="small-input" placeholder="Nr">
+Min: <input type="number" id="pen-mins" class="small-input" value="2">
 <button class="control-btn btn-danger" onclick="addPenalty()">DODAJ KARĘ</button>
 <div id="active-penalties-list"></div>
 </div>
+<div class="section" style="margin-top:15px;border:1px solid #0a5">
+<h3 style="color:#0a5;margin-top:0">🔄 ZMIANA ZAWODNIKÓW</h3>
+Drużyna: <select id="sub-team-sel"><option value="home" id="sub-opt-home">GOSPODARZE</option><option value="away" id="sub-opt-away">GOŚCIE</option></select>
+Schodzi: <input type="number" id="sub-out-num" class="small-input" placeholder="Nr">
+Wchodzi: <input type="number" id="sub-in-num" class="small-input" placeholder="Nr">
+<button class="control-btn btn-success" onclick="sendSub()">POKAŻ ZMIANĘ</button>
+</div>
 </div>
 <script>
-const OBS_ID = "pzs4-wejherowo-obs-host-2026";
-let peer = null, conn = null, connKary = null, isPilot = false, timer = null, isRunning = false;
-let activePilots = new Array();
-let state = JSON.parse(localStorage.getItem('pzs4_state')) || {homeName:"GOSPODARZE",awayName:"GOŚCIE",homeLogo:"",awayLogo:"",homeScore:0,awayScore:0,time:0,targetTime:12,period:1,penalties:new Array()};
-
-function broadcastToPilots(senderId){
-    activePilots.forEach(p => { if(p.open && p.peer !== senderId) p.send(state); });
-}
-
-function initObsHost(){
-    peer = new Peer(OBS_ID);
-    peer.on('connection', (c) => {
-        activePilots.push(c);
-        c.on('open', () => c.send(state));
-        c.on('data', (data) => {
-            state = data;
-            if(!state.penalties) state.penalties = new Array();
-            localStorage.setItem('pzs4_state', JSON.stringify(state));
-            renderUI();
-            broadcastToPilots(c.peer);
-        });
-        c.on('close', () => { activePilots = activePilots.filter(p => p.peer !== c.peer); });
-    });
-}
-
-function connectToObs(){
-    const st = document.getElementById('conn-status');
-    st.style.background = '#f33'; st.innerText = '🔴 ŁĄCZENIE Z OBS...';
-    conn = peer.connect(OBS_ID, {reliable: true});
-    conn.on('open', () => {
-        st.style.background = '#0a5'; st.innerText = '🟢 POŁĄCZONO Z OBS (TRYB MULTI-PILOT)';
-    });
-    conn.on('data', (data) => {
-        if(data && data.homeName){ state = data; renderUI(); }
-    });
-    conn.on('close', () => {
-        st.style.background = '#f33'; st.innerText = '🔴 ROZŁĄCZONO - PONAWIAM...';
-        setTimeout(connectToObs, 2000);
-    });
-    connKary = peer.connect("pzs4-wejherowo-kary-host-2026", {reliable: true});
-    connKary.on('open', () => connKary.send(state));
-}
-
-function openPilot(){
-    isPilot = true;
-    document.getElementById('control-panel').style.display = 'block';
-    document.getElementById('obs-wrapper').style.position = 'relative';
-    document.getElementById('obs-wrapper').style.marginTop = '15px';
-    document.getElementById('open-control-btn').style.display = 'none';
-    if(peer) peer.destroy();
-    peer = new Peer();
-    peer.on('open', () => connectToObs());
-}
-
-function sendState(){
-    localStorage.setItem('pzs4_state', JSON.stringify(state));
-    renderUI();
-    if(conn && conn.open) conn.send(state);
-    if(connKary && connKary.open) connKary.send(state);
-}
-
-function renderUI(){
-    document.getElementById('display-home-name').innerText = state.homeName;
-    document.getElementById('display-away-name').innerText = state.awayName;
-    const hL = document.getElementById('display-home-logo'); if(state.homeLogo){hL.src=state.homeLogo;hL.style.display="block"}else{hL.style.display="none"}
-    const aL = document.getElementById('display-away-logo'); if(state.awayLogo){aL.src=state.awayLogo;aL.style.display="block"}else{aL.style.display="none"}
-    document.getElementById('display-home-score').innerText = state.homeScore;
-    document.getElementById('display-away-score').innerText = state.awayScore;
-    document.getElementById('obs-period').innerText = state.period || 1;
-    let m = Math.floor(state.time/60).toString().padStart(2,'0'), s = (state.time%60).toString().padStart(2,'0');
-    document.getElementById('obs-timer').innerText = `${m}:${s}`;
-    if(isPilot){
-        if(document.activeElement.tagName !== 'INPUT'){
-            document.getElementById('input-home-name').value = state.homeName;
-            document.getElementById('input-away-name').value = state.awayName;
-            document.getElementById('input-home-logo').value = state.homeLogo;
-            document.getElementById('input-away-logo').value = state.awayLogo;
-            document.getElementById('input-target-time').value = state.targetTime || 12;
-        }
-        document.getElementById('panel-home-title').innerText = state.homeName;
-        document.getElementById('panel-away-title').innerText = state.awayName;
-        document.getElementById('opt-home').innerText = state.homeName;
-        document.getElementById('opt-away').innerText = state.awayName;
-        document.getElementById('panel-period-val').innerText = state.period || 1;
-        const pList = document.getElementById('active-penalties-list'); pList.innerHTML = '';
-        if(state.penalties){ state.penalties.forEach((p,idx)=>{ let pm=Math.floor(p.timeLeft/60).toString().padStart(2,'0'),ps=(p.timeLeft%60).toString().padStart(2,'0'); pList.innerHTML+=`<div class="pen-tag">${p.team} ${p.num} (${pm}:${ps}) <button onclick="removePenalty(${idx})" style="background:#000;color:#fff;border:none;cursor:pointer;padding:2px 6px">X</button></div>`; }); }
-    }
-}
-
-function changeScore(t,v){ if(t==='home') state.homeScore=Math.max(0,state.homeScore+v); if(t==='away') state.awayScore=Math.max(0,state.awayScore+v); sendState(); }
-function changePeriod(v){ state.period=Math.max(1,(state.period||1)+v); sendState(); }
-function updateSettings(){ state.homeName=document.getElementById('input-home-name').value||"GOSPODARZE"; state.awayName=document.getElementById('input-away-name').value||"GOŚCIE"; state.homeLogo=document.getElementById('input-home-logo').value||""; state.awayLogo=document.getElementById('input-away-logo').value||""; state.targetTime=parseInt(document.getElementById('input-target-time').value)||12; sendState(); }
-function addPenalty(){ const num=document.getElementById('pen-num').value; const mins=parseInt(document.getElementById('pen-mins').value)||2; const teamSide=document.getElementById('pen-team').value; if(!num)return alert("Wpisz numer zawodnika!"); const teamName=teamSide==='home'?state.homeName:state.awayName; state.penalties.push({id:Date.now(),team:teamName,num:num,timeLeft:mins*60}); document.getElementById('pen-num').value=''; sendState(); }
-function removePenalty(idx){ state.penalties.splice(idx,1); sendState(); }
-
-function toggleTimer(){
-    isRunning = !isRunning;
-    if(isRunning){
-        timer = setInterval(() => {
-            state.time++;
-            if(state.penalties){ state.penalties.forEach(p=>p.timeLeft--); state.penalties=state.penalties.filter(p=>p.timeLeft>0); }
-            const limit = (parseInt(document.getElementById('input-target-time').value) || 12) * 60;
-            if(state.time >= limit){
-                clearInterval(timer); isRunning = false; state.time = limit; sendState();
-                setTimeout(() => { state.time = 0; state.period = (state.period || 1) + 1; sendState(); }, 3000);
-            } else { sendState(); }
-        }, 1000);
-    } else { clearInterval(timer); }
-}
-
-function resetTimerOnly(){ if(confirm("Zresetować CZAS do 00:00?")){ clearInterval(timer); isRunning=false; state.time=0; sendState(); } }
-function resetAll(){ if(confirm("Zresetować CAŁY MECZ?")){ clearInterval(timer); isRunning=false; state={homeName:"GOSPODARZE",awayName:"GOŚCIE",homeLogo:"",awayLogo:"",homeScore:0,awayScore:0,time:0,targetTime:12,period:1,penalties:new Array()}; sendState(); } }
-
-const lib = document.createElement('script');
-lib.src = "https:" + "//unpkg.com" + "/peerjs@1.5.4" + "/dist/peerjs.min.js";
-lib.onload = () => { renderUI(); initObsHost(); };
-document.head.appendChild(lib);
+const OBS_ID="pzs4-wejherowo-obs-host-2026";let peer=null,conn=null,connKary=null,connZmiany=null,isPilot=false,timer=null,isRunning=false,activePilots=new Array();
+let state=JSON.parse(localStorage.getItem('pzs4_state'))||{homeName:"GOSPODARZE",awayName:"GOŚCIE",homeLogo:"",awayLogo:"",homeScore:0,awayScore:0,time:0,targetTime:12,period:1,penalties:new Array()};
+function broadcastToPilots(sid){activePilots.forEach(p=>{if(p.open&&p.peer!==sid)p.send(state)})}
+function initObsHost(){peer=new Peer(OBS_ID);peer.on('connection',(c)=>{activePilots.push(c);c.on('open',()=>c.send(state));c.on('data',(d)=>{state=d;if(!state.penalties)state.penalties=new Array();localStorage.setItem('pzs4_state',JSON.stringify(state));renderUI();broadcastToPilots(c.peer)});c.on('close',()=>{activePilots=activePilots.filter(p=>p.peer!==c.peer)})})}
+function connectToObs(){const st=document.getElementById('conn-status');st.style.background='#f33';st.innerText='🔴 ŁĄCZENIE Z OBS...';conn=peer.connect(OBS_ID,{reliable:true});conn.on('open',()=>{st.style.background='#0a5';st.innerText='🟢 POŁĄCZONO Z OBS (MULTI-PILOT)'});conn.on('data',(d)=>{if(d&&d.homeName){state=d;renderUI()}});conn.on('close',()=>{st.style.background='#f33';st.innerText='🔴 ROZŁĄCZONO - PONAWIAM...';setTimeout(connectToObs,2000)});connKary=peer.connect("pzs4-wejherowo-kary-host-2026",{reliable:true});connKary.on('open',()=>connKary.send(state));connZmiany=peer.connect("pzs4-wejherowo-zmiany-host-2026",{reliable:true})}
+function openPilot(){isPilot=true;document.getElementById('control-panel').style.display='block';document.getElementById('obs-wrapper').style.position='relative';document.getElementById('obs-wrapper').style.marginTop='15px';document.getElementById('open-control-btn').style.display='none';if(peer)peer.destroy();peer=new Peer();peer.on('open',()=>connectToObs())}
+function sendState(){localStorage.setItem('pzs4_state',JSON.stringify(state));renderUI();if(conn&&conn.open)conn.send(state);if(connKary&&connKary.open)connKary.send(state)}
+function renderUI(){document.getElementById('display-home-name').innerText=state.homeName;document.getElementById('display-away-name').innerText=state.awayName;const hL=document.getElementById('display-home-logo');if(state.homeLogo){hL.src=state.homeLogo;hL.style.display="block"}else{hL.style.display="none"}const aL=document.getElementById('display-away-logo');if(state.awayLogo){aL.src=state.awayLogo;aL.style.display="block"}else{aL.style.display="none"}document.getElementById('display-home-score').innerText=state.homeScore;document.getElementById('display-away-score').innerText=state.awayScore;document.getElementById('obs-period').innerText=state.period||1;let m=Math.floor(state.time/60).toString().padStart(2,'0'),s=(state.time%60).toString().padStart(2,'0');document.getElementById('obs-timer').innerText=${m}:${s};if(isPilot){if(document.activeElement.tagName!=='INPUT'){document.getElementById('input-home-name').value=state.homeName;document.getElementById('input-away-name').value=state.awayName;document.getElementById('input-home-logo').value=state.homeLogo;document.getElementById('input-away-logo').value=state.awayLogo;document.getElementById('input-target-time').value=state.targetTime||12}document.getElementById('panel-home-title').innerText=state.homeName;document.getElementById('panel-away-title').innerText=state.awayName;document.getElementById('opt-home').innerText=state.homeName;document.getElementById('opt-away').innerText=state.awayName;document.getElementById('sub-opt-home').innerText=state.homeName;document.getElementById('sub-opt-away').innerText=state.awayName;document.getElementById('panel-period-val').innerText=state.period||1;const pList=document.getElementById('active-penalties-list');pList.innerHTML='';if(state.penalties){state.penalties.forEach((p,idx)=>{let pm=Math.floor(p.timeLeft/60).toString().padStart(2,'0'),ps=(p.timeLeft%60).toString().padStart(2,'0');pList.innerHTML+=<div class="pen-tag">${p.team} ${p.num} (${pm}:${ps}) <button onclick="removePenalty(${idx})" style="background:#000;color:#fff;border:none;cursor:pointer;padding:2px 6px">X</button></div>})}}}
+function changeScore(t,v){if(t==='home')state.homeScore=Math.max(0,state.homeScore+v);if(t==='away')state.awayScore=Math.max(0,state.awayScore+v);sendState()}
+function changePeriod(v){state.period=Math.max(1,(state.period||1)+v);sendState()}
+function updateSettings(){state.homeName=document.getElementById('input-home-name').value||"GOSPODARZE";state.awayName=document.getElementById('input-away-name').value||"GOŚCIE";state.homeLogo=document.getElementById('input-home-logo').value||"";state.awayLogo=document.getElementById('input-away-logo').value||"";state.targetTime=parseInt(document.getElementById('input-target-time').value)||12;sendState()}
+function addPenalty(){const num=document.getElementById('pen-num').value;const mins=parseInt(document.getElementById('pen-mins').value)||2;const teamSide=document.getElementById('pen-team').value;if(!num)return alert("Wpisz numer!");const teamName=teamSide==='home'?state.homeName:state.awayName;state.penalties.push({id:Date.now(),team:teamName,num:num,timeLeft:mins*60});document.getElementById('pen-num').value='';sendState()}
+function removePenalty(idx){state.penalties.splice(idx,1);sendState()}
+function sendSub(){const outN=document.getElementById('sub-out-num').value,inN=document.getElementById('sub-in-num').value,side=document.getElementById('sub-team-sel').value;if(!outN||!inN)return alert("Wpisz oba numery!");const tName=side==='home'?state.homeName:state.awayName;if(connZmiany&&connZmiany.open)connZmiany.send({type:'sub',team:tName,outNum:outN,inNum:inN});document.getElementById('sub-out-num').value='';document.getElementById('sub-in-num').value=''}
+function toggleTimer(){isRunning=!isRunning;if(isRunning){timer=setInterval(()=>{state.time++;if(state.penalties){state.penalties.forEach(p=>p.timeLeft--);state.penalties=state.penalties.filter(p=>p.timeLeft>0)}const limit=(parseInt(document.getElementById('input-target-time').value)||12)*60;if(state.time>=limit){clearInterval(timer);isRunning=false;state.time=limit;sendState();setTimeout(()=>{state.time=0;state.period=(state.period||1)+1;sendState()},3000)}else{sendState()}},1000)}else{clearInterval(timer)}}
+function resetTimerOnly(){if(confirm("Zresetować CZAS do 00:00?")){clearInterval(timer);isRunning=false;state.time=0;sendState()}}
+function resetAll(){if(confirm("Zresetować CAŁY MECZ?")){clearInterval(timer);isRunning=false;state={homeName:"GOSPODARZE",awayName:"GOŚCIE",homeLogo:"",awayLogo:"",homeScore:0,awayScore:0,time:0,targetTime:12,period:1,penalties:new Array()};sendState()}}
+const lib=document.createElement('script');lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";lib.onload=()=>{renderUI();initObsHost()};document.head.appendChild(lib);
 </script>
 </body>
 </html>
