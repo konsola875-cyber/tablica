@@ -94,7 +94,10 @@ function sendSub(){const outN=document.getElementById('sub-out-num').value,inN=d
 function toggleTimer(){isRunning=!isRunning;if(isRunning){timer=setInterval(()=>{state.time++;if(state.penalties){state.penalties.forEach(p=>p.timeLeft--);state.penalties=state.penalties.filter(p=>p.timeLeft>0)}const limit=(parseInt(document.getElementById('input-target-time').value)||12)*60;if(state.time>=limit){clearInterval(timer);isRunning=false;state.time=limit;sendState();setTimeout(()=>{state.time=0;state.period=(state.period||1)+1;sendState()},3000)}else{sendState()}},1000)}else{clearInterval(timer)}}
 function resetTimerOnly(){if(confirm("Zresetować CZAS do 00:00?")){clearInterval(timer);isRunning=false;state.time=0;sendState()}}
 function resetAll(){if(confirm("Zresetować CAŁY MECZ?")){clearInterval(timer);isRunning=false;state={homeName:"GOSPODARZE",awayName:"GOŚCIE",homeLogo:"",awayLogo:"",homeScore:0,awayScore:0,time:0,targetTime:12,period:1,penalties:new Array()};sendState()}}
-const lib=document.createElement('script');lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";lib.onload=()=>{renderUI();initObsHost()};document.head.appendChild(lib);
+const lib=document.createElement('script');
+lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
+lib.onload=()=>{renderUI();initObsHost()};
+document.head.appendChild(lib);
 </script>
 </body>
 </html>
