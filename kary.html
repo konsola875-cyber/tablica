@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>PZS 4 AV - Kary</title>
+<style>
+body{margin:0;font-family:sans-serif;background:transparent;overflow:hidden;color:#fff;font-weight:700}
+#wrapper{padding:15px;display:none;flex-direction:column;gap:6px}
+#pen-header{background:#f33;color:#fff;font-size:12px;padding:3px 10px;border-radius:4px;letter-spacing:1px;width:fit-content;text-transform:uppercase;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+#penalties-box{display:flex;flex-direction:column;gap:8px}
+.pen-card{display:flex;align-items:center;background:rgba(20,35,60,.95);border-left:5px solid #f33;border-bottom:2px solid #fc0;border-radius:6px;padding:8px 15px;box-shadow:0 4px 12px rgba(0,0,0,.5);width:fit-content;animation:slideIn .3s ease-out}
+.pen-team{font-size:13px;color:#fc0;text-transform:uppercase;margin-right:10px}
+.pen-num{background:#f33;color:#fff;padding:4px 8px;border-radius:4px;font-size:18px;margin-right:12px}
+.pen-time{font-size:22px;letter-spacing:1px}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div id="wrapper">
+<div id="pen-header">KARY</div>
+<div id="penalties-box"></div>
+</div>
+<script>
+const KARY_ID="pzs4-wejherowo-kary-host-2026";
+function renderPenalties(list){
+const wrap=document.getElementById('wrapper'),box=document.getElementById('penalties-box');
+if(!list||list.length===0){wrap.style.display='none';box.innerHTML='';return}
+wrap.style.display='flex';
+const activeIds=list.map(p=>'pen-'+p.id);
+Array.from(box.children).forEach(el=>{if(!activeIds.includes(el.id))el.remove()});
+list.forEach(p=>{
+let m=Math.floor(p.timeLeft/60).toString().padStart(2,'0'),s=(p.timeLeft%60).toString().padStart(2,'0');
+let card=document.getElementById('pen-'+p.id);
+if(!card){card=document.createElement('div');card.id='pen-'+p.id;card.className='pen-card';card.innerHTML=`<span class="pen-team">${p.team}</span><span class="pen-num">${p.num}</span><span class="pen-time">${m}:${s}</span>`;box.appendChild(card)}else{card.querySelector('.pen-time').innerText=`${m}:${s}`}
+})}
+const lib=document.createElement('script');
+lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
+lib.onload=()=>{const p=new Peer(KARY_ID);p.on('connection',c=>c.on('data',d=>{if(d&&d.penalties)renderPenalties(d.penalties)}))};
+document.head.appendChild(lib);
+</script>
+</body>
+</html>
