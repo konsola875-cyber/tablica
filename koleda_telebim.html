@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>PZS 4 AV - Kolędowanie Telebim</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#091426;overflow:hidden;color:#fff;width:100vw;height:100vh}
+#snow-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20}
+#scene-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 25%,#1b355c 0%,#091426 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+.header-title{position:absolute;top:55px;text-align:center;z-index:5}
+.header-title h1{font-size:52px;color:#ffcc00;text-transform:uppercase;letter-spacing:4px;text-shadow:0 4px 20px rgba(0,0,0,.8)}
+.header-title p{font-size:22px;color:#e0e8f5;letter-spacing:2px;margin-top:6px}
+.village-svg{position:absolute;bottom:0;left:0;width:100%;height:65%;z-index:2}
+@keyframes smokeRise{0%{transform:translateY(0) scale(1);opacity:.7}100%{transform:translateY(-90px) scale(2.2);opacity:0}}
+.smoke{animation:smokeRise 4s infinite ease-out}
+.smoke2{animation:smokeRise 4s infinite ease-out 2s}
+#song-card{position:absolute;z-index:30;background:rgba(15,28,50,.95);border:3px solid #ffcc00;border-radius:18px;padding:45px 75px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.85);opacity:0;transform:scale(0.85) translateY(30px);transition:all 0.65s cubic-bezier(0.16,1,0.3,1);pointer-events:none;max-width:80%}
+#song-card.active{opacity:1;transform:scale(1) translateY(0)}
+.song-badge{display:inline-block;background:#d62828;color:#fff;font-size:16px;font-weight:700;padding:6px 18px;border-radius:20px;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px}
+#card-title{font-size:58px;color:#ffcc00;font-weight:800;margin-bottom:14px;line-height:1.15}
+#card-artist{font-size:32px;color:#fff;font-weight:600;letter-spacing:1px}
+#open-pilot-btn{position:absolute;top:20px;left:20px;z-index:9999;background:rgba(0,0,0,.7);color:#fff;border:1px solid #fc0;padding:12px 20px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
+#pilot-panel{display:none;position:fixed;inset:0;background:#161b26;z-index:5000;padding:20px;overflow-y:auto}
+.p-box{background:#1f2738;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2e3a52}
+.p-box h3{color:#ffcc00;margin-bottom:12px;font-size:18px}
+input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526e;background:#111622;color:#fff;font-size:16px;margin-bottom:10px}
+.btn{padding:12px 18px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;color:#fff;margin:3px}
+.btn-gold{background:#ffcc00;color:#111}.btn-green{background:#00a859}.btn-red{background:#d62828}.btn-blue{background:#0066ff}
+.song-item{display:flex;justify-content:space-between;align-items:center;background:#141a26;padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:4px solid #ffcc00}
+#conn-badge{display:inline-block;padding:5px 12px;border-radius:5px;font-size:13px;font-weight:700;background:#d62828;margin-bottom:12px}
+</style>
+</head>
+<body>
+<button id="open-pilot-btn" onclick="openPilot()">🎄 OTWÓRZ PILOTA KOLĘDOWANIA</button>
+
+<div id="scene-bg">
+    <div class="header-title">
+        <h1>Szkolne Kolędowanie</h1>
+        <p>PZS nr 4 im. Jakuba Wejhera w Wejherowie</p>
+    </div>
+    <svg class="village-svg" viewBox="0 0 1920 700" preserveAspectRatio="none">
+        <path d="M0,450 Q480,350 960,440 T1920,410 L1920,700 L0,700 Z" fill="#dce8f7"/>
+        <path d="M0,510 Q600,430 1200,520 T1920,480 L1920,700 L0,700 Z" fill="#ffffff"/>
+        <polygon points="220,460 150,580 290,580" fill="#133b2b"/><polygon points="220,390 165,490 275,490" fill="#194d38"/>
+        <polygon points="1680,450 1600,590 1760,590" fill="#133b2b"/><polygon points="1680,370 1615,490 1745,490" fill="#194d38"/>
+        <circle class="smoke" cx="835" cy="270" r="14" fill="rgba(255,255,255,0.6)"/>
+        <circle class="smoke2" cx="845" cy="260" r="18" fill="rgba(255,255,255,0.5)"/>
+        <rect x="820" y="280" width="30" height="70" fill="#4a2e1b"/>
+        <rect x="740" y="380" width="220" height="150" fill="#5c3a21"/>
+        <polygon points="715,385 850,290 985,385" fill="#fff" stroke="#3d2514" stroke-width="6"/>
+        <rect x="775" y="420" width="55" height="55" rx="4" fill="#ffcc00"/>
+        <rect x="870" y="420" width="55" height="55" rx="4" fill="#ffcc00"/>
+        <circle cx="1140" cy="510" r="38" fill="#fff" stroke="#cbd9eb" stroke-width="3"/>
+        <circle cx="1140" cy="455" r="27" fill="#fff" stroke="#cbd9eb" stroke-width="3"/>
+        <circle cx="1140" cy="415" r="19" fill="#fff" stroke="#cbd9eb" stroke-width="3"/>
+        <circle cx="1133" cy="410" r="2.5" fill="#111"/><circle cx="1147" cy="410" r="2.5" fill="#111"/>
+        <polygon points="1140,415 1162,419 1140,422" fill="#ff6600"/>
+        <rect x="1125" y="382" width="30" height="16" fill="#1c2536"/><rect x="1118" y="396" width="44" height="4" fill="#d62828"/>
+    </svg>
+    <div id="song-card">
+        <div class="song-badge">🎄 TERAZ NA SCENIE</div>
+        <div id="card-title">Cicha noc</div>
+        <div id="card-artist">Samochodówka Band</div>
+    </div>
+</div>
+<canvas id="snow-canvas"></canvas>
+
+<div id="pilot-panel">
+    <div style="text-align:center">
+        <h2 style="color:#ffcc00;margin-bottom:6px">🎄 PILOT KOLĘDOWANIA - PZS 4 AV</h2>
+        <div id="conn-badge">🔴 ŁĄCZENIE Z TELEBIMEM...</div>
+    </div>
+
+    <div class="p-box">
+        <h3>⚡ SZYBKA ZAPOWIEDŹ (TRYB RĘCZNY / AWARYJNY)</h3>
+        <input type="text" id="in-title" placeholder="Wpisz tytuł kolędy lub piosenki...">
+        <input type="text" id="in-artist" placeholder="Wykonawca (np. Samochodówka Band, Klasa 2TM)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Samochodówka Band'">🎸 Samochodówka Band</button>
+            <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Wspólne śpiewanie'">🎤 Wspólne śpiewanie</button>
+        </div>
+        <button class="btn btn-gold" onclick="triggerManual(false)">🎄 POKAŻ ZAPOWIEDŹ (8s)</button>
+        <button class="btn btn-green" onclick="triggerManual(true)">📌 PRZYPNIJ NA STAŁE</button>
+        <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ KARTĘ</button>
+    </div>
+
+    <div class="p-box">
+        <h3>📋 GOTOWA LISTA UTWORÓW (WKLEJ PRZED KONCERTEM)</h3>
+        <textarea id="playlist-raw" rows="4" placeholder="Wpisz po jednym utworze w linijce według wzoru:&#10;Cicha noc | Samochodówka Band&#10;Dzisiaj w Betlejem | Klasa 1TM"></textarea>
+        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ PRZYCISKÓW</button>
+        <div id="playlist-buttons" style="margin-top:12px"></div>
+    </div>
+</div>
+<script>
+const HOST_ID="pzs4-wejherowo-koleda-telebim-2026";
+const BELKI_ID="pzs4-wejherowo-koleda-belki-2026";
+let peer=null,connTelebim=null,connBelki=null,hideTimeout=null;
+
+const cvs=document.getElementById('snow-canvas'),ctx=cvs.getContext('2d');
+let flakes=new Array();
+function initSnow(){
+    cvs.width=window.innerWidth;cvs.height=window.innerHeight;
+    flakes=new Array();
+    for(let i=0;i<130;i++){
+        flakes.push({x:Math.random()*cvs.width,y:Math.random()*cvs.height,r:Math.random()*3.5+1.5,s:Math.random()*1.2+0.5,d:Math.random()*0.6-0.3});
+    }
+}
+function drawSnow(){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    ctx.fillStyle="rgba(255,255,255,0.85)";ctx.beginPath();
+    flakes.forEach(f=>{
+        ctx.moveTo(f.x,f.y);ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+        f.y+=f.s;f.x+=f.d;
+        if(f.y>cvs.height){f.y=-5;f.x=Math.random()*cvs.width}
+    });
+    ctx.fill();requestAnimationFrame(drawSnow);
+}
+window.addEventListener('resize',initSnow);initSnow();drawSnow();
+
+function displayCard(title,artist,pin){
+    const card=document.getElementById('song-card');
+    document.getElementById('card-title').innerText=title;
+    document.getElementById('card-artist').innerText=artist;
+    card.classList.add('active');
+    clearTimeout(hideTimeout);
+    if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),8000);
+}
+
+function initHost(){
+    peer=new Peer(HOST_ID);
+    peer.on('connection',c=>{
+        c.on('data',d=>{
+            if(d.action==='show') displayCard(d.title,d.artist,d.pin);
+            if(d.action==='hide'){clearTimeout(hideTimeout);document.getElementById('song-card').classList.remove('active')}
+        });
+    });
+}
+
+function openPilot(){
+    document.getElementById('pilot-panel').style.display='block';
+    document.getElementById('open-pilot-btn').style.display='none';
+    if(peer)peer.destroy();
+    peer=new Peer();
+    peer.on('open',()=>connectPilot());
+}
+
+function connectPilot(){
+    const b=document.getElementById('conn-badge');
+    b.style.background='#d62828';b.innerText='🔴 ŁĄCZENIE Z TELEBIMEM...';
+    connTelebim=peer.connect(HOST_ID,{reliable:true});
+    connTelebim.on('open',()=>{b.style.background='#00a859';b.innerText='🟢 POŁĄCZONO Z TELEBIMEM'});
+    connTelebim.on('close',()=>{b.style.background='#d62828';b.innerText='🔴 ROZŁĄCZONO - PONAWIAM...';setTimeout(connectPilot,2000)});
+    connBelki=peer.connect(BELKI_ID,{reliable:true});
+}
+
+function sendSong(title,artist,pin){
+    const payload={action:'show',title:title,artist:artist,pin:pin};
+    if(connTelebim&&connTelebim.open) connTelebim.send(payload);
+    if(connBelki&&connBelki.open) connBelki.send(payload);
+}
+
+function triggerManual(pin){
+    const t=document.getElementById('in-title').value.trim();
+    const a=document.getElementById('in-artist').value.trim()||"Samochodówka Band";
+    if(!t)return alert("Wpisz tytuł kolędy!");
+    sendSong(t,a,pin);
+    document.getElementById('in-title').value='';
+}
+
+function hideCardNow(){
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'hide'});
+    if(connBelki&&connBelki.open) connBelki.send({action:'hide'});
+}
+
+function buildPlaylist(){
+    const raw=document.getElementById('playlist-raw').value.trim();
+    const box=document.getElementById('playlist-buttons');
+    box.innerHTML='';
+    if(!raw)return;
+    raw.split('\n').forEach(line=>{
+        const parts=line.split('|');
+        const t=(parts.at(0)||'').trim();
+        const a=(parts.at(1)||'Samochodówka Band').trim();
+        if(t){
+            const row=document.createElement('div');row.className='song-item';
+            row.innerHTML=`<div><strong style="color:#ffcc00">${t}</strong><br><small style="color:#aaa">${a}</small></div>
+            <div><button class="btn btn-gold" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}',false)">▶️ 8s</button>
+            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}',true)">📌</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+const lib=document.createElement('script');
+lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
+lib.onload=()=>initHost();
+document.head.appendChild(lib);
+</script>
+</body>
+</html>
