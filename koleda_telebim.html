@@ -5,77 +5,53 @@
 <title>PZS 4 AV - Kolędowanie Telebim</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#091426;overflow:hidden;color:#fff;width:100vw;height:100vh}
-#snow-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20}
-#scene-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 25%,#1b355c 0%,#091426 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
-.header-title{position:absolute;top:55px;text-align:center;z-index:5}
-.header-title h1{font-size:52px;color:#ffcc00;text-transform:uppercase;letter-spacing:4px;text-shadow:0 4px 20px rgba(0,0,0,.8)}
-.header-title p{font-size:22px;color:#e0e8f5;letter-spacing:2px;margin-top:6px}
-.village-svg{position:absolute;bottom:0;left:0;width:100%;height:65%;z-index:2}
-@keyframes smokeRise{0%{transform:translateY(0) scale(1);opacity:.7}100%{transform:translateY(-90px) scale(2.2);opacity:0}}
-.smoke{animation:smokeRise 4s infinite ease-out}
-.smoke2{animation:smokeRise 4s infinite ease-out 2s}
-#song-card{position:absolute;z-index:30;background:rgba(15,28,50,.95);border:3px solid #ffcc00;border-radius:18px;padding:45px 75px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.85);opacity:0;transform:scale(0.85) translateY(30px);transition:all 0.65s cubic-bezier(0.16,1,0.3,1);pointer-events:none;max-width:80%}
-#song-card.active{opacity:1;transform:scale(1) translateY(0)}
-.song-badge{display:inline-block;background:#d62828;color:#fff;font-size:16px;font-weight:700;padding:6px 18px;border-radius:20px;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px}
-#card-title{font-size:58px;color:#ffcc00;font-weight:800;margin-bottom:14px;line-height:1.15}
-#card-artist{font-size:32px;color:#fff;font-weight:600;letter-spacing:1px}
-#open-pilot-btn{position:absolute;top:20px;left:20px;z-index:9999;background:rgba(0,0,0,.7);color:#fff;border:1px solid #fc0;padding:12px 20px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
-#pilot-panel{display:none;position:fixed;inset:0;background:#161b26;z-index:5000;padding:20px;overflow-y:auto}
-.p-box{background:#1f2738;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2e3a52}
+body{font-family:'Segoe UI',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
+#bg-photo{position:absolute;inset:0;background:url('tlo_koleda.jpg') center/cover no-repeat;z-index:1;animation:slowZoom 25s infinite alternate ease-in-out}
+@keyframes slowZoom{0%{transform:scale(1)}100%{transform:scale(1.04)}}
+#warm-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 60%,rgba(255,180,50,0.14),transparent 70%);z-index:2;pointer-events:none;animation:candleFlicker 3.5s infinite alternate ease-in-out}
+@keyframes candleFlicker{0%,100%{opacity:0.65;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+#snow-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.vignette{position:absolute;inset:0;box-shadow:inset 0 0 140px rgba(0,0,0,0.85);z-index:4;pointer-events:none}
+
+/* KARTA ZAPOWIEDZI KOLĘDY */
+#song-card{position:absolute;top:50%;left:50%;z-index:30;background:rgba(12,20,36,.92);backdrop-filter:blur(10px);border:2px solid #ffcc00;border-radius:16px;padding:45px 75px;text-align:center;box-shadow:0 25px 70px rgba(0,0,0,.9);opacity:0;transform:translate(-50%,-45%) scale(0.9);transition:all 0.75s cubic-bezier(0.16,1,0.3,1);pointer-events:none;max-width:80%}
+#song-card.active{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.song-badge{display:inline-block;background:#c1121f;color:#fff;font-size:15px;font-weight:700;padding:6px 18px;border-radius:20px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+#card-title{font-size:56px;color:#ffcc00;font-weight:800;margin-bottom:12px;text-shadow:0 4px 15px rgba(0,0,0,0.6)}
+#card-artist{font-size:30px;color:#f1f5f9;font-weight:600;letter-spacing:1px}
+
+/* PILOT STEROWANIA (WIDOCZNY TYLKO Z DOPISKIEM ?pilot=1) */
+#pilot-panel{display:none;position:fixed;inset:0;background:#121722;z-index:5000;padding:20px;overflow-y:auto}
+.p-box{background:#1b2232;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2d3850}
 .p-box h3{color:#ffcc00;margin-bottom:12px;font-size:18px}
-input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526e;background:#111622;color:#fff;font-size:16px;margin-bottom:10px}
+input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526e;background:#0d111a;color:#fff;font-size:16px;margin-bottom:10px}
 .btn{padding:12px 18px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;color:#fff;margin:3px}
 .btn-gold{background:#ffcc00;color:#111}.btn-green{background:#00a859}.btn-red{background:#d62828}.btn-blue{background:#0066ff}
-.song-item{display:flex;justify-content:space-between;align-items:center;background:#141a26;padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:4px solid #ffcc00}
+.song-item{display:flex;justify-content:space-between;align-items:center;background:#131824;padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:4px solid #ffcc00}
 #conn-badge{display:inline-block;padding:5px 12px;border-radius:5px;font-size:13px;font-weight:700;background:#d62828;margin-bottom:12px}
 </style>
 </head>
 <body>
-<button id="open-pilot-btn" onclick="openPilot()">🎄 OTWÓRZ PILOTA KOLĘDOWANIA</button>
-
-<div id="scene-bg">
-    <div class="header-title">
-        <h1>Szkolne Kolędowanie</h1>
-        <p>PZS nr 4 im. Jakuba Wejhera w Wejherowie</p>
-    </div>
-    <svg class="village-svg" viewBox="0 0 1920 700" preserveAspectRatio="none">
-        <path d="M0,450 Q480,350 960,440 T1920,410 L1920,700 L0,700 Z" fill="#dce8f7"/>
-        <path d="M0,510 Q600,430 1200,520 T1920,480 L1920,700 L0,700 Z" fill="#ffffff"/>
-        <polygon points="220,460 150,580 290,580" fill="#133b2b"/><polygon points="220,390 165,490 275,490" fill="#194d38"/>
-        <polygon points="1680,450 1600,590 1760,590" fill="#133b2b"/><polygon points="1680,370 1615,490 1745,490" fill="#194d38"/>
-        <circle class="smoke" cx="835" cy="270" r="14" fill="rgba(255,255,255,0.6)"/>
-        <circle class="smoke2" cx="845" cy="260" r="18" fill="rgba(255,255,255,0.5)"/>
-        <rect x="820" y="280" width="30" height="70" fill="#4a2e1b"/>
-        <rect x="740" y="380" width="220" height="150" fill="#5c3a21"/>
-        <polygon points="715,385 850,290 985,385" fill="#fff" stroke="#3d2514" stroke-width="6"/>
-        <rect x="775" y="420" width="55" height="55" rx="4" fill="#ffcc00"/>
-        <rect x="870" y="420" width="55" height="55" rx="4" fill="#ffcc00"/>
-        <circle cx="1140" cy="510" r="38" fill="#fff" stroke="#cbd9eb" stroke-width="3"/>
-        <circle cx="1140" cy="455" r="27" fill="#fff" stroke="#cbd9eb" stroke-width="3"/>
-        <circle cx="1140" cy="415" r="19" fill="#fff" stroke="#cbd9eb" stroke-width="3"/>
-        <circle cx="1133" cy="410" r="2.5" fill="#111"/><circle cx="1147" cy="410" r="2.5" fill="#111"/>
-        <polygon points="1140,415 1162,419 1140,422" fill="#ff6600"/>
-        <rect x="1125" y="382" width="30" height="16" fill="#1c2536"/><rect x="1118" y="396" width="44" height="4" fill="#d62828"/>
-    </svg>
-    <div id="song-card">
-        <div class="song-badge">🎄 TERAZ NA SCENIE</div>
-        <div id="card-title">Cicha noc</div>
-        <div id="card-artist">Samochodówka Band</div>
-    </div>
-</div>
+<div id="bg-photo"></div>
+<div id="warm-glow"></div>
 <canvas id="snow-canvas"></canvas>
+<div class="vignette"></div>
+
+<div id="song-card">
+    <div class="song-badge">🎄 TERAZ NA SCENIE</div>
+    <div id="card-title">Cicha noc</div>
+    <div id="card-artist">Samochodówka Band</div>
+</div>
 
 <div id="pilot-panel">
     <div style="text-align:center">
         <h2 style="color:#ffcc00;margin-bottom:6px">🎄 PILOT KOLĘDOWANIA - PZS 4 AV</h2>
         <div id="conn-badge">🔴 ŁĄCZENIE Z TELEBIMEM...</div>
     </div>
-
     <div class="p-box">
-        <h3>⚡ SZYBKA ZAPOWIEDŹ (TRYB RĘCZNY / AWARYJNY)</h3>
+        <h3>⚡ SZYBKA ZAPOWIEDŹ (TRYB RĘCZNY)</h3>
         <input type="text" id="in-title" placeholder="Wpisz tytuł kolędy lub piosenki...">
-        <input type="text" id="in-artist" placeholder="Wykonawca (np. Samochodówka Band, Klasa 2TM)...">
+        <input type="text" id="in-artist" placeholder="Wykonawca (np. Samochodówka Band)...">
         <div style="margin-bottom:10px">
             <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Samochodówka Band'">🎸 Samochodówka Band</button>
             <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Wspólne śpiewanie'">🎤 Wspólne śpiewanie</button>
@@ -84,37 +60,68 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
         <button class="btn btn-green" onclick="triggerManual(true)">📌 PRZYPNIJ NA STAŁE</button>
         <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ KARTĘ</button>
     </div>
-
     <div class="p-box">
-        <h3>📋 GOTOWA LISTA UTWORÓW (WKLEJ PRZED KONCERTEM)</h3>
-        <textarea id="playlist-raw" rows="4" placeholder="Wpisz po jednym utworze w linijce według wzoru:&#10;Cicha noc | Samochodówka Band&#10;Dzisiaj w Betlejem | Klasa 1TM"></textarea>
-        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ PRZYCISKÓW</button>
+        <h3>📋 GOTOWA LISTA UTWORÓW</h3>
+        <textarea id="playlist-raw" rows="4" placeholder="Wzór: Cicha noc | Samochodówka Band"></textarea>
+        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ</button>
         <div id="playlist-buttons" style="margin-top:12px"></div>
     </div>
 </div>
 <script>
 const HOST_ID="pzs4-wejherowo-koleda-telebim-2026";
 const BELKI_ID="pzs4-wejherowo-koleda-belki-2026";
+const isPilotMode = new URLSearchParams(window.location.search).get('pilot') === '1';
 let peer=null,connTelebim=null,connBelki=null,hideTimeout=null;
 
+// Rysowanie prawdziwych sześcioramiennych śnieżynek 60fps
 const cvs=document.getElementById('snow-canvas'),ctx=cvs.getContext('2d');
 let flakes=new Array();
 function initSnow(){
     cvs.width=window.innerWidth;cvs.height=window.innerHeight;
     flakes=new Array();
-    for(let i=0;i<130;i++){
-        flakes.push({x:Math.random()*cvs.width,y:Math.random()*cvs.height,r:Math.random()*3.5+1.5,s:Math.random()*1.2+0.5,d:Math.random()*0.6-0.3});
+    for(let i=0;i<75;i++){
+        flakes.push({
+            x:Math.random()*cvs.width,
+            y:Math.random()*cvs.height,
+            size:Math.random()*9+5,
+            speed:Math.random()*1.1+0.4,
+            drift:Math.random()*0.6-0.3,
+            angle:Math.random()*Math.PI*2,
+            spin:(Math.random()-0.5)*0.02,
+            alpha:Math.random()*0.5+0.35
+        });
     }
 }
+
+function drawCrystal(x,y,size,angle,alpha){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(angle);
+    ctx.strokeStyle=`rgba(255,255,255,${alpha})`;
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<6;i++){
+        ctx.rotate(Math.PI/3);
+        ctx.moveTo(0,0);ctx.lineTo(0,size);
+        ctx.moveTo(0,size*0.55);ctx.lineTo(size*0.3,size*0.8);
+        ctx.moveTo(0,size*0.55);ctx.lineTo(-size*0.3,size*0.8);
+    }
+    ctx.stroke();
+    ctx.restore();
+}
+
 function drawSnow(){
-    ctx.clearRect(0,0,cvs.width,cvs.height);
-    ctx.fillStyle="rgba(255,255,255,0.85)";ctx.beginPath();
-    flakes.forEach(f=>{
-        ctx.moveTo(f.x,f.y);ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
-        f.y+=f.s;f.x+=f.d;
-        if(f.y>cvs.height){f.y=-5;f.x=Math.random()*cvs.width}
-    });
-    ctx.fill();requestAnimationFrame(drawSnow);
+    if(!isPilotMode){
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+        flakes.forEach(f=>{
+            drawCrystal(f.x,f.y,f.size,f.angle,f.alpha);
+            f.y+=f.speed;f.x+=f.drift;f.angle+=f.spin;
+            if(f.y>cvs.height+20){f.y=-20;f.x=Math.random()*cvs.width}
+            if(f.x>cvs.width+20)f.x=-20;
+            if(f.x<-20)f.x=cvs.width+20;
+        });
+    }
+    requestAnimationFrame(drawSnow);
 }
 window.addEventListener('resize',initSnow);initSnow();drawSnow();
 
@@ -135,14 +142,6 @@ function initHost(){
             if(d.action==='hide'){clearTimeout(hideTimeout);document.getElementById('song-card').classList.remove('active')}
         });
     });
-}
-
-function openPilot(){
-    document.getElementById('pilot-panel').style.display='block';
-    document.getElementById('open-pilot-btn').style.display='none';
-    if(peer)peer.destroy();
-    peer=new Peer();
-    peer.on('open',()=>connectPilot());
 }
 
 function connectPilot(){
@@ -194,7 +193,15 @@ function buildPlaylist(){
 
 const lib=document.createElement('script');
 lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
-lib.onload=()=>initHost();
+lib.onload=()=>{
+    if(isPilotMode){
+        document.getElementById('pilot-panel').style.display='block';
+        peer=new Peer();
+        peer.on('open',()=>connectPilot());
+    }else{
+        initHost();
+    }
+};
 document.head.appendChild(lib);
 </script>
 </body>
