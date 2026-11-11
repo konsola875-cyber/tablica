@@ -6,12 +6,22 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
-#bg-photo{position:absolute;inset:0;background:url('tlo_koleda.jpg') center/cover no-repeat;z-index:1;animation:slowZoom 25s infinite alternate ease-in-out}
-@keyframes slowZoom{0%{transform:scale(1)}100%{transform:scale(1.04)}}
-#warm-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 60%,rgba(255,180,50,0.14),transparent 70%);z-index:2;pointer-events:none;animation:candleFlicker 3.5s infinite alternate ease-in-out}
-@keyframes candleFlicker{0%,100%{opacity:0.65;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
-#snow-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
-.vignette{position:absolute;inset:0;box-shadow:inset 0 0 140px rgba(0,0,0,0.85);z-index:4;pointer-events:none}
+#scene-wrap{position:relative;width:100vw;height:100vh;overflow:hidden}
+#bg-photo{position:absolute;inset:0;background:url('tlo_koleda.jpg') center/cover no-repeat;z-index:1}
+
+/* Maska przycinająca śnieg wyłącznie do obszaru dwóch wielkich okien */
+#window-snow{position:absolute;top:11%;left:30%;width:54%;height:54%;clip-path:polygon(0% 100%, 0% 35%, 18% 6%, 46% 0%, 54% 0%, 82% 6%, 100% 35%, 100% 100%);z-index:2;pointer-events:none}
+
+/* Ciepły, pulsacyjny blask ognia w kominku (lewy dolny róg) */
+#fire-glow{position:absolute;left:2%;bottom:14%;width:24%;height:34%;background:radial-gradient(circle,rgba(255,140,20,0.45) 0%,rgba(255,60,0,0.15) 55%,transparent 75%);z-index:3;pointer-events:none;mix-blend-mode:screen;animation:firePulse 0.18s infinite alternate}
+@keyframes firePulse{0%{transform:scale(0.97) translateY(2px);opacity:0.75}100%{transform:scale(1.04) translateY(-2px);opacity:1}}
+
+/* Migotanie lampek na choince za oknem i na suficie */
+#lights-twinkle{position:absolute;top:15%;left:34%;width:22%;height:42%;background:radial-gradient(circle,rgba(255,220,100,0.22),transparent 70%);z-index:3;pointer-events:none;mix-blend-mode:screen;animation:twinkle 2.2s infinite alternate ease-in-out}
+@keyframes twinkle{0%{opacity:0.35;transform:scale(0.95)}100%{opacity:0.95;transform:scale(1.05)}}
+
+/* Canvas na iskry w kominku oraz parę z obu kubków z herbatą */
+#fx-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
 
 /* KARTA ZAPOWIEDZI KOLĘDY */
 #song-card{position:absolute;top:50%;left:50%;z-index:30;background:rgba(12,20,36,.92);backdrop-filter:blur(10px);border:2px solid #ffcc00;border-radius:16px;padding:45px 75px;text-align:center;box-shadow:0 25px 70px rgba(0,0,0,.9);opacity:0;transform:translate(-50%,-45%) scale(0.9);transition:all 0.75s cubic-bezier(0.16,1,0.3,1);pointer-events:none;max-width:80%}
@@ -20,7 +30,7 @@ body{font-family:'Segoe UI',sans-serif;background:#050b14;overflow:hidden;color:
 #card-title{font-size:56px;color:#ffcc00;font-weight:800;margin-bottom:12px;text-shadow:0 4px 15px rgba(0,0,0,0.6)}
 #card-artist{font-size:30px;color:#f1f5f9;font-weight:600;letter-spacing:1px}
 
-/* PILOT STEROWANIA (WIDOCZNY TYLKO Z DOPISKIEM ?pilot=1) */
+/* PILOT STEROWANIA (?pilot=1) */
 #pilot-panel{display:none;position:fixed;inset:0;background:#121722;z-index:5000;padding:20px;overflow-y:auto}
 .p-box{background:#1b2232;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2d3850}
 .p-box h3{color:#ffcc00;margin-bottom:12px;font-size:18px}
@@ -32,10 +42,13 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
 </style>
 </head>
 <body>
-<div id="bg-photo"></div>
-<div id="warm-glow"></div>
-<canvas id="snow-canvas"></canvas>
-<div class="vignette"></div>
+<div id="scene-wrap">
+    <div id="bg-photo"></div>
+    <canvas id="window-snow"></canvas>
+    <div id="fire-glow"></div>
+    <div id="lights-twinkle"></div>
+    <canvas id="fx-canvas"></canvas>
+</div>
 
 <div id="song-card">
     <div class="song-badge">🎄 TERAZ NA SCENIE</div>
@@ -73,57 +86,120 @@ const BELKI_ID="pzs4-wejherowo-koleda-belki-2026";
 const isPilotMode = new URLSearchParams(window.location.search).get('pilot') === '1';
 let peer=null,connTelebim=null,connBelki=null,hideTimeout=null;
 
-// Rysowanie prawdziwych sześcioramiennych śnieżynek 60fps
-const cvs=document.getElementById('snow-canvas'),ctx=cvs.getContext('2d');
+// 1. ŚNIEG PADĄCY WYŁĄCZNIE ZA OKNAMI
+const sCvs=document.getElementById('window-snow'),sCtx=sCvs.getContext('2d');
 let flakes=new Array();
-function initSnow(){
-    cvs.width=window.innerWidth;cvs.height=window.innerHeight;
+
+// 2. ISKRY W KOMINKU + DYM ZE ŚWIEC + PARA Z KUBKÓW HERBATY
+const fCvs=document.getElementById('fx-canvas'),fCtx=fCvs.getContext('2d');
+let embers=new Array(), steam=new Array();
+
+function initFX(){
+    sCvs.width=sCvs.offsetWidth; sCvs.height=sCvs.offsetHeight;
+    fCvs.width=window.innerWidth; fCvs.height=window.innerHeight;
     flakes=new Array();
-    for(let i=0;i<75;i++){
+    for(let i=0;i<90;i++){
         flakes.push({
-            x:Math.random()*cvs.width,
-            y:Math.random()*cvs.height,
-            size:Math.random()*9+5,
-            speed:Math.random()*1.1+0.4,
-            drift:Math.random()*0.6-0.3,
-            angle:Math.random()*Math.PI*2,
-            spin:(Math.random()-0.5)*0.02,
-            alpha:Math.random()*0.5+0.35
+            x:Math.random()*sCvs.width, y:Math.random()*sCvs.height,
+            size:Math.random()*6+3.5, speed:Math.random()*0.9+0.4,
+            drift:Math.random()*0.5-0.25, angle:Math.random()*6.28, spin:(Math.random()-0.5)*0.02,
+            alpha:Math.random()*0.55+0.35
         });
     }
 }
 
-function drawCrystal(x,y,size,angle,alpha){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(angle);
-    ctx.strokeStyle=`rgba(255,255,255,${alpha})`;
-    ctx.lineWidth=1.5;
+function drawCrystal(ctx,x,y,size,angle,alpha){
+    ctx.save(); ctx.translate(x,y); ctx.rotate(angle);
+    ctx.strokeStyle=`rgba(255,255,255,${alpha})`; ctx.lineWidth=1.2;
     ctx.beginPath();
     for(let i=0;i<6;i++){
         ctx.rotate(Math.PI/3);
-        ctx.moveTo(0,0);ctx.lineTo(0,size);
-        ctx.moveTo(0,size*0.55);ctx.lineTo(size*0.3,size*0.8);
-        ctx.moveTo(0,size*0.55);ctx.lineTo(-size*0.3,size*0.8);
+        ctx.moveTo(0,0); ctx.lineTo(0,size);
+        ctx.moveTo(0,size*0.55); ctx.lineTo(size*0.3,size*0.8);
+        ctx.moveTo(0,size*0.55); ctx.lineTo(-size*0.3,size*0.8);
     }
-    ctx.stroke();
-    ctx.restore();
+    ctx.stroke(); ctx.restore();
 }
 
-function drawSnow(){
+function animateScene(){
     if(!isPilotMode){
-        ctx.clearRect(0,0,cvs.width,cvs.height);
+        // Rysowanie śnieżynek za oknem
+        sCtx.clearRect(0,0,sCvs.width,sCvs.height);
         flakes.forEach(f=>{
-            drawCrystal(f.x,f.y,f.size,f.angle,f.alpha);
-            f.y+=f.speed;f.x+=f.drift;f.angle+=f.spin;
-            if(f.y>cvs.height+20){f.y=-20;f.x=Math.random()*cvs.width}
-            if(f.x>cvs.width+20)f.x=-20;
-            if(f.x<-20)f.x=cvs.width+20;
+            drawCrystal(sCtx,f.x,f.y,f.size,f.angle,f.alpha);
+            f.y+=f.speed; f.x+=f.drift; f.angle+=f.spin;
+            if(f.y>sCvs.height+15){f.y=-15; f.x=Math.random()*sCvs.width}
+        });
+
+        // Rysowanie ognia, iskier i pary
+        fCtx.clearRect(0,0,fCvs.width,fCvs.height);
+        const W=fCvs.width, H=fCvs.height;
+
+        // Generowanie iskier i płomieni w kominku (lewy dół: X ~ 11%, Y ~ 74%)
+        if(embers.length<45){
+            embers.push({
+                x: W*(0.08 + Math.random()*0.07),
+                y: H*(0.72 + Math.random()*0.05),
+                vx: (Math.random()-0.5)*0.8,
+                vy: -(Math.random()*1.8+0.8),
+                r: Math.random()*4+2,
+                life: 1,
+                isFlame: Math.random()>0.45
+            });
+        }
+        embers.forEach((e,idx)=>{
+            fCtx.save();
+            fCtx.globalAlpha=e.life;
+            if(e.isFlame){
+                const g=fCtx.createRadialGradient(e.x,e.y,1,e.x,e.y,e.r*4);
+                g.addColorStop(0,"rgba(255,230,100,0.9)");
+                g.addColorStop(0.5,"rgba(255,100,0,0.5)");
+                g.addColorStop(1,"transparent");
+                fCtx.fillStyle=g;
+                fCtx.beginPath(); fCtx.arc(e.x,e.y,e.r*4,0,6.28); fCtx.fill();
+            } else {
+                fCtx.fillStyle="#ffdd55";
+                fCtx.beginPath(); fCtx.arc(e.x,e.y,e.r*0.6,0,6.28); fCtx.fill();
+            }
+            fCtx.restore();
+            e.x+=e.vx; e.y+=e.vy; e.life-=0.022;
+            if(e.life<=0) embers.splice(idx,1);
+        });
+
+        // Generowanie pary z dwóch kubków herbaty na stole (X ~ 63% i 70%, Y ~ 71%) oraz dymu ze świec (X ~ 56% i 60%, Y ~ 62%)
+        if(Math.random()<0.25){
+            const sources=[
+                {x:W*0.635, y:H*0.71}, // Kubek lewy
+                {x:W*0.705, y:H*0.71}, // Kubek prawy
+                {x:W*0.565, y:H*0.61}, // Świeca 1
+                {x:W*0.595, y:H*0.63}  // Świeca 2
+            ];
+            const src=sources.at(Math.floor(Math.random()*sources.length));
+            steam.push({
+                x: src.x + (Math.random()-0.5)*8,
+                y: src.y,
+                vx: (Math.random()-0.5)*0.4,
+                vy: -(Math.random()*0.7+0.35),
+                r: Math.random()*8+6,
+                life: 0.45
+            });
+        }
+        steam.forEach((s,idx)=>{
+            fCtx.save();
+            const g=fCtx.createRadialGradient(s.x,s.y,1,s.x,s.y,s.r);
+            g.addColorStop(0,`rgba(255,255,255,${s.life})`);
+            g.addColorStop(1,"transparent");
+            fCtx.fillStyle=g;
+            fCtx.beginPath(); fCtx.arc(s.x,s.y,s.r,0,6.28); fCtx.fill();
+            fCtx.restore();
+            s.x+=s.vx + Math.sin(s.y*0.05)*0.3;
+            s.y+=s.vy; s.r+=0.15; s.life-=0.0045;
+            if(s.life<=0) steam.splice(idx,1);
         });
     }
-    requestAnimationFrame(drawSnow);
+    requestAnimationFrame(animateScene);
 }
-window.addEventListener('resize',initSnow);initSnow();drawSnow();
+window.addEventListener('resize',initFX); initFX(); animateScene();
 
 function displayCard(title,artist,pin){
     const card=document.getElementById('song-card');
