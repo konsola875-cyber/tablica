@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>PZS 4 AV - Nakładka na Kamery</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;width:100vw;height:100vh}
+
+/* 1. SLAJD DYREKCJI NA PEŁNY EKRAN */
+#cam-slide-full{position:fixed;inset:0;z-index:45;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 1.2s ease-in-out}
+#cam-slide-full.active{opacity:1}
+#cam-full-img{width:100vw;height:100vh;object-fit:contain}
+
+/* 2. PASEK PRZEWIJANY (TICKER) */
+#cam-ticker-wrap{position:fixed;bottom:48px;left:9vw;z-index:30;width:82vw;height:74px;background:linear-gradient(90deg,#6b0505 0%,#b81414 50%,#6b0505 100%);border:3px solid #ffcc00;border-radius:40px;box-shadow:0 15px 40px rgba(0,0,0,0.9);display:flex;align-items:center;overflow:hidden;clip-path:inset(0 100% 0 0 round 40px);opacity:0;transition:clip-path 1.5s cubic-bezier(0.22,1,0.36,1),opacity 0.6s ease}
+#cam-ticker-wrap.active{clip-path:inset(0 0% 0 0 round 40px);opacity:1}
+.ticker-badge{position:relative;z-index:5;background:#ffcc00;color:#4a0404;height:100%;padding:0 28px;display:flex;align-items:center;font-weight:900;font-size:20px;letter-spacing:1.5px;text-transform:uppercase;box-shadow:6px 0 15px rgba(0,0,0,0.5);white-space:nowrap}
+.ticker-track{flex:1;overflow:hidden;position:relative;height:100%;display:flex;align-items:center}
+#ticker-text{position:absolute;white-space:nowrap;font-size:30px;font-weight:800;color:#fff3d6;text-shadow:0 2px 6px rgba(0,0,0,0.8);left:100%}
+@keyframes marqueePass{0%{left:100%;transform:translateX(0)}100%{left:0%;transform:translateX(-100%)}}
+
+/* MOTYW UROCZYSTY / 11 LISTOPADA DLA PASKA */
+body.theme-gala #cam-ticker-wrap{background:linear-gradient(90deg,#0f1c30 0%,#1d3557 50%,#0f1c30 100%);border-color:#d4af37}
+body.theme-gala .ticker-badge{background:linear-gradient(180deg,#ffffff 50%,#dc143c 50%);color:#0f1c30;text-shadow:0 0 8px #fff}
+
+/* 3. KARTA ZAPOWIEDZI UTWORU */
+#cam-song-card{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:35;background:radial-gradient(circle at center,#a81313 0%,#5c0505 85%,#380202 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;clip-path:circle(0% at 50% 50%);opacity:0;pointer-events:none;transform-origin:bottom left;transition:clip-path 2.5s cubic-bezier(0.25,1,0.5,1),transform 1.8s cubic-bezier(0.22,1,0.36,1),border-radius 1.8s ease,opacity 1.4s ease-in-out}
+#cam-song-card.fullscreen{clip-path:circle(85% at 50% 50%);opacity:1;transform:translate(0,0) scale(1);border-radius:0;border:none}
+#cam-song-card.corner{clip-path:circle(100% at 50% 50%);opacity:1;transform:translate(45px,-45px) scale(0.28);border-radius:36px;border:12px solid #ffcc00;box-shadow:0 30px 90px rgba(0,0,0,0.95)}
+
+#cam-wreath{position:absolute;inset:0;width:100%;height:100%;background-image:url('ramka_koleda.png.png');background-size:100% 100%;background-position:center;background-repeat:no-repeat;z-index:2;pointer-events:none}
+.cam-badge{position:absolute;top:210px;left:50%;transform:translateX(-50%);z-index:6;font-family:'Rye',serif;font-size:44px;letter-spacing:5px;text-transform:uppercase;padding:8px 36px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 5px 0px #3d0202) drop-shadow(0 8px 16px rgba(0,0,0,0.9));white-space:nowrap}
+.cam-inner{position:relative;z-index:5;text-align:center;max-width:74%;margin-top:115px}
+#cam-card-title{font-family:'Rye',serif;font-size:165px;line-height:1.05;margin-bottom:24px;background:repeating-linear-gradient(90deg,#fff3d6 0px,#fff3d6 22px,#ffd29d 22px,#ffd29d 30px);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 10px 0px #3d0202) drop-shadow(0 16px 28px rgba(0,0,0,0.95))}
+#cam-card-artist{font-family:'Rye',serif;font-size:82px;letter-spacing:3px;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 7px 0px #3d0202) drop-shadow(0 12px 22px rgba(0,0,0,0.9))}
+
+/* MOTYW UROCZYSTY / 11 LISTOPADA DLA KARTY UTWORU */
+body.theme-gala #cam-song-card{background:radial-gradient(circle at center,#1d3557 0%,#0b1526 85%,#050a14 100%)}
+body.theme-gala #cam-wreath{display:none}
+body.theme-gala #cam-song-card::after{content:'';position:absolute;inset:35px;border:4px solid #d4af37;box-shadow:inset 0 0 0 12px #0b1526,inset 0 0 0 15px rgba(220,20,60,0.7);pointer-events:none}
+body.theme-gala .cam-badge,body.theme-gala #cam-card-title,body.theme-gala #cam-card-artist{font-family:'Cinzel',serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-gala #cam-card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #cam-card-artist{background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+</style>
+</head>
+<body>
+<div id="cam-slide-full"><img id="cam-full-img" src="" alt=""></div>
+
+<div id="cam-ticker-wrap">
+    <div class="ticker-badge" id="ticker-badge-txt">🎄 NA ŻYWO</div>
+    <div class="ticker-track">
+        <div id="ticker-text"></div>
+    </div>
+</div>
+
+<div id="cam-song-card">
+    <div id="cam-wreath"></div>
+    <div class="cam-badge" id="cam-badge-txt">Koncert kolęd</div>
+    <div class="cam-inner">
+        <div id="cam-card-title"></div>
+        <div id="cam-card-artist"></div>
+        <div id="cam-card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:42px;color:#e2e8f0;margin-top:14px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
+    </div>
+</div>
+
+<script>
+const BELKI_ID="pzs4-wejherowo-koleda-belki-2026";
+let peer=null, songTimer1=null, tickerTimer=null, currentTheme='xmas';
+
+function setTheme(theme){
+    currentTheme = theme;
+    if(theme === 'gala'){
+        document.body.classList.add('theme-gala');
+        document.getElementById('ticker-badge-txt').innerText = '🇵🇱 PZS 4 WEJHEROWO';
+        document.getElementById('cam-badge-txt').innerText = 'Koncert Pieśni Patriotycznych';
+    } else {
+        document.body.classList.remove('theme-gala');
+        document.getElementById('ticker-badge-txt').innerText = '🎄 NA ŻYWO';
+        document.getElementById('cam-badge-txt').innerText = 'Koncert kolęd';
+    }
+}
+
+function showCamSong(title, artist, cls){
+    hideCamSpeaker();
+    const titleEl=document.getElementById('cam-card-title');
+    const artistEl=document.getElementById('cam-card-artist');
+    const classEl=document.getElementById('cam-card-class');
+
+    titleEl.innerText=title;
+    if(title.length <= 12) titleEl.style.fontSize = '175px';
+    else if(title.length <= 20) titleEl.style.fontSize = '130px';
+    else if(title.length <= 28) titleEl.style.fontSize = '104px';
+    else titleEl.style.fontSize = '82px';
+
+    artistEl.innerText=artist;
+    if(artist.length <= 22) artistEl.style.fontSize = '80px';
+    else if(artist.length <= 35) artistEl.style.fontSize = '58px';
+    else artistEl.style.fontSize = '44px';
+
+    classEl.innerText=cls||'';
+    classEl.style.display=cls?'block':'none';
+
+    const card=document.getElementById('cam-song-card');
+    clearTimeout(songTimer1);
+
+    card.classList.remove('corner');
+    card.classList.add('fullscreen');
+    songTimer1=setTimeout(()=>{
+        card.classList.remove('fullscreen');
+        card.classList.add('corner');
+    },5500);
+}
+
+function showCamSpeaker(name, role){
+    clearTimeout(songTimer1);
+    clearTimeout(tickerTimer);
+    document.getElementById('cam-song-card').classList.remove('fullscreen','corner');
+
+    const wrap=document.getElementById('cam-ticker-wrap');
+    const txt=document.getElementById('ticker-text');
+    const icon = currentTheme === 'gala' ? '🔸' : '⭐';
+    txt.innerText = role ? `${icon} ${name}  —  ${role} ${icon}` : `${icon} ${name} ${icon}`;
+    
+    txt.style.animation='none';
+    txt.offsetHeight;
+    wrap.classList.add('active');
+    
+    setTimeout(()=>{ txt.style.animation='marqueePass 9s linear 2'; },1200);
+    tickerTimer=setTimeout(()=>{ wrap.classList.remove('active'); },19500);
+}
+
+function hideCamSpeaker(){
+    clearTimeout(tickerTimer);
+    document.getElementById('cam-ticker-wrap').classList.remove('active');
+}
+
+function showCamSlide(dataUrl){
+    if(!dataUrl) return;
+    document.getElementById('cam-full-img').src=dataUrl;
+    document.getElementById('cam-slide-full').classList.add('active');
+}
+
+function hideCamSlide(){
+    document.getElementById('cam-slide-full').classList.remove('active');
+}
+
+function initBelkiHost(){
+    peer=new Peer(BELKI_ID);
+    peer.on('connection',c=>{
+        c.on('data',d=>{
+            if(d.action==='setTheme') setTheme(d.theme);
+            if(d.action==='show') showCamSong(d.title, d.artist, d.cls);
+            if(d.action==='hide'){clearTimeout(songTimer1);document.getElementById('cam-song-card').classList.remove('fullscreen','corner')}
+            if(d.action==='showSpeaker') showCamSpeaker(d.name, d.role);
+            if(d.action==='hideSpeaker') hideCamSpeaker();
+            if(d.action==='showCamSlide') showCamSlide(d.img);
+            if(d.action==='hideCamSlide') hideCamSlide();
+        });
+    });
+}
+
+const lib=document.createElement('script');
+lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
+lib.onload=()=>initBelkiHost();
+document.head.appendChild(lib);
+</script>
+</body>
+</html>

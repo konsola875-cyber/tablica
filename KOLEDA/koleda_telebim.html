@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>PZS 4 AV - Uroczystości Telebim</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
+.bg-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+
+/* PEŁNOEKRANOWA KARTA ZAPOWIEDZI - DOSTOJNE ROZKWITANIE (2.5s) */
+#song-card{position:fixed;inset:0;z-index:40;background:radial-gradient(circle at center,#a81313 0%,#5c0505 85%,#380202 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;clip-path:circle(0% at 50% 50%);opacity:0;pointer-events:none;transition:clip-path 2.5s cubic-bezier(0.25,1,0.5,1),opacity 1.4s ease-in-out}
+#song-card.active{clip-path:circle(85% at 50% 50%);opacity:1}
+
+#wreath-frame{position:absolute;inset:0;width:100vw;height:100vh;background-image:url('ramka_koleda.png.png');background-size:100vw 100vh;background-position:center;background-repeat:no-repeat;transform:scale(1.12);transition:transform 2.8s cubic-bezier(0.22,1,0.36,1);z-index:2;pointer-events:none}
+#song-card.active #wreath-frame{transform:scale(1)}
+
+.song-badge{position:absolute;top:210px;left:50%;transform:translateX(-50%) translateY(-22px);z-index:6;font-family:'Rye',serif;font-size:44px;letter-spacing:5px;text-transform:uppercase;padding:8px 36px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 5px 0px #3d0202) drop-shadow(0 8px 16px rgba(0,0,0,0.9));opacity:0;transition:all 1.4s cubic-bezier(0.22,1,0.36,1) 0.85s;white-space:nowrap}
+#song-card.active .song-badge{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.card-inner-glow{position:relative;z-index:5;text-align:center;max-width:72%;margin-top:115px;transform:translateY(18px) scale(0.94);opacity:0;transition:all 1.5s cubic-bezier(0.22,1,0.36,1) 1.25s}
+#song-card.active .card-inner-glow{transform:scale(1);opacity:1}
+
+#card-title{font-family:'Rye',serif;font-size:185px;line-height:1.05;margin-bottom:24px;background:repeating-linear-gradient(90deg,#fff3d6 0px,#fff3d6 22px,#ffd29d 22px,#ffd29d 30px);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 10px 0px #3d0202) drop-shadow(0 16px 28px rgba(0,0,0,0.95))}
+#card-artist{font-family:'Rye',serif;font-size:88px;letter-spacing:3px;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 7px 0px #3d0202) drop-shadow(0 12px 22px rgba(0,0,0,0.9))}
+
+/* MOTYW UROCZYSTY / 11 LISTOPADA */
+body.theme-gala #song-card{background:radial-gradient(circle at center,#1d3557 0%,#0b1526 85%,#050a14 100%)}
+body.theme-gala #wreath-frame{display:none}
+body.theme-gala #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #d4af37;box-shadow:inset 0 0 0 14px #0b1526,inset 0 0 0 17px rgba(220,20,60,0.75);pointer-events:none}
+body.theme-gala .song-badge,body.theme-gala #card-title,body.theme-gala #card-artist{font-family:'Cinzel',serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-gala #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #card-artist{background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala .bg-vid{opacity:0 !important}
+
+/* PILOT STEROWANIA (?pilot=1) */
+#pilot-panel{display:none;position:fixed;inset:0;background:#121722;z-index:5000;padding:20px;overflow-y:auto}
+.p-box{background:#1b2232;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2d3850}
+.p-box h3{color:#ffcc00;margin-bottom:12px;font-size:18px}
+input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526e;background:#0d111a;color:#fff;font-size:16px;margin-bottom:10px}
+.btn{padding:12px 16px;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;margin:3px}
+.btn-gold{background:#ffcc00;color:#111}.btn-green{background:#00a859}.btn-red{background:#d62828}.btn-blue{background:#0066ff}.btn-orange{background:#f77f00}
+.song-item{display:flex;justify-content:space-between;align-items:center;background:#131824;padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:4px solid #ffcc00}
+#conn-badge{display:inline-block;padding:5px 12px;border-radius:5px;font-size:13px;font-weight:700;background:#d62828;margin-bottom:12px}
+#slides-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px;max-height:360px;overflow-y:auto;padding:4px}
+.slide-thumb{position:relative;border:3px solid #2d3850;border-radius:8px;overflow:hidden;cursor:pointer;background:#090d14;transition:transform 0.15s,border-color 0.15s}
+.slide-thumb:hover{transform:scale(1.03)}
+.slide-thumb.active-slide{border-color:#00a859;box-shadow:0 0 15px rgba(0,168,89,0.6)}
+.slide-thumb img{width:100%;aspect-ratio:16/9;object-fit:contain;display:block}
+.slide-num{position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.8);color:#ffcc00;font-size:12px;font-weight:800;padding:2px 7px;border-radius:4px}
+.slide-del{position:absolute;top:4px;right:4px;background:#d62828;color:#fff;border:none;border-radius:4px;width:24px;height:24px;font-size:13px;font-weight:800;cursor:pointer;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.8)}
+#slide-counter{display:inline-block;font-size:16px;font-weight:800;color:#ffcc00;margin:0 10px;vertical-align:middle}
+</style>
+</head>
+<body>
+<video id="vid-a" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:1"></video>
+<video id="vid-b" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:0"></video>
+<img id="base-main-slide" src="" alt="" style="position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#050b14;z-index:2;display:none">
+
+<div id="song-card">
+    <div id="wreath-frame"></div>
+    <div class="song-badge">Koncert kolęd</div>
+    <div class="card-inner-glow">
+        <div id="card-title">Cicha noc</div>
+        <div id="card-artist">Samochodówka Band</div>
+        <div id="card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:44px;color:#e2e8f0;margin-top:16px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
+    </div>
+</div>
+
+<div id="pilot-panel">
+    <div style="text-align:center">
+        <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI - PZS 4 AV</h2>
+        <div id="conn-badge">🔴 ŁĄCZENIE Z TELEBIMEM...</div>
+        <div style="margin-bottom:14px">
+            <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 TRYB ŚWIĄTECZNY</button>
+            <button class="btn btn-blue" onclick="switchTheme('gala')">🇵🇱 TRYB UROCZYSTY / 11 LISTOPADA</button>
+        </div>
+    </div>
+
+    <div class="p-box" style="border-color:#0066ff">
+        <h3>📊 PREZENTACJA DYREKCJI (PDF LUB ZDJĘCIA JPG/PNG)</h3>
+        <input type="file" id="slides-file-input" accept="application/pdf,image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleSlidesUpload(this)">
+        <button class="btn btn-blue" onclick="document.getElementById('slides-file-input').click()">📁 WGRAJ PDF LUB ZDJĘCIA</button>
+        <span id="slides-status" style="font-size:13px;color:#aaa;margin-left:8px">Brak slajdów</span>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2d3850">
+            <button class="btn btn-gold" onclick="stepSlide(-1)">⬅️ POPRZEDNI</button>
+            <span id="slide-counter">Slajd: 0 / 0</span>
+            <button class="btn btn-gold" onclick="stepSlide(1)">NASTĘPNY ➡️</button>
+            <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ UKRYJ PREZENTACJĘ (STINGER)</button>
+            <button class="btn btn-orange" onclick="clearAllSlides()">🗑️ WYCZYŚĆ WSZYSTKIE</button><br>
+            <button class="btn btn-green" onclick="sendSlideToCam()">📺 POKAŻ AKTUALNY SLAJD NA NAGRANIU</button>
+            <button class="btn btn-red" onclick="hideSlideFromCam()">✖ SCHOWAJ SLAJD Z NAGRANIA</button>
+            <br>
+            <button class="btn btn-gold" onclick="setAsMainSlide()">⭐ USTAW WYBRANY SLAJD JAKO TŁO GŁÓWNE</button>
+            <button class="btn btn-orange" onclick="clearMainSlide()">🗑️ USUŃ TŁO GŁÓWNE</button>
+            <button class="btn btn-red" style="width:100%;margin-top:8px;padding:15px;font-size:16px;border:2px solid #ffcc00" onclick="panicMainSlide()">🛡️ AWARYJNY: POKAŻ SLAJD GŁÓWNY (BAZOWY)</button>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2d3850">
+            <input type="text" id="in-web-url" oninput="syncWebUrlInput()" placeholder="Wklej link z sieci (zdjęcie JPG/PNG lub YouTube)...">
+            <button class="btn btn-blue" onclick="sendWebUrlToScreen()">🌐 POKAŻ Z LINKU NA TELEBIMIE</button>
+            <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ ZAMKNIJ LINK (STINGER)</button>
+        </div>
+        </div>
+        <div id="slides-grid"></div>
+    </div>
+
+    <div class="p-box" style="border-color:#c1121f">
+        <h3>🎤 OSOBA MÓWIĄCA (PASEK NA NAGRANIE Z KAMER)</h3>
+        <input type="text" id="in-sp-name" placeholder="Imię i nazwisko (np. Cezary Lewandowski)...">
+        <input type="text" id="in-sp-role" placeholder="Funkcja / Rola (np. Dyrektor PZS nr 4)...">
+        <button class="btn btn-green" onclick="triggerSpeakerManual()">🎤 POKAŻ PASEK MÓWCY</button>
+        <button class="btn btn-red" onclick="hideSpeakerNow()">✖ UKRYJ PASEK</button>
+        <hr style="border-color:#2d3850;margin:12px 0">
+        <textarea id="speakers-raw" rows="3" placeholder="Lista mówców (Wzór: Jan Kowalski - Dyrektor PZS nr 4)"></textarea>
+        <button class="btn btn-blue" onclick="buildSpeakersList()">🔄 ZAŁADUJ LISTĘ MÓWCÓW</button>
+        <div id="speakers-buttons" style="margin-top:10px"></div>
+    </div>
+
+    <div class="p-box">
+        <h3>⚡ SZYBKA ZAPOWIEDŹ UTWORU (TRYB RĘCZNY)</h3>
+        <input type="text" id="in-title" placeholder="Wpisz tytuł utworu lub pieśni...">
+        <input type="text" id="in-artist" placeholder="Wykonawca (np. Samochodówka Band)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Samochodówka Band'">🎸 Samochodówka Band</button>
+            <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Wspólne śpiewanie'">🎤 Wspólne śpiewanie</button>
+        </div>
+        <button class="btn btn-gold" onclick="triggerManual(false)">🎵 POKAŻ ZAPOWIEDŹ (10s)</button>
+        <button class="btn btn-green" onclick="triggerManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
+        <button class="btn btn-orange" onclick="unpinAndFade()">⏱️ ZDEJMIJ PINEZKĘ (ZOSTAW 10s)</button>
+                <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
+    </div>
+
+    <div class="p-box">
+        <h3>📋 GOTOWA LISTA UTWORÓW (ODDZIEL KRESKĄ | LUB MYŚLNIKIEM -)</h3>
+        <textarea id="playlist-raw" rows="4" placeholder="Wzór: Rota - Samochodówka Band"></textarea>
+        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ</button>
+        <div id="playlist-buttons" style="margin-top:12px"></div>
+    </div>
+</div>
+<script>
+const HOST_ID="pzs4-wejherowo-koleda-telebim-2026";
+const PDF_HOST_ID="pzs4-wejherowo-koleda-pdf-2026";
+const BELKI_ID="pzs4-wejherowo-koleda-belki-2026";
+const isPilotMode = new URLSearchParams(window.location.search).get('pilot') === '1';
+
+let peer=null,connTelebim=null,connPdf=null,connBelki=null,hideTimeout=null;
+let activePilots=new Array();
+let savedRawList="", savedSpeakersList="", savedMainSlide="", currentTheme="xmas";
+let savedWebUrl="";
+let slidesArray=new Array(), currentSlideIdx=-1;
+
+function setupSeamlessLoop(){
+    const vA=document.getElementById('vid-a'), vB=document.getElementById('vid-b');
+    let active=vA, next=vB, fading=false;
+    active.style.zIndex=2; next.style.zIndex=1;
+    active.style.transition='none'; next.style.transition='none';
+    active.play().catch(()=>{});
+    setInterval(()=>{
+        if(!active.duration || fading) return;
+        if(active.duration - active.currentTime <= 1.4){
+            fading=true;
+            next.currentTime=0;
+            next.style.opacity=1;
+            next.play().catch(()=>{});
+            setTimeout(()=>{
+                active.style.transition='opacity 1.1s linear';
+                active.style.opacity=0;
+                setTimeout(()=>{
+                    active.pause();
+                    active.style.transition='none';
+                    active.style.zIndex=1;
+                    next.style.zIndex=2;
+                    const tmp=active; active=next; next=tmp;
+                    fading=false;
+                },1150);
+            },150);
+        }
+    },100);
+}
+
+function broadcastPilots(senderId, payload){
+    activePilots.forEach(p=>{if(p.open && p.peer!==senderId) p.send(payload)});
+}
+
+function applyThemeLocal(theme){
+    currentTheme = theme;
+    if(theme === 'gala'){
+        document.body.classList.add('theme-gala');
+        document.querySelector('.song-badge').innerText = 'Koncert Pieśni Patriotycznych';
+    } else {
+        document.body.classList.remove('theme-gala');
+        document.querySelector('.song-badge').innerText = 'Koncert kolęd';
+    }
+}
+
+function switchTheme(theme){
+    applyThemeLocal(theme);
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'setTheme',theme:theme});
+    if(connBelki&&connBelki.open) connBelki.send({action:'setTheme',theme:theme});
+}
+
+function applyMainSlideLocal(dataUrl){
+    const baseImg=document.getElementById('base-main-slide');
+    if(!baseImg) return;
+    if(dataUrl){
+        baseImg.src=dataUrl;
+        baseImg.style.display='block';
+    } else {
+        baseImg.src='';
+        baseImg.style.display='none';
+    }
+}
+
+function displayCard(title,artist,cls,pin){
+    const card=document.getElementById('song-card');
+    const titleEl=document.getElementById('card-title');
+    const artistEl=document.getElementById('card-artist');
+    const classEl=document.getElementById('card-class');
+
+    titleEl.innerText=title;
+    if(title.length <= 12) titleEl.style.fontSize = '185px';
+    else if(title.length <= 20) titleEl.style.fontSize = '135px';
+    else if(title.length <= 28) titleEl.style.fontSize = '108px';
+    else titleEl.style.fontSize = '85px';
+
+    artistEl.innerText=artist;
+    if(artist.length <= 22) artistEl.style.fontSize = '84px';
+    else if(artist.length <= 35) artistEl.style.fontSize = '62px';
+    else artistEl.style.fontSize = '46px';
+
+    classEl.innerText=cls||'';
+    classEl.style.display=cls?'block':'none';
+
+    card.classList.add('active');
+    clearTimeout(hideTimeout);
+    if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),10000);
+}
+
+function initHost(){
+    peer=new Peer(HOST_ID);
+    peer.on('connection',c=>{
+        activePilots.push(c);
+        c.on('open',()=>{
+            c.send({action:'setTheme',theme:currentTheme});
+            if(savedMainSlide) c.send({action:'setMainSlide',img:savedMainSlide});
+            if(savedRawList) c.send({action:'syncList',raw:savedRawList});
+            if(savedSpeakersList) c.send({action:'syncSpeakers',raw:savedSpeakersList});
+            if(slidesArray.length>0) c.send({action:'syncSlides',slides:slidesArray,activeIdx:currentSlideIdx});
+            if(savedWebUrl) c.send({action:'syncWebUrl',url:savedWebUrl});
+        });
+        c.on('data',d=>{
+            if(d.action==='setTheme'){applyThemeLocal(d.theme);broadcastPilots(c.peer,{action:'setTheme',theme:d.theme})}
+            if(d.action==='setMainSlide'){savedMainSlide=d.img;applyMainSlideLocal(d.img);broadcastPilots(c.peer,{action:'setMainSlide',img:d.img})}
+            if(d.action==='show') displayCard(d.title,d.artist,d.cls,d.pin);
+            if(d.action==='unpin'){clearTimeout(hideTimeout);hideTimeout=setTimeout(()=>document.getElementById('song-card').classList.remove('active'),10000)}
+            if(d.action==='hide'){clearTimeout(hideTimeout);document.getElementById('song-card').classList.remove('active')}
+            if(d.action==='syncList'){savedRawList=d.raw;broadcastPilots(c.peer,{action:'syncList',raw:savedRawList})}
+            if(d.action==='syncSpeakers'){savedSpeakersList=d.raw;broadcastPilots(c.peer,{action:'syncSpeakers',raw:savedSpeakersList})}
+            if(d.action==='syncSlides'){slidesArray=d.slides;currentSlideIdx=d.activeIdx;broadcastPilots(c.peer,{action:'syncSlides',slides:slidesArray,activeIdx:currentSlideIdx})}
+            if(d.action==='syncActiveSlide'){currentSlideIdx=d.activeIdx;broadcastPilots(c.peer,{action:'syncActiveSlide',activeIdx:currentSlideIdx})}
+            if(d.action==='syncWebUrl'){savedWebUrl=d.url;broadcastPilots(c.peer,{action:'syncWebUrl',url:savedWebUrl})}
+        });
+        c.on('close',()=>{activePilots=activePilots.filter(p=>p.peer!==c.peer)});
+    });
+}
+function connectPilot(){
+    const b=document.getElementById('conn-badge');
+    b.style.background='#d62828';b.innerText='🔴 ŁĄCZENIE Z TELEBIMEM...';
+    connTelebim=peer.connect(HOST_ID,{reliable:true});
+    connTelebim.on('open',()=>{b.style.background='#00a859';b.innerText='🟢 POŁĄCZONO (MULTI-PILOT)'});
+    connTelebim.on('data',d=>{
+        if(d.action==='setTheme') applyThemeLocal(d.theme);
+        if(d.action==='setMainSlide'){savedMainSlide=d.img;applyMainSlideLocal(d.img)}
+        if(d.action==='syncList'){document.getElementById('playlist-raw').value=d.raw;renderPlaylistButtons(d.raw)}
+        if(d.action==='syncSpeakers'){document.getElementById('speakers-raw').value=d.raw;renderSpeakersButtons(d.raw)}
+        if(d.action==='syncSlides'){slidesArray=d.slides;currentSlideIdx=d.activeIdx;renderSlidesGrid()}
+        if(d.action==='syncActiveSlide'){currentSlideIdx=d.activeIdx;updateSlideSelectionUI()}
+        if(d.action==='syncWebUrl'){document.getElementById('in-web-url').value=d.url}
+    });
+    connTelebim.on('close',()=>{b.style.background='#d62828';b.innerText='🔴 ROZŁĄCZONO - PONAWIAM...';setTimeout(connectPilot,2000)});
+    connPdf=peer.connect(PDF_HOST_ID,{reliable:true});
+    connBelki=peer.connect(BELKI_ID,{reliable:true});
+}
+
+async function handleSlidesUpload(inp){
+    const files=Array.from(inp.files||[]);
+    if(!files.length) return;
+    const st=document.getElementById('slides-status');
+    st.innerText="⏳ Przetwarzanie slajdów...";
+    slidesArray=new Array();
+    currentSlideIdx=-1;
+
+    try {
+        const firstFile = files.at(0);
+        const isPdf = firstFile && (firstFile.type==='application/pdf' || firstFile.name.toLowerCase().endsWith('.pdf'));
+
+        if(isPdf){
+            if(!window.pdfjsLib){
+                st.innerText="⏳ Ładowanie lokalnego silnika PDF...";
+                await new Promise((res,rej)=>{
+                    const s=document.createElement('script');
+                    s.src="pdf.min.js";
+                    s.onload=res; s.onerror=()=>rej(new Error("Brak pliku pdf.min.js w folderze!"));
+                    document.head.appendChild(s);
+                });
+            }
+            pdfjsLib.GlobalWorkerOptions.workerSrc="pdf.worker.min.js";
+            const buf=await firstFile.arrayBuffer();
+            const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+            for(let i=1;i<=pdf.numPages;i++){
+                st.innerText=`⏳ Renderowanie strony ${i} z ${pdf.numPages}...`;
+                const page=await pdf.getPage(i);
+                const vp=page.getViewport({scale:1.5});
+                const c=document.createElement('canvas');
+                c.width=vp.width; c.height=vp.height;
+                await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+                slidesArray.push(c.toDataURL('image/jpeg',0.85));
+            }
+        } else {
+            files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+            for(let f of files){
+                const dataUrl=await new Promise(res=>{
+                    const r=new FileReader();
+                    r.onload=e=>res(e.target.result);
+                    r.readAsDataURL(f);
+                });
+                slidesArray.push(dataUrl);
+            }
+        }
+        st.innerText=`✅ Załadowano slajdów: ${slidesArray.length}`;
+        renderSlidesGrid();
+        if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSlides',slides:slidesArray,activeIdx:-1});
+    } catch(err) {
+        st.innerText="❌ Błąd: " + err.message;
+        console.error(err);
+    }
+}
+
+function renderSlidesGrid(){
+    const grid=document.getElementById('slides-grid');
+    grid.innerHTML='';
+    document.getElementById('slides-status').innerText=slidesArray.length?`✅ Gotowe slajdy: ${slidesArray.length}`:'Brak slajdów';
+    slidesArray.forEach((src,idx)=>{
+        const div=document.createElement('div');
+        div.className='slide-thumb'+(idx===currentSlideIdx?' active-slide':'');
+        div.id='thumb-'+idx;
+        div.onclick=()=>selectSlide(idx);
+        div.innerHTML=`<img src="${src}" alt="Slajd ${idx+1}"><span class="slide-num">${idx+1}</span><button class="slide-del" onclick="event.stopPropagation();deleteSingleSlide(${idx})">✖</button>`;
+        grid.appendChild(div);
+    });
+    updateSlideSelectionUI();
+}
+
+function deleteSingleSlide(idx){
+    const wasActive = (idx === currentSlideIdx);
+    slidesArray.splice(idx, 1);
+    if(wasActive){
+        currentSlideIdx = -1;
+        if(connPdf&&connPdf.open) connPdf.send({action:'hideSlide'});
+    } else if(idx < currentSlideIdx){
+        currentSlideIdx--;
+    }
+    renderSlidesGrid();
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSlides',slides:slidesArray,activeIdx:currentSlideIdx});
+}
+
+function clearAllSlides(){
+    if(!slidesArray.length) return;
+    if(!confirm("Usunąć wszystkie załadowane slajdy?")) return;
+    slidesArray = new Array();
+    currentSlideIdx = -1;
+    document.getElementById('slides-file-input').value = '';
+    renderSlidesGrid();
+    if(connPdf&&connPdf.open) connPdf.send({action:'hideSlide'});
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSlides',slides:slidesArray,activeIdx:-1});
+}
+function updateSlideSelectionUI(){
+    document.querySelectorAll('.slide-thumb').forEach((el,idx)=>{
+        if(idx===currentSlideIdx) el.classList.add('active-slide');
+        else el.classList.remove('active-slide');
+    });
+    const total=slidesArray.length;
+    const cur=currentSlideIdx>=0?(currentSlideIdx+1):0;
+    document.getElementById('slide-counter').innerText=`Slajd: ${cur} / ${total}`;
+}
+
+function selectSlide(idx){
+    if(idx<0 || idx>=slidesArray.length) return;
+    currentSlideIdx=idx;
+    updateSlideSelectionUI();
+    if(connPdf&&connPdf.open) connPdf.send({action:'showSlide',img:slidesArray[idx]});
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncActiveSlide',activeIdx:idx});
+}
+
+function stepSlide(dir){
+    if(!slidesArray.length) return;
+    let nextIdx=currentSlideIdx+dir;
+    if(nextIdx<0) nextIdx=0;
+    if(nextIdx>=slidesArray.length) nextIdx=slidesArray.length-1;
+    selectSlide(nextIdx);
+}
+
+function hideSlidesOnScreen(){
+    currentSlideIdx=-1;
+    updateSlideSelectionUI();
+    if(connPdf&&connPdf.open) connPdf.send({action:'hideSlide'});
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncActiveSlide',activeIdx:-1});
+}
+
+function syncWebUrlInput(){
+    const u=document.getElementById('in-web-url').value;
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncWebUrl',url:u});
+}
+
+function sendWebUrlToScreen(){
+    const u=document.getElementById('in-web-url').value.trim();
+    if(!u) return alert("Wklej najpierw link!");
+    if(connPdf&&connPdf.open) connPdf.send({action:'showUrl',url:u});
+}
+
+function setAsMainSlide(){
+    if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw kliknij miniaturkę slajdu, który ma być głównym tłem!");
+    const imgData=slidesArray[currentSlideIdx];
+    savedMainSlide=imgData;
+    applyMainSlideLocal(imgData);
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'setMainSlide',img:imgData});
+    alert("✅ Ustawiono jako Slajd Główny!");
+}
+
+function clearMainSlide(){
+    savedMainSlide='';
+    applyMainSlideLocal('');
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'setMainSlide',img:''});
+}
+
+function panicMainSlide(){
+    hideCardNow();
+    hideSlidesOnScreen();
+    if(savedMainSlide) applyMainSlideLocal(savedMainSlide);
+}
+
+function sendSlideToCam(){
+    if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw wybierz slajd z listy powyżej!");
+    if(connBelki&&connBelki.open) connBelki.send({action:'showCamSlide',img:slidesArray[currentSlideIdx]});
+}
+
+function hideSlideFromCam(){
+    if(connBelki&&connBelki.open) connBelki.send({action:'hideCamSlide'});
+}
+
+function sendSpeaker(name,role){
+    if(connBelki&&connBelki.open) connBelki.send({action:'showSpeaker',name:name,role:role});
+}
+
+function triggerSpeakerManual(){
+    const n=document.getElementById('in-sp-name').value.trim();
+    const r=document.getElementById('in-sp-role').value.trim()||"PZS nr 4 w Wejherowie";
+    if(!n) return alert("Wpisz imię i nazwisko osoby mówiącej!");
+    sendSpeaker(n,r);
+}
+
+function hideSpeakerNow(){
+    if(connBelki&&connBelki.open) connBelki.send({action:'hideSpeaker'});
+}
+
+function buildSpeakersList(){
+    const raw=document.getElementById('speakers-raw').value.trim();
+    renderSpeakersButtons(raw);
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSpeakers',raw:raw});
+}
+
+function renderSpeakersButtons(raw){
+    const box=document.getElementById('speakers-buttons');
+    box.innerHTML='';
+    if(!raw)return;
+    raw.split('\n').forEach(line=>{
+        const parts=line.split(/\||-/);
+        const n=(parts.at(0)||'').trim();
+        const r=(parts.at(1)||'PZS nr 4 w Wejherowie').trim();
+        if(n){
+            const row=document.createElement('div');row.className='song-item';
+            row.style.borderLeftColor='#c1121f';
+            row.innerHTML=`<div><strong style="color:#fff">${n}</strong><br><small style="color:#ffcc00">${r}</small></div>
+            <div><button class="btn btn-green" onclick="sendSpeaker('${n.replace(/'/g,"\\'")}','${r.replace(/'/g,"\\'")}')">🎤 POKAŻ</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+function sendSong(title,artist,cls,pin){
+    const payload={action:'show',title:title,artist:artist,cls:cls,pin:pin};
+    if(connTelebim&&connTelebim.open) connTelebim.send(payload);
+    if(connBelki&&connBelki.open) connBelki.send(payload);
+}
+
+function triggerManual(pin){
+    const t=document.getElementById('in-title').value.trim();
+    const rawA=document.getElementById('in-artist').value.trim()||"Samochodówka Band";
+    const parts=rawA.split('|');
+    const a=(parts.at(0)||'').trim();
+    const cls=(parts.at(1)||'').trim();
+    if(!t)return alert("Wpisz tytuł utworu!");
+    sendSong(t,a,cls,pin);
+    document.getElementById('in-title').value='';
+}
+
+function unpinAndFade(){
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'unpin'});
+    if(connBelki&&connBelki.open) connBelki.send({action:'unpin'});
+}
+
+function hideCardNow(){
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'hide'});
+    if(connBelki&&connBelki.open) connBelki.send({action:'hide'});
+}
+
+function buildPlaylist(){
+    const raw=document.getElementById('playlist-raw').value.trim();
+    renderPlaylistButtons(raw);
+    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncList',raw:raw});
+}
+
+function renderPlaylistButtons(raw){
+    const box=document.getElementById('playlist-buttons');
+    box.innerHTML='';
+    if(!raw)return;
+    raw.split('\n').forEach(line=>{
+        const pipeParts=line.split('|');
+        const leftSide=(pipeParts.at(0)||'').trim();
+        const cls=(pipeParts.at(1)||'').trim();
+        const dashIdx=leftSide.indexOf('-');
+        let t=leftSide, a='Samochodówka Band';
+        if(dashIdx>-1){
+            t=leftSide.slice(0,dashIdx).trim();
+            a=leftSide.slice(dashIdx+1).trim()||'Samochodówka Band';
+        }
+        if(t){
+            const row=document.createElement('div');row.className='song-item';
+            row.innerHTML=`<div><strong style="color:#ffcc00">${t}</strong><br><small style="color:#ddd">${a}</small>${cls?`<br><small style="color:#aaa;font-style:italic">${cls}</small>`:''}</div>
+            <div><button class="btn btn-gold" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false)">▶️ 10s</button>
+            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true)">📌</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+const lib=document.createElement('script');
+lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
+lib.onload=()=>{
+    if(isPilotMode){
+        document.querySelectorAll('.bg-vid').forEach(v=>v.style.display='none');
+        document.getElementById('pilot-panel').style.display='block';
+        peer=new Peer();
+        peer.on('open',()=>connectPilot());
+    }else{
+        setupSeamlessLoop();
+        initHost();
+    }
+};
+document.head.appendChild(lib);
+</script>
+</body>
+</html>
