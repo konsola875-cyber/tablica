@@ -154,14 +154,20 @@ function pub(subtopic, payload, retainFlag=false){
 }
 
 function startMqttEngine(){
-    client = mqtt.connect("wss:" + "//broker.emqx.io:8084/mqtt", {
+    const b = document.getElementById('conn-badge');
+    if (typeof mqtt === 'undefined') {
+        if (b) { b.style.background = '#d62828'; b.innerText = '❌ BŁĄD: BRAK PLIKU mqtt.min.js'; }
+        return;
+    }
+
+    client = mqtt.connect("wss:" + "//://hivemq.com", {
         reconnectPeriod: 2000,
-        keepalive: 30
+        keepalive: 30,
+        connectTimeout: 5000
     });
 
     client.on("connect", () => {
-        const b = document.getElementById('conn-badge');
-        if (b) { b.style.background = '#00a859'; b.innerText = '🟢 POŁĄCZONO (MQTT 443 • PANCERNY)'; }
+        if (b) { b.style.background = '#00a859'; b.innerText = '🟢 POŁĄCZONO (HIVEMQ 443 • PANCERNY)'; }
         client.subscribe(TOPIC_PREFIX + "telebim");
         client.subscribe(TOPIC_PREFIX + "theme");
         client.subscribe(TOPIC_PREFIX + "mainslide");
@@ -175,13 +181,11 @@ function startMqttEngine(){
     });
 
     client.on("reconnect", () => {
-        const b = document.getElementById('conn-badge');
         if (b) { b.style.background = '#f77f00'; b.innerText = '🟠 WZNAWIANIE POŁĄCZENIA...'; }
     });
 
-    client.on("offline", () => {
-        const b = document.getElementById('conn-badge');
-        if (b) { b.style.background = '#d62828'; b.innerText = '🔴 BRAK SIECI - CZEKAM...'; }
+    client.on("error", (err) => {
+        if (b) { b.style.background = '#d62828'; b.innerText = '❌ BŁĄD SIECI: ' + err.message; }
     });
 
     client.on("message", (topic, message) => {
@@ -206,359 +210,13 @@ function startMqttEngine(){
 }
 
 const mqttLib = document.createElement('script');
-mqttLib.src = "https:" + "//://unpkg.com" + "/dist/mqtt.min.js";
+mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => startMqttEngine();
+mqttLib.onerror = () => {
+    const b = document.getElementById('conn-badge');
+    if (b) { b.style.background = '#d62828'; b.innerText = '❌ WRZUĆ PLIK mqtt.min.js DO FOLDERU!'; }
+};
 document.head.appendChild(mqttLib);
-
-function setupSeamlessLoop(){
-    const vA=document.getElementById('vid-a'), vB=document.getElementById('vid-b');
-    let active=vA, next=vB, fading=false;
-    active.style.zIndex=2; next.style.zIndex=1;
-    active.style.transition='none'; next.style.transition='none';
-    active.play().catch(()=>{});
-    setInterval(()=>{
-        if(!active.duration || fading) return;
-        if(active.duration - active.currentTime <= 1.4){
-            fading=true;
-            next.currentTime=0;
-            next.style.opacity=1;
-            next.play().catch(()=>{});
-            setTimeout(()=>{
-                active.style.transition='opacity 1.1s linear';
-                active.style.opacity=0;
-                setTimeout(()=>{
-                    active.pause();
-                    active.style.transition='none';
-                    active.style.zIndex=1;
-                    next.style.zIndex=2;
-                    const tmp=active; active=next; next=tmp;
-                    fading=false;
-                },1150);
-            },150);
-        }
-    },100);
-}
-
-function applyThemeLocal(theme){
-    currentTheme = theme;
-    if(theme === 'gala'){
-        document.body.classList.add('theme-gala');
-        document.querySelector('.song-badge').innerText = 'FESTIWAL "MIEJCIE NADZIEJĘ"';
-    } else {
-        document.body.classList.remove('theme-gala');
-        document.querySelector('.song-badge').innerText = 'Koncert kolęd';
-    }
-}
-
-function switchTheme(theme){
-    applyThemeLocal(theme);
-    pub("theme", { theme: theme }, true);
-}
-
-function applyMainSlideLocal(dataUrl){
-    const baseImg=document.getElementById('base-main-slide');
-    if(!baseImg) return;
-    if(dataUrl){
-        baseImg.src=dataUrl;
-        baseImg.style.display='block';
-    } else {
-        baseImg.src='';
-        baseImg.style.display='none';
-    }
-}
-
-function displayCard(title,artist,cls,pin){
-    const card=document.getElementById('song-card');
-    const titleEl=document.getElementById('card-title');
-    const artistEl=document.getElementById('card-artist');
-    const classEl=document.getElementById('card-class');
-
-    titleEl.innerText=title;
-    if(title.length <= 12) titleEl.style.fontSize = '185px';
-    else if(title.length <= 20) titleEl.style.fontSize = '135px';
-    else if(title.length <= 28) titleEl.style.fontSize = '108px';
-    else titleEl.style.fontSize = '85px';
-
-    artistEl.innerText=artist;
-    if(artist.length <= 22) artistEl.style.fontSize = '84px';
-    else if(artist.length <= 35) artistEl.style.fontSize = '62px';
-    else artistEl.style.fontSize = '46px';
-
-    classEl.innerText=cls||'';
-    classEl.style.display=cls?'block':'none';
-
-    card.classList.add('active');
-    clearTimeout(hideTimeout);
-    if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),10000);
-}
-async function handleSlidesUpload(inp){
-    const files=Array.from(inp.files||[]);
-    if(!files.length) return;
-    const st=document.getElementById('slides-status');
-    st.innerText="⏳ Przetwarzanie slajdów...";
-    slidesArray=new Array();
-    currentSlideIdx=-1;
-
-    try {
-        const firstFile = files.at(0);
-        const isPdf = firstFile && (firstFile.type==='application/pdf' || firstFile.name.toLowerCase().endsWith('.pdf'));
-
-        if(isPdf){
-            if(!window.pdfjsLib){
-                st.innerText="⏳ Ładowanie lokalnego silnika PDF...";
-                await new Promise((res,rej)=>{
-                    const s=document.createElement('script');
-                    s.src="pdf.min.js";
-                    s.onload=res; s.onerror=()=>rej(new Error("Brak pliku pdf.min.js w folderze!"));
-                    document.head.appendChild(s);
-                });
-            }
-            pdfjsLib.GlobalWorkerOptions.workerSrc="pdf.worker.min.js";
-            const buf=await firstFile.arrayBuffer();
-            const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-            for(let i=1;i<=pdf.numPages;i++){
-                st.innerText=`⏳ Renderowanie strony ${i} z ${pdf.numPages}...`;
-                const page=await pdf.getPage(i);
-                const vp=page.getViewport({scale:1.4});
-                const c=document.createElement('canvas');
-                c.width=vp.width; c.height=vp.height;
-                await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-                slidesArray.push(c.toDataURL('image/jpeg',0.75));
-            }
-        } else {
-            files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
-            for(let f of files){
-                const dataUrl=await new Promise(res=>{
-                    const r=new FileReader();
-                    r.onload=e=>res(e.target.result);
-                    r.readAsDataURL(f);
-                });
-                slidesArray.push(dataUrl);
-            }
-        }
-        st.innerText=`✅ Załadowano slajdów: ${slidesArray.length}`;
-        renderSlidesGrid();
-        pub("slides", { slides: slidesArray, activeIdx: -1 }, true);
-    } catch(err) {
-        st.innerText="❌ Błąd: " + err.message;
-        console.error(err);
-    }
-}
-
-function renderSlidesGrid(){
-    const grid=document.getElementById('slides-grid');
-    grid.innerHTML='';
-    document.getElementById('slides-status').innerText=slidesArray.length?`✅ Gotowe slajdy: ${slidesArray.length}`:'Brak slajdów';
-    slidesArray.forEach((src,idx)=>{
-        const div=document.createElement('div');
-        div.className='slide-thumb'+(idx===currentSlideIdx?' active-slide':'');
-        div.id='thumb-'+idx;
-        div.onclick=()=>selectSlide(idx);
-        div.innerHTML=`<img src="${src}" alt="Slajd ${idx+1}"><span class="slide-num">${idx+1}</span><button class="slide-del" onclick="event.stopPropagation();deleteSingleSlide(${idx})">✖</button>`;
-        grid.appendChild(div);
-    });
-    updateSlideSelectionUI();
-}
-
-function deleteSingleSlide(idx){
-    const wasActive = (idx === currentSlideIdx);
-    slidesArray.splice(idx, 1);
-    if(wasActive){
-        currentSlideIdx = -1;
-        pub("pdf", { action: 'hideSlide' });
-    } else if(idx < currentSlideIdx){
-        currentSlideIdx--;
-    }
-    renderSlidesGrid();
-    pub("slides", { slides: slidesArray, activeIdx: currentSlideIdx }, true);
-}
-
-function clearAllSlides(){
-    if(!slidesArray.length) return;
-    if(!confirm("Usunąć wszystkie załadowane slajdy?")) return;
-    slidesArray = new Array();
-    currentSlideIdx = -1;
-    document.getElementById('slides-file-input').value = '';
-    renderSlidesGrid();
-    pub("pdf", { action: 'hideSlide' });
-    pub("slides", { slides: [], activeIdx: -1 }, true);
-}
-
-function updateSlideSelectionUI(){
-    document.querySelectorAll('.slide-thumb').forEach((el,idx)=>{
-        if(idx===currentSlideIdx) el.classList.add('active-slide');
-        else el.classList.remove('active-slide');
-    });
-    const total=slidesArray.length;
-    const cur=currentSlideIdx>=0?(currentSlideIdx+1):0;
-    document.getElementById('slide-counter').innerText=`Slajd: ${cur} / ${total}`;
-}
-
-function selectSlide(idx){
-    if(idx<0 || idx>=slidesArray.length) return;
-    currentSlideIdx=idx;
-    updateSlideSelectionUI();
-    pub("pdf", { action: 'showSlide', img: slidesArray[idx] });
-    pub("activeslide", { activeIdx: idx }, true);
-}
-
-function stepSlide(dir){
-    if(!slidesArray.length) return;
-    let nextIdx=currentSlideIdx+dir;
-    if(nextIdx<0) nextIdx=0;
-    if(nextIdx>=slidesArray.length) nextIdx=slidesArray.length-1;
-    selectSlide(nextIdx);
-}
-
-function hideSlidesOnScreen(){
-    currentSlideIdx=-1;
-    updateSlideSelectionUI();
-    pub("pdf", { action: 'hideSlide' });
-    pub("activeslide", { activeIdx: -1 }, true);
-}
-
-function setAsMainSlide(){
-    if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw kliknij miniaturkę slajdu, który ma być głównym tłem!");
-    const imgData=slidesArray[currentSlideIdx];
-    savedMainSlide=imgData;
-    applyMainSlideLocal(imgData);
-    pub("mainslide", { img: imgData }, true);
-    alert("✅ Ustawiono jako Slajd Główny!");
-}
-
-function clearMainSlide(){
-    savedMainSlide='';
-    applyMainSlideLocal('');
-    pub("mainslide", { img: '' }, true);
-}
-
-function panicMainSlide(){
-    hideCardNow();
-    hideSlidesOnScreen();
-    if(savedMainSlide) applyMainSlideLocal(savedMainSlide);
-}
-
-function sendSlideToCam(){
-    if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw wybierz slajd z listy powyżej!");
-    pub("belki", { action: 'showCamSlide', img: slidesArray[currentSlideIdx] });
-}
-
-function hideSlideFromCam(){
-    pub("belki", { action: 'hideCamSlide' });
-}
-
-function syncWebUrlInput(){
-    const u=document.getElementById('in-web-url').value;
-    pub("weburl", { url: u }, true);
-}
-
-function sendWebUrlToScreen(){
-    const u=document.getElementById('in-web-url').value.trim();
-    if(!u) return alert("Wklej najpierw link!");
-    pub("pdf", { action: 'showUrl', url: u });
-}
-
-function sendSpeaker(name,role){
-    pub("belki", { action: 'showSpeaker', name: name, role: role });
-}
-
-function triggerSpeakerManual(){
-    const n=document.getElementById('in-sp-name').value.trim();
-    const r=document.getElementById('in-sp-role').value.trim()||"PZS nr 4 w Wejherowie";
-    if(!n) return alert("Wpisz imię i nazwisko osoby mówiącej!");
-    sendSpeaker(n,r);
-}
-
-function hideSpeakerNow(){
-    pub("belki", { action: 'hideSpeaker' });
-}
-
-function buildSpeakersList(){
-    const raw=document.getElementById('speakers-raw').value.trim();
-    renderSpeakersButtons(raw);
-    pub("speakers", { raw: raw }, true);
-}
-
-function renderSpeakersButtons(raw){
-    const box=document.getElementById('speakers-buttons');
-    box.innerHTML='';
-    if(!raw)return;
-    raw.split('\n').forEach(line=>{
-        const parts=line.split(/\||-/);
-        const n=(parts.at(0)||'').trim();
-        const r=(parts.at(1)||'PZS nr 4 w Wejherowie').trim();
-        if(n){
-            const row=document.createElement('div');row.className='song-item';
-            row.style.borderLeftColor='#c1121f';
-            row.innerHTML=`<div><strong style="color:#fff">${n}</strong><br><small style="color:#ffcc00">${r}</small></div>
-            <div><button class="btn btn-green" onclick="sendSpeaker('${n.replace(/'/g,"\\'")}','${r.replace(/'/g,"\\'")}')">🎤 POKAŻ</button></div>`;
-            box.appendChild(row);
-        }
-    });
-}
-
-function sendSong(title,artist,cls,pin){
-    const payload={action:'show',title:title,artist:artist,cls:cls,pin:pin};
-    pub("telebim", payload);
-    pub("belki", payload);
-}
-
-function triggerManual(pin){
-    const t=document.getElementById('in-title').value.trim();
-    const rawA=document.getElementById('in-artist').value.trim()||"Samochodówka Band";
-    const parts=rawA.split('|');
-    const a=(parts.at(0)||'').trim();
-    const cls=(parts.at(1)||'').trim();
-    if(!t)return alert("Wpisz tytuł utworu!");
-    sendSong(t,a,cls,pin);
-    document.getElementById('in-title').value='';
-}
-
-function unpinAndFade(){
-    pub("telebim", { action: 'unpin' });
-}
-
-function hideCardNow(){
-    pub("telebim", { action: 'hide' });
-    pub("belki", { action: 'hide' });
-}
-
-function buildPlaylist(){
-    const raw=document.getElementById('playlist-raw').value.trim();
-    renderPlaylistButtons(raw);
-    pub("list", { raw: raw }, true);
-}
-
-function renderPlaylistButtons(raw){
-    const box=document.getElementById('playlist-buttons');
-    box.innerHTML='';
-    if(!raw)return;
-    raw.split('\n').forEach(line=>{
-        const pipeParts=line.split('|');
-        const leftSide=(pipeParts.at(0)||'').trim();
-        const cls=(pipeParts.at(1)||'').trim();
-        const dashIdx=leftSide.indexOf('-');
-        let t=leftSide, a='Samochodówka Band';
-        if(dashIdx>-1){
-            t=leftSide.slice(0,dashIdx).trim();
-            a=leftSide.slice(dashIdx+1).trim()||'Samochodówka Band';
-        }
-        if(t){
-            const row=document.createElement('div');row.className='song-item';
-            row.innerHTML=`<div><strong style="color:#ffcc00">${t}</strong><br><small style="color:#ddd">${a}</small>${cls?`<br><small style="color:#aaa;font-style:italic">${cls}</small>`:''}</div>
-            <div><button class="btn btn-gold" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false)">▶️ 10s</button>
-            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true)">📌</button></div>`;
-            box.appendChild(row);
-        }
-    });
-}
-
-if(isPilotMode){
-    document.querySelectorAll('.bg-vid').forEach(v=>v.style.display='none');
-    document.getElementById('pilot-panel').style.display='block';
-}else{
-    setupSeamlessLoop();
-}
 </script>
 </body>
 </html>
