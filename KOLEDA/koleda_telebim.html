@@ -232,7 +232,18 @@ function displayCard(title,artist,cls,pin){
     clearTimeout(hideTimeout);
     if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),10000);
 }
-async function handleSlidesUpload(inp){
+function compressSlideCanvas(sourceCanvasOrImg){
+    const c = document.createElement('canvas');
+    const maxW = 1280;
+    const w = sourceCanvasOrImg.width || sourceCanvasOrImg.naturalWidth || 1280;
+    const h = sourceCanvasOrImg.height || sourceCanvasOrImg.naturalHeight || 720;
+    const scale = w > maxW ? (maxW / w) : 1;
+    c.width = Math.round(w * scale);
+    c.height = Math.round(h * scale);
+    c.getContext('2d').drawImage(sourceCanvasOrImg, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.68);
+}
+    async function handleSlidesUpload(inp){
     const files=Array.from(inp.files||[]);
     if(!files.length) return;
     const st=document.getElementById('slides-status');
