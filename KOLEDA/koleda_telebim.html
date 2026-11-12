@@ -232,6 +232,7 @@ function displayCard(title,artist,cls,pin){
     clearTimeout(hideTimeout);
     if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),10000);
 }
+
 function compressSlideCanvas(sourceCanvasOrImg){
     const c = document.createElement('canvas');
     const maxW = 1280;
@@ -243,11 +244,12 @@ function compressSlideCanvas(sourceCanvasOrImg){
     c.getContext('2d').drawImage(sourceCanvasOrImg, 0, 0, c.width, c.height);
     return c.toDataURL('image/jpeg', 0.68);
 }
-    async function handleSlidesUpload(inp){
+
+async function handleSlidesUpload(inp){
     const files=Array.from(inp.files||[]);
     if(!files.length) return;
     const st=document.getElementById('slides-status');
-    st.innerText="⏳ Przetwarzanie slajdów...";
+    st.innerText="⏳ Optymalizacja i wysyłanie slajdów...";
     slidesArray=new Array();
     currentSlideIdx=-1;
 
@@ -271,37 +273,44 @@ function compressSlideCanvas(sourceCanvasOrImg){
             for(let i=1;i<=pdf.numPages;i++){
                 st.innerText=`⏳ Renderowanie strony ${i} z ${pdf.numPages}...`;
                 const page=await pdf.getPage(i);
-                const vp=page.getViewport({scale:1.4});
+                const vp=page.getViewport({scale:1.2});
                 const c=document.createElement('canvas');
                 c.width=vp.width; c.height=vp.height;
                 await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-                slidesArray.push(c.toDataURL('image/jpeg',0.75));
+                slidesArray.push(compressSlideCanvas(c));
             }
         } else {
             files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
             for(let f of files){
-                const dataUrl=await new Promise(res=>{
+                const imgObj = await new Promise(res=>{
                     const r=new FileReader();
-                    r.onload=e=>res(e.target.result);
+                    r.onload=e=>{
+                        const im = new Image();
+                        im.onload=()=>res(im);
+                        im.src=e.target.result;
+                    };
                     r.readAsDataURL(f);
                 });
-                slidesArray.push(dataUrl);
+                slidesArray.push(compressSlideCanvas(imgObj));
             }
         }
         st.innerText=`✅ Załadowano slajdów: ${slidesArray.length}`;
         renderSlidesGrid();
-        pub("slides", { slides: slidesArray, activeIdx: -1 }, true);
+        pub("slides_meta", { count: slidesArray.length, activeIdx: -1 }, true);
+        slidesArray.forEach((imgData, i) => {
+            setTimeout(() => pub("slide_item/" + i, { idx: i, img: imgData }, true), i * 120);
+        });
     } catch(err) {
         st.innerText="❌ Błąd: " + err.message;
         console.error(err);
     }
 }
-
 function renderSlidesGrid(){
     const grid=document.getElementById('slides-grid');
     grid.innerHTML='';
     document.getElementById('slides-status').innerText=slidesArray.length?`✅ Gotowe slajdy: ${slidesArray.length}`:'Brak slajdów';
     slidesArray.forEach((src,idx)=>{
+        if(!src) return;
         const div=document.createElement('div');
         div.className='slide-thumb'+(idx===currentSlideIdx?' active-slide':'');
         div.id='thumb-'+idx;
@@ -322,18 +331,23 @@ function deleteSingleSlide(idx){
         currentSlideIdx--;
     }
     renderSlidesGrid();
-    pub("slides", { slides: slidesArray, activeIdx: currentSlideIdx }, true);
+    pub("slides_meta", { count: slidesArray.length, activeIdx: currentSlideIdx }, true);
+    slidesArray.forEach((imgData, i) => {
+        setTimeout(() => pub("slide_item/" + i, { idx: i, img: imgData }, true), i * 120);
+    });
 }
 
 function clearAllSlides(){
     if(!slidesArray.length) return;
     if(!confirm("Usunąć wszystkie załadowane slajdy?")) return;
+    const oldCount = slidesArray.length;
     slidesArray = new Array();
     currentSlideIdx = -1;
     document.getElementById('slides-file-input').value = '';
     renderSlidesGrid();
     pub("pdf", { action: 'hideSlide' });
-    pub("slides", { slides: [], activeIdx: -1 }, true);
+    pub("slides_meta", { count: 0, activeIdx: -1 }, true);
+    for(let i=0; i<oldCount; i++) pub("slide_item/" + i, { idx: i, img: '' }, true);
 }
 
 function updateSlideSelectionUI(){
@@ -350,7 +364,7 @@ function selectSlide(idx){
     if(idx<0 || idx>=slidesArray.length) return;
     currentSlideIdx=idx;
     updateSlideSelectionUI();
-    pub("pdf", { action: 'showSlide', img: slidesArray[idx] });
+    pub("pdf", { action: 'showSlideIdx', idx: idx });
     pub("activeslide", { activeIdx: idx }, true);
 }
 
@@ -526,7 +540,8 @@ function startMqttEngine(){
         if (isPilotMode) {
             client.subscribe(TOPIC_PREFIX + "list");
             client.subscribe(TOPIC_PREFIX + "speakers");
-            client.subscribe(TOPIC_PREFIX + "slides");
+            client.subscribe(TOPIC_PREFIX + "slides_meta");
+            client.subscribe(TOPIC_PREFIX + "slide_item/#");
             client.subscribe(TOPIC_PREFIX + "activeslide");
             client.subscribe(TOPIC_PREFIX + "weburl");
         }
@@ -553,7 +568,14 @@ function startMqttEngine(){
             if (isPilotMode && d.sender !== MY_SENDER_ID) {
                 if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
                 if (topic === TOPIC_PREFIX + "speakers") { document.getElementById('speakers-raw').value = d.raw || ""; renderSpeakersButtons(d.raw || ""); }
-                if (topic === TOPIC_PREFIX + "slides") { slidesArray = d.slides || []; currentSlideIdx = d.activeIdx ?? -1; renderSlidesGrid(); }
+                if (topic === TOPIC_PREFIX + "slides_meta") {
+                    if (d.count === 0) { slidesArray = []; currentSlideIdx = -1; renderSlidesGrid(); }
+                    else { slidesArray.length = d.count; currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
+                }
+                if (topic.startsWith(TOPIC_PREFIX + "slide_item/") && d.img) {
+                    slidesArray[d.idx] = d.img;
+                    renderSlidesGrid();
+                }
                 if (topic === TOPIC_PREFIX + "activeslide") { currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
                 if (topic === TOPIC_PREFIX + "weburl") { document.getElementById('in-web-url').value = d.url || ""; }
             }
