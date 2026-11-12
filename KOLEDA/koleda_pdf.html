@@ -111,19 +111,26 @@ client = mqtt.connect(brokerUrl, {
 
     });
 
+        let cachedSlides = [];
+
     client.on("connect", () => {
         client.subscribe(TOPIC_PREFIX + "pdf");
+        client.subscribe(TOPIC_PREFIX + "slide_item/#");
     });
 
     client.on("message", (topic, message) => {
         try {
             const d = JSON.parse(message.toString());
+            if (topic.startsWith(TOPIC_PREFIX + "slide_item/")) {
+                if (d.img) cachedSlides[d.idx] = d.img;
+                return;
+            }
+            if (d.action === 'showSlideIdx' && cachedSlides[d.idx]) showSlide(cachedSlides[d.idx]);
             if (d.action === 'showSlide') showSlide(d.img);
             if (d.action === 'showUrl') showWebUrl(d.url);
             if (d.action === 'hideSlide') hideSlideWithStinger();
         } catch (e) { console.error(e); }
     });
-};
 document.head.appendChild(mqttLib);
 </script>
 </body>
