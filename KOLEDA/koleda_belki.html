@@ -25,7 +25,7 @@ body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;
 body.theme-gala #cam-ticker-wrap{background:linear-gradient(90deg,#0f1c30 0%,#1d3557 50%,#0f1c30 100%);border-color:#d4af37}
 body.theme-gala .ticker-badge{background:linear-gradient(180deg,#ffffff 50%,#dc143c 50%);color:#0f1c30;text-shadow:0 0 8px #fff}
 
-/* 3. KARTA ZAPOWIEDZI UTWORU */
+/* 3. KARTA ZAPOWIEDZI UTWORU / WYSTĘPU */
 #cam-song-card{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:35;background:radial-gradient(circle at center,#a81313 0%,#5c0505 85%,#380202 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;clip-path:circle(0% at 50% 50%);opacity:0;pointer-events:none;transform-origin:bottom left;transition:clip-path 2.5s cubic-bezier(0.25,1,0.5,1),transform 1.8s cubic-bezier(0.22,1,0.36,1),border-radius 1.8s ease,opacity 1.4s ease-in-out}
 #cam-song-card.fullscreen{clip-path:circle(85% at 50% 50%);opacity:1;transform:translate(0,0) scale(1);border-radius:0;border:none}
 #cam-song-card.corner{clip-path:circle(100% at 50% 50%);opacity:1;transform:translate(45px,-45px) scale(0.28);border-radius:36px;border:12px solid #ffcc00;box-shadow:0 30px 90px rgba(0,0,0,0.95)}
@@ -67,21 +67,26 @@ body.theme-gala #cam-card-artist{background:linear-gradient(180deg,#fceabb 0%,#d
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let songTimer1=null, tickerTimer=null, currentTheme='xmas';
 
+function getDefaultBadge(){
+    return currentTheme === 'gala' ? 'FESTIWAL "MIEJCIE NADZIEJĘ"' : 'Koncert kolęd';
+}
+
 function setTheme(theme){
     currentTheme = theme;
     if(theme === 'gala'){
         document.body.classList.add('theme-gala');
         document.getElementById('ticker-badge-txt').innerText = '🇵🇱 PZS 4 WEJHEROWO';
-        document.getElementById('cam-badge-txt').innerText = 'FESTIWAL "MIEJCIE NADZIEJĘ"';
     } else {
         document.body.classList.remove('theme-gala');
         document.getElementById('ticker-badge-txt').innerText = '🎄 NA ŻYWO';
-        document.getElementById('cam-badge-txt').innerText = 'Koncert kolęd';
     }
+    document.getElementById('cam-badge-txt').innerText = getDefaultBadge();
 }
 
-function showCamSong(title, artist, cls){
+function showCamSong(title, artist, cls, badge){
     hideCamSpeaker();
+    document.getElementById('cam-badge-txt').innerText = badge || getDefaultBadge();
+
     const titleEl=document.getElementById('cam-card-title');
     const artistEl=document.getElementById('cam-card-artist');
     const classEl=document.getElementById('cam-card-class');
@@ -147,12 +152,11 @@ function hideCamSlide(){
 const mqttLib = document.createElement('script');
 mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => {
-   const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
-client = mqtt.connect(brokerUrl, {
-    reconnectPeriod: 2000,
-    keepalive: 30
-});
-
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    const client = mqtt.connect(brokerUrl, {
+        reconnectPeriod: 2000,
+        keepalive: 30
+    });
 
     client.on("connect", () => {
         client.subscribe(TOPIC_PREFIX + "belki");
@@ -163,7 +167,7 @@ client = mqtt.connect(brokerUrl, {
         try {
             const d = JSON.parse(message.toString());
             if (topic === TOPIC_PREFIX + "theme" || d.action === 'setTheme') setTheme(d.theme);
-            if (d.action === 'show') showCamSong(d.title, d.artist, d.cls);
+            if (d.action === 'show') showCamSong(d.title, d.artist, d.cls, d.badge);
             if (d.action === 'hide') { clearTimeout(songTimer1); document.getElementById('cam-song-card').classList.remove('fullscreen','corner'); }
             if (d.action === 'showSpeaker') showCamSpeaker(d.name, d.role);
             if (d.action === 'hideSpeaker') hideCamSpeaker();

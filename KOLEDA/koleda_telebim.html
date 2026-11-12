@@ -9,7 +9,6 @@
 body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
 .bg-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
 
-/* PEŁNOEKRANOWA KARTA ZAPOWIEDZI - DOSTOJNE ROZKWITANIE (2.5s) */
 #song-card{position:fixed;inset:0;z-index:40;background:radial-gradient(circle at center,#a81313 0%,#5c0505 85%,#380202 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;clip-path:circle(0% at 50% 50%);opacity:0;pointer-events:none;transition:clip-path 2.5s cubic-bezier(0.25,1,0.5,1),opacity 1.4s ease-in-out}
 #song-card.active{clip-path:circle(85% at 50% 50%);opacity:1}
 
@@ -25,22 +24,24 @@ body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;colo
 #card-title{font-family:'Rye',serif;font-size:185px;line-height:1.05;margin-bottom:24px;background:repeating-linear-gradient(90deg,#fff3d6 0px,#fff3d6 22px,#ffd29d 22px,#ffd29d 30px);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 10px 0px #3d0202) drop-shadow(0 16px 28px rgba(0,0,0,0.95))}
 #card-artist{font-family:'Rye',serif;font-size:88px;letter-spacing:3px;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 7px 0px #3d0202) drop-shadow(0 12px 22px rgba(0,0,0,0.9))}
 
-/* MOTYW UROCZYSTY / FESTIWAL */
-body.theme-gala #song-card{background:radial-gradient(circle at center,#1d3557 0%,#0b1526 85%,#050a14 100%)}
-body.theme-gala #wreath-frame{display:none}
-body.theme-gala #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #d4af37;box-shadow:inset 0 0 0 14px #0b1526,inset 0 0 0 17px rgba(220,20,60,0.75);pointer-events:none}
-body.theme-gala .song-badge,body.theme-gala #card-title,body.theme-gala #card-artist{font-family:'Cinzel',serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
-body.theme-gala #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
-body.theme-gala #card-artist{background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
-body.theme-gala .bg-vid{opacity:0 !important}
+/* PEŁNOEKRANOWA PLANSZA KOMUNIKATÓW NA TELEBIM */
+#telebim-msg-bar{position:fixed;inset:0;z-index:48;background:radial-gradient(circle at center,rgba(168,19,19,0.96) 0%,rgba(65,3,3,0.98) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px;text-align:center;opacity:0;transform:scale(0.92);pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
+#telebim-msg-bar::after{content:'';position:absolute;inset:32px;border:6px solid #ffcc00;border-radius:28px;box-shadow:0 0 40px rgba(255,204,0,0.4);pointer-events:none}
+#telebim-msg-bar.active{transform:scale(1);opacity:1}
+.msg-top-badge{font-family:'Montserrat',sans-serif;font-size:34px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#ffcc00;margin-bottom:30px;padding:10px 32px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;text-shadow:0 4px 12px rgba(0,0,0,0.9)}
+#telebim-msg-text{font-family:'Montserrat',sans-serif;font-size:115px;font-weight:900;line-height:1.15;color:#fff3d6;text-transform:uppercase;text-shadow:0 10px 0px #3d0202,0 18px 35px rgba(0,0,0,0.95);max-width:88vw;word-wrap:break-word}
 
-/* PILOT STEROWANIA (?pilot=1) */
+body.theme-gala #telebim-msg-bar{background:radial-gradient(circle at center,rgba(29,53,87,0.97) 0%,rgba(7,15,28,0.99) 100%)}
+body.theme-gala #telebim-msg-bar::after{border-color:#d4af37;box-shadow:0 0 40px rgba(212,175,55,0.4)}
+body.theme-gala .msg-top-badge{color:#d4af37;border-color:#d4af37}
+body.theme-gala #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #050a14,0 18px 35px rgba(0,0,0,0.95)}
+
 #pilot-panel{display:none;position:fixed;inset:0;background:#121722;z-index:5000;padding:20px;overflow-y:auto}
 .p-box{background:#1b2232;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2d3850}
 .p-box h3{color:#ffcc00;margin-bottom:12px;font-size:18px}
 input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526e;background:#0d111a;color:#fff;font-size:16px;margin-bottom:10px}
 .btn{padding:12px 16px;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;margin:3px}
-.btn-gold{background:#ffcc00;color:#111}.btn-green{background:#00a859}.btn-red{background:#d62828}.btn-blue{background:#0066ff}.btn-orange{background:#f77f00}
+.btn-gold{background:#ffcc00;color:#111}.btn-green{background:#00a859}.btn-red{background:#d62828}.btn-blue{background:#0066ff}.btn-orange{background:#f77f00}.btn-pink{background:#d90429}.btn-purple{background:#7209b7}
 .song-item{display:flex;justify-content:space-between;align-items:center;background:#131824;padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:4px solid #ffcc00}
 #conn-badge{display:inline-block;padding:5px 12px;border-radius:5px;font-size:13px;font-weight:700;background:#d62828;margin-bottom:12px}
 #slides-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px;max-height:360px;overflow-y:auto;padding:4px}
@@ -51,6 +52,13 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
 .slide-num{position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.8);color:#ffcc00;font-size:12px;font-weight:800;padding:2px 7px;border-radius:4px}
 .slide-del{position:absolute;top:4px;right:4px;background:#d62828;color:#fff;border:none;border-radius:4px;width:24px;height:24px;font-size:13px;font-weight:800;cursor:pointer;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.8)}
 #slide-counter{display:inline-block;font-size:16px;font-weight:800;color:#ffcc00;margin:0 10px;vertical-align:middle}
+/* ZEGAR ODLICZAJĄCY CZAS NA TELEBIMIE */
+#telebim-timer-box{position:fixed;inset:0;z-index:42;background:radial-gradient(circle at center,rgba(5,11,20,0.45) 0%,rgba(5,11,20,0.82) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transform:scale(0.9);pointer-events:none;transition:transform 0.6s cubic-bezier(0.22,1,0.36,1),opacity 0.5s ease}
+#telebim-timer-box.active{opacity:1;transform:scale(1)}
+#timer-label-txt{font-family:'Montserrat',sans-serif;font-size:44px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ffcc00;margin-bottom:18px;padding:10px 36px;background:rgba(107,5,5,0.88);border:3px solid #ffcc00;border-radius:50px;box-shadow:0 12px 30px rgba(0,0,0,0.85)}
+#timer-digits{font-family:'Montserrat',sans-serif;font-size:230px;font-weight:900;line-height:1;color:#fff3d6;text-shadow:0 12px 0px #3d0202,0 20px 45px rgba(0,0,0,0.95);font-variant-numeric:tabular-nums}
+body.theme-gala #timer-label-txt{background:rgba(15,28,48,0.92);border-color:#d4af37;color:#d4af37}
+body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20px 45px rgba(0,0,0,0.95)}
 </style>
 </head>
 <body>
@@ -67,6 +75,15 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
         <div id="card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:44px;color:#e2e8f0;margin-top:16px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
     </div>
 </div>
+
+<div id="telebim-msg-bar">
+    <div class="msg-top-badge">📢 KOMUNIKAT ORGANIZACYJNY</div>
+    <div id="telebim-msg-text">CISZA NA SALI</div>
+</div>
+<div id="telebim-timer-box">
+    <div id="timer-label-txt">DO ROZPOCZĘCIA UROCZYSTOŚCI</div>
+    <div id="timer-digits">05:00</div>
+</div>
 <div id="pilot-panel">
     <div style="text-align:center">
         <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI - PZS 4 AV</h2>
@@ -74,6 +91,37 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
         <div style="margin-bottom:14px">
             <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 TRYB ŚWIĄTECZNY</button>
             <button class="btn btn-blue" onclick="switchTheme('gala')">🇵🇱 FESTIWAL "MIEJCIE NADZIEJĘ"</button>
+        </div>
+    </div>
+
+    <div class="p-box" style="border-color:#f77f00">
+        <h3>📢 SZYBKI KOMUNIKAT NA TELEBIM</h3>
+        <input type="text" id="in-telebim-msg" placeholder="Wpisz własny komunikat (np. Prosimy klasę 3a o podejście pod scenę)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="sendTelebimMsg('Prosimy o zachowanie ciszy na sali')">🤫 Cisza na sali</button>
+            <button class="btn btn-blue" onclick="sendTelebimMsg('Zapraszamy kolejną klasę pod scenę')">🚶 Kolejna klasa</button>
+            <button class="btn btn-blue" onclick="sendTelebimMsg('Przerwa techniczna — za chwilę wracamy')">⏳ Przerwa</button>
+        </div>
+        <button class="btn btn-gold" onclick="triggerTelebimMsgManual()">📢 POKAŻ KOMUNIKAT</button>
+        <button class="btn btn-red" onclick="hideTelebimMsgNow()">✖ UKRYJ KOMUNIKAT</button>
+    </div>
+        <div class="p-box" style="border-color:#00a859">
+        <h3>⏱️ ZEGAR ODLICZAJĄCY (START / PRZERWA)</h3>
+        <input type="text" id="in-timer-label" value="DO ROZPOCZĘCIA UROCZYSTOŚCI" placeholder="Napis nad zegarem (np. KONIEC PRZERWY ZA)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="document.getElementById('in-timer-label').value='DO ROZPOCZĘCIA UROCZYSTOŚCI'">🎬 Do rozpoczęcia</button>
+            <button class="btn btn-blue" onclick="document.getElementById('in-timer-label').value='KONIEC PRZERWY ZA'">☕ Koniec przerwy</button>
+        </div>
+        <div style="margin-bottom:10px">
+            <button class="btn btn-green" onclick="startCountdown(1)">⏱️ 1 MIN</button>
+            <button class="btn btn-green" onclick="startCountdown(3)">⏱️ 3 MIN</button>
+            <button class="btn btn-green" onclick="startCountdown(5)">⏱️ 5 MIN</button>
+            <button class="btn btn-green" onclick="startCountdown(10)">⏱️ 10 MIN</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="in-timer-mins" min="1" max="60" value="2" style="width:110px;margin-bottom:0" placeholder="Minuty">
+            <button class="btn btn-gold" onclick="startCountdownCustom()">▶️ START WŁASNY</button>
+            <button class="btn btn-red" onclick="stopCountdownNow()">✖ ZATRZYMAJ / UKRYJ</button>
         </div>
     </div>
 
@@ -86,20 +134,24 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
             <button class="btn btn-gold" onclick="stepSlide(-1)">⬅️ POPRZEDNI</button>
             <span id="slide-counter">Slajd: 0 / 0</span>
             <button class="btn btn-gold" onclick="stepSlide(1)">NASTĘPNY ➡️</button>
-            <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ UKRYJ PREZENTACJĘ (STINGER)</button>
+            <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ UKRYJ SLAJD (STINGER)</button>
             <button class="btn btn-orange" onclick="clearAllSlides()">🗑️ WYCZYŚĆ WSZYSTKIE</button><br>
-            <button class="btn btn-green" onclick="sendSlideToCam()">📺 POKAŻ AKTUALNY SLAJD NA NAGRANIU</button>
+            <button class="btn btn-green" onclick="sendSlideToCam()">📺 POKAŻ SLAJD NA NAGRANIU</button>
             <button class="btn btn-red" onclick="hideSlideFromCam()">✖ SCHOWAJ SLAJD Z NAGRANIA</button><br>
-            <button class="btn btn-gold" onclick="setAsMainSlide()">⭐ USTAW WYBRANY SLAJD JAKO TŁO GŁÓWNE</button>
+            <button class="btn btn-gold" onclick="setAsMainSlide()">⭐ USTAW JAKO TŁO GŁÓWNE</button>
             <button class="btn btn-orange" onclick="clearMainSlide()">🗑️ USUŃ TŁO GŁÓWNE</button>
             <button class="btn btn-red" style="width:100%;margin-top:8px;padding:15px;font-size:16px;border:2px solid #ffcc00" onclick="panicMainSlide()">🛡️ AWARYJNY: POKAŻ SLAJD GŁÓWNY (BAZOWY)</button>
         </div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2d3850">
-            <input type="text" id="in-web-url" oninput="syncWebUrlInput()" placeholder="Wklej link z sieci (zdjęcie JPG/PNG lub YouTube)...">
-            <button class="btn btn-blue" onclick="sendWebUrlToScreen()">🌐 POKAŻ Z LINKU NA TELEBIMIE</button>
-            <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ ZAMKNIJ LINK (STINGER)</button>
-        </div>
         <div id="slides-grid"></div>
+    </div>
+
+    <div class="p-box" style="border-color:#7209b7">
+        <h3>🎬 SZYBKI LINK Z SIECI / YOUTUBE KARAOKE</h3>
+        <input type="text" id="in-web-url" oninput="syncWebUrlInput()" placeholder="Wklej link z YouTube (karaoke / tekst) lub adres zdjęcia...">
+        <button class="btn btn-purple" onclick="sendWebUrlToScreen()">🌐 ZAŁADUJ NA TELEBIMIE</button>
+        <button class="btn btn-green" onclick="ytCommand('playVideo')">▶️ ODTWÓRZ</button>
+        <button class="btn btn-orange" onclick="ytCommand('pauseVideo')">⏸️ PAUZA</button>
+        <button class="btn btn-red" onclick="hideWebUrlNow()">✖ ZAMKNIJ LINK (STINGER)</button>
     </div>
 
     <div class="p-box" style="border-color:#c1121f">
@@ -114,25 +166,41 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
         <div id="speakers-buttons" style="margin-top:10px"></div>
     </div>
 
-    <div class="p-box">
-        <h3>⚡ SZYBKA ZAPOWIEDŹ UTWORU (TRYB RĘCZNY)</h3>
+    <div class="p-box" style="border-color:#ffcc00">
+        <h3>🎵 ZAPOWIEDZI PIOSENEK / PIEŚNI</h3>
         <input type="text" id="in-title" placeholder="Wpisz tytuł utworu lub pieśni...">
         <input type="text" id="in-artist" placeholder="Wykonawcy | Klasa (np. Jan Kowalski | 4m LO)...">
         <div style="margin-bottom:10px">
             <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Samochodówka Band'">🎸 Samochodówka Band</button>
             <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Wspólne śpiewanie'">🎤 Wspólne śpiewanie</button>
         </div>
-        <button class="btn btn-gold" onclick="triggerManual(false)">🎵 POKAŻ ZAPOWIEDŹ (10s)</button>
-        <button class="btn btn-green" onclick="triggerManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
+        <button class="btn btn-gold" onclick="triggerSongManual(false)">🎵 POKAŻ PIOSENKĘ (10s)</button>
+        <button class="btn btn-green" onclick="triggerSongManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
         <button class="btn btn-orange" onclick="unpinAndFade()">⏱️ ZDEJMIJ PINEZKĘ (ZOSTAW 10s)</button>
         <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
+        <hr style="border-color:#2d3850;margin:12px 0">
+        <textarea id="playlist-raw" rows="4" placeholder="Lista utworów (Wzór: Brygada - Michał Nowociński, Sandra Miotk | 4m LO)"></textarea>
+        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ UTWORÓW</button>
+        <div id="playlist-buttons" style="margin-top:12px"></div>
     </div>
 
-    <div class="p-box">
-        <h3>📋 GOTOWA LISTA UTWORÓW (WZÓR: Tytuł - Wykonawcy | Klasa)</h3>
-        <textarea id="playlist-raw" rows="4" placeholder="Wzór: Brygada - Michał Nowociński, Sandra Miotk | 4m LO"></textarea>
-        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ</button>
-        <div id="playlist-buttons" style="margin-top:12px"></div>
+    <div class="p-box" style="border-color:#d90429">
+        <h3>📣 CHEERLEADERKI / WYSTĘPY TANECZNE</h3>
+        <input type="text" id="in-cheer-badge" value="Cheerleaderki PZS 4" placeholder="Nagłówek karty (np. Cheerleaderki PZS 4 lub Występ taneczny)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-pink" onclick="document.getElementById('in-cheer-badge').value='Cheerleaderki PZS 4'">📣 Cheerleaderki PZS 4</button>
+            <button class="btn btn-pink" onclick="document.getElementById('in-cheer-badge').value='Występ taneczny'">💃 Występ taneczny</button>
+        </div>
+        <input type="text" id="in-cheer-title" placeholder="Nazwa układu tanecznego (np. Świąteczny Mix)...">
+        <input type="text" id="in-cheer-artist" placeholder="Zespół / Tancerki | Klasa (np. Zespół Taneczny | 2a LO)...">
+        <button class="btn btn-pink" onclick="triggerCheerManual(false)">📣 POKAŻ WYSTĘP (10s)</button>
+        <button class="btn btn-green" onclick="triggerCheerManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
+        <button class="btn btn-orange" onclick="unpinAndFade()">⏱️ ZDEJMIJ PINEZKĘ (ZOSTAW 10s)</button>
+        <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
+        <hr style="border-color:#2d3850;margin:12px 0">
+        <textarea id="cheer-raw" rows="3" placeholder="Lista układów tanecznych (Wzór: Świąteczny Mix - Dziewczyny z 2a | 2a LO)"></textarea>
+        <button class="btn btn-pink" onclick="buildCheerList()">🔄 ZAŁADUJ LISTĘ CHEERLEADEREK</button>
+        <div id="cheer-buttons" style="margin-top:12px"></div>
     </div>
 </div>
 <script>
@@ -143,12 +211,17 @@ const MY_SENDER_ID = "dev_" + Math.random().toString(36).slice(2, 9);
 let client = null;
 let hideTimeout = null, savedMainSlide = "", currentTheme = "xmas";
 let slidesArray = new Array(), currentSlideIdx = -1;
+let countdownInterval = null;
 
 function pub(subtopic, payload, retainFlag=false){
     if(client && client.connected){
         payload.sender = MY_SENDER_ID;
         client.publish(TOPIC_PREFIX + subtopic, JSON.stringify(payload), { qos: 1, retain: retainFlag });
     }
+}
+
+function getDefaultBadge(){
+    return currentTheme === 'gala' ? 'FESTIWAL "MIEJCIE NADZIEJĘ"' : 'Koncert kolęd';
 }
 
 function setupSeamlessLoop(){
@@ -182,24 +255,32 @@ function setupSeamlessLoop(){
 
 function applyThemeLocal(theme){
     currentTheme = theme;
+    const baseImg = document.getElementById('base-main-slide');
     if(theme === 'gala'){
         document.body.classList.add('theme-gala');
-        document.querySelector('.song-badge').innerText = 'FESTIWAL "MIEJCIE NADZIEJĘ"';
+        if(baseImg && savedMainSlide){
+            baseImg.src = savedMainSlide;
+            baseImg.style.display = 'block';
+        }
     } else {
         document.body.classList.remove('theme-gala');
-        document.querySelector('.song-badge').innerText = 'Koncert kolęd';
+        if(baseImg) baseImg.style.display = 'none';
+        const vA = document.getElementById('vid-a');
+        if(vA) vA.play().catch(()=>{});
     }
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
 }
 
 function switchTheme(theme){
     applyThemeLocal(theme);
     pub("theme", { theme: theme }, true);
+    if(theme === 'xmas') hideSlidesOnScreen();
 }
 
 function applyMainSlideLocal(dataUrl){
     const baseImg=document.getElementById('base-main-slide');
     if(!baseImg) return;
-    if(dataUrl){
+    if(dataUrl && currentTheme === 'gala'){
         baseImg.src=dataUrl;
         baseImg.style.display='block';
     } else {
@@ -208,11 +289,13 @@ function applyMainSlideLocal(dataUrl){
     }
 }
 
-function displayCard(title,artist,cls,pin){
+function displayCard(title,artist,cls,pin,badge){
     const card=document.getElementById('song-card');
     const titleEl=document.getElementById('card-title');
     const artistEl=document.getElementById('card-artist');
     const classEl=document.getElementById('card-class');
+
+    document.querySelector('.song-badge').innerText = badge || getDefaultBadge();
 
     titleEl.innerText=title;
     if(title.length <= 12) titleEl.style.fontSize = '185px';
@@ -364,7 +447,7 @@ function selectSlide(idx){
     if(idx<0 || idx>=slidesArray.length) return;
     currentSlideIdx=idx;
     updateSlideSelectionUI();
-    pub("pdf", { action: 'showSlideIdx', idx: idx });
+    pub("pdf", { action: 'showSlideIdx', idx: idx, img: slidesArray[idx] });
     pub("activeslide", { activeIdx: idx }, true);
 }
 
@@ -403,6 +486,7 @@ function panicMainSlide(){
     hideSlidesOnScreen();
     if(savedMainSlide) applyMainSlideLocal(savedMainSlide);
 }
+
 function sendSlideToCam(){
     if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw wybierz slajd z listy powyżej!");
     pub("belki", { action: 'showCamSlide', img: slidesArray[currentSlideIdx] });
@@ -423,6 +507,10 @@ function sendWebUrlToScreen(){
     pub("pdf", { action: 'showUrl', url: u });
 }
 
+function ytCommand(cmd){
+    pub("pdf", { action: cmd });
+}
+
 function sendSpeaker(name,role){
     pub("belki", { action: 'showSpeaker', name: name, role: role });
 }
@@ -437,7 +525,6 @@ function triggerSpeakerManual(){
 function hideSpeakerNow(){
     pub("belki", { action: 'hideSpeaker' });
 }
-
 function buildSpeakersList(){
     const raw=document.getElementById('speakers-raw').value.trim();
     renderSpeakersButtons(raw);
@@ -462,8 +549,8 @@ function renderSpeakersButtons(raw){
     });
 }
 
-function sendSong(title,artist,cls,pin){
-    const payload={action:'show',title:title,artist:artist,cls:cls,pin:pin};
+function sendSong(title,artist,cls,pin,badge){
+    const payload={action:'show',title:title,artist:artist,cls:cls,pin:pin,badge:badge||''};
     pub("telebim", payload);
     pub("belki", payload);
 }
@@ -471,11 +558,12 @@ function sendSong(title,artist,cls,pin){
 function triggerManual(pin){
     const t=document.getElementById('in-title').value.trim();
     const rawA=document.getElementById('in-artist').value.trim()||"Samochodówka Band";
+    const b=document.getElementById('in-badge').value.trim();
     const parts=rawA.split('|');
     const a=(parts.at(0)||'').trim();
     const cls=(parts.at(1)||'').trim();
-    if(!t)return alert("Wpisz tytuł utworu!");
-    sendSong(t,a,cls,pin);
+    if(!t)return alert("Wpisz tytuł utworu lub występu!");
+    sendSong(t,a,cls,pin,b);
     document.getElementById('in-title').value='';
 }
 
@@ -499,7 +587,14 @@ function renderPlaylistButtons(raw){
     box.innerHTML='';
     if(!raw)return;
     raw.split('\n').forEach(line=>{
-        const pipeParts=line.split('|');
+        let cleanLine = line.trim();
+        let badge = '';
+        const badgeMatch = cleanLine.match(/\[(.*?)\]/);
+        if(badgeMatch){
+            badge = badgeMatch[1].trim();
+            cleanLine = cleanLine.replace(/\[.*?\]/, '').trim();
+        }
+        const pipeParts=cleanLine.split('|');
         const leftSide=(pipeParts.at(0)||'').trim();
         const cls=(pipeParts.at(1)||'').trim();
         const dashIdx=leftSide.indexOf('-');
@@ -510,9 +605,124 @@ function renderPlaylistButtons(raw){
         }
         if(t){
             const row=document.createElement('div');row.className='song-item';
-            row.innerHTML=`<div><strong style="color:#ffcc00">${t}</strong><br><small style="color:#ddd">${a}</small>${cls?`<br><small style="color:#aaa;font-style:italic">${cls}</small>`:''}</div>
-            <div><button class="btn btn-gold" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false)">▶️ 10s</button>
-            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true)">📌</button></div>`;
+            row.innerHTML=`<div>${badge?`<span style="background:#f77f00;color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;font-weight:800;display:inline-block;margin-bottom:4px">${badge}</span><br>`:''}<strong style="color:#ffcc00">${t}</strong><br><small style="color:#ddd">${a}</small>${cls?`<br><small style="color:#aaa;font-style:italic">${cls}</small>`:''}</div>
+            <div><button class="btn btn-gold" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false,'${badge.replace(/'/g,"\\'")}')">▶️ 10s</button>
+            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true,'${badge.replace(/'/g,"\\'")}')">📌</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+function sendTelebimMsg(text){
+    pub("msg", { action: 'show', text: text });
+}
+
+function triggerTelebimMsgManual(){
+    const t = document.getElementById('in-telebim-msg').value.trim();
+    if(!t) return alert("Wpisz treść komunikatu!");
+    sendTelebimMsg(t);
+}
+
+function hideTelebimMsgNow(){
+    pub("msg", { action: 'hide' });
+}
+
+function hideWebUrlNow(){
+    pub("pdf", { action: 'hideSlide' });
+}
+
+function startCountdown(mins){
+    const label = document.getElementById('in-timer-label').value.trim() || "DO ROZPOCZĘCIA UROCZYSTOŚCI";
+    const durationSec = Math.round(mins * 60);
+    pub("timer", { action: 'start', durationSec: durationSec, label: label });
+}
+
+function startCountdownCustom(){
+    const m = parseInt(document.getElementById('in-timer-mins').value, 10);
+    if(!m || m < 1) return alert("Wpisz poprawną liczbę minut!");
+    startCountdown(m);
+}
+
+function stopCountdownNow(){
+    pub("timer", { action: 'stop' }, true);
+}
+
+function runLocalCountdown(endTime, label){
+    clearInterval(countdownInterval);
+    const box = document.getElementById('telebim-timer-box');
+    const lbl = document.getElementById('timer-label-txt');
+    const dig = document.getElementById('timer-digits');
+    if(!box || !lbl || !dig) return;
+
+    lbl.innerText = label || "DO ROZPOCZĘCIA UROCZYSTOŚCI";
+    box.classList.add('active');
+
+    const updateTick = () => {
+        const diff = endTime - Date.now();
+        if(diff <= 0){
+            clearInterval(countdownInterval);
+            dig.innerText = "ZACZYNAMY!";
+            dig.style.fontSize = "135px";
+            setTimeout(() => stopLocalCountdown(), 3000);
+            return;
+        }
+        dig.style.fontSize = "230px";
+        const totalSec = Math.ceil(diff / 1000);
+        const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        dig.innerText = `${mm}:${ss}`;
+    };
+
+    updateTick();
+    countdownInterval = setInterval(updateTick, 250);
+}
+
+function stopLocalCountdown(){
+    clearInterval(countdownInterval);
+    const box = document.getElementById('telebim-timer-box');
+    if(box) box.classList.remove('active');
+}
+
+function triggerCheerManual(pin){
+    const t = document.getElementById('in-cheer-title').value.trim();
+    const rawA = document.getElementById('in-cheer-artist').value.trim() || "Cheerleaderki PZS 4";
+    const b = document.getElementById('in-cheer-badge').value.trim() || "Cheerleaderki PZS 4";
+    const parts = rawA.split('|');
+    const a = (parts.at(0) || '').trim();
+    const cls = (parts.at(1) || '').trim();
+    if(!t) return alert("Wpisz nazwę układu tanecznego!");
+    sendSong(t, a, cls, pin, b);
+    document.getElementById('in-cheer-title').value = '';
+}
+
+function buildCheerList(){
+    const raw = document.getElementById('cheer-raw').value.trim();
+    renderCheerButtons(raw);
+    pub("cheerlist", { raw: raw }, true);
+}
+
+function renderCheerButtons(raw){
+    const box = document.getElementById('cheer-buttons');
+    if(!box) return;
+    box.innerHTML = '';
+    if(!raw) return;
+    raw.split('\n').forEach(line => {
+        const pipeParts = line.split('|');
+        const leftSide = (pipeParts.at(0) || '').trim();
+        const cls = (pipeParts.at(1) || '').trim();
+        const dashIdx = leftSide.indexOf('-');
+        let t = leftSide, a = 'Cheerleaderki PZS 4';
+        if(dashIdx > -1){
+            t = leftSide.slice(0, dashIdx).trim();
+            a = leftSide.slice(dashIdx + 1).trim() || 'Cheerleaderki PZS 4';
+        }
+        if(t){
+            const row = document.createElement('div');
+            row.className = 'song-item';
+            row.style.borderLeftColor = '#d90429';
+            row.innerHTML = `<div><strong style="color:#ff4d6d">${t}</strong><br><small style="color:#ddd">${a}</small>${cls ? `<br><small style="color:#aaa;font-style:italic">${cls}</small>` : ''}</div>
+            <div><button class="btn btn-pink" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false,'Cheerleaderki PZS 4')">▶️ 10s</button>
+            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true,'Cheerleaderki PZS 4')">📌</button></div>`;
             box.appendChild(row);
         }
     });
@@ -537,8 +747,11 @@ function startMqttEngine(){
         client.subscribe(TOPIC_PREFIX + "telebim");
         client.subscribe(TOPIC_PREFIX + "theme");
         client.subscribe(TOPIC_PREFIX + "mainslide");
+        client.subscribe(TOPIC_PREFIX + "msg");
+        client.subscribe(TOPIC_PREFIX + "timer");
         if (isPilotMode) {
             client.subscribe(TOPIC_PREFIX + "list");
+            client.subscribe(TOPIC_PREFIX + "cheerlist");
             client.subscribe(TOPIC_PREFIX + "speakers");
             client.subscribe(TOPIC_PREFIX + "slides_meta");
             client.subscribe(TOPIC_PREFIX + "slide_item/#");
@@ -560,13 +773,38 @@ function startMqttEngine(){
             const d = JSON.parse(message.toString());
             if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
             if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
+            if (topic === TOPIC_PREFIX + "timer") {
+    if (d.action === 'start' && d.durationSec) {
+        const localEndTime = Date.now() + (d.durationSec * 1000);
+        runLocalCountdown(localEndTime, d.label);
+    } else {
+        stopLocalCountdown();
+    }
+}
+            if (topic === TOPIC_PREFIX + "msg") {
+                const bar = document.getElementById('telebim-msg-bar');
+                const txt = document.getElementById('telebim-msg-text');
+                if (bar && txt) {
+                    if (d.action === 'show' && d.text) {
+                        const cleanTxt = d.text.trim();
+                        txt.innerText = cleanTxt;
+                        if (cleanTxt.length <= 18) txt.style.fontSize = '140px';
+                        else if (cleanTxt.length <= 35) txt.style.fontSize = '105px';
+                        else txt.style.fontSize = '78px';
+                        bar.classList.add('active');
+                    } else {
+                        bar.classList.remove('active');
+                    }
+                }
+            }
             if (topic === TOPIC_PREFIX + "telebim") {
-                if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin);
+                if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin, d.badge);
                 if (d.action === 'unpin') { clearTimeout(hideTimeout); hideTimeout = setTimeout(() => document.getElementById('song-card').classList.remove('active'), 10000); }
                 if (d.action === 'hide') { clearTimeout(hideTimeout); document.getElementById('song-card').classList.remove('active'); }
             }
             if (isPilotMode && d.sender !== MY_SENDER_ID) {
                 if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
+                if (topic === TOPIC_PREFIX + "cheerlist") { document.getElementById('cheer-raw').value = d.raw || ""; renderCheerButtons(d.raw || ""); }
                 if (topic === TOPIC_PREFIX + "speakers") { document.getElementById('speakers-raw').value = d.raw || ""; renderSpeakersButtons(d.raw || ""); }
                 if (topic === TOPIC_PREFIX + "slides_meta") {
                     if (d.count === 0) { slidesArray = []; currentSlideIdx = -1; renderSlidesGrid(); }

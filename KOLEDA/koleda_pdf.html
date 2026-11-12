@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>PZS 4 AV - Prezentacja i Linki Telebim</title>
+<title>PZS 4 AV - Prezentacja i YouTube Telebim</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 #slide-screen{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.6s ease-in-out;z-index:10}
 #slide-screen.visible{opacity:1}
 #slide-img{width:100%;height:100%;object-fit:contain;transition:opacity 0.3s ease;display:none}
-#web-frame{width:100vw;height:100vh;border:none;display:none;background:#fff}
+#web-frame{width:100vw;height:100vh;border:none;display:none;background:#000;transform:scale(1.14);transition:opacity 0.35s ease;pointer-events:none}
 #stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;opacity:0}
 </style>
 </head>
 <body>
 <div id="slide-screen">
     <img id="slide-img" src="" alt="">
-    <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
+    <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
 </div>
 <video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
 
@@ -25,17 +25,31 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let cachedSlides = new Array();
 
+const stingerEl = document.getElementById('stinger-vid');
+stingerEl.onerror = () => {
+    if (!stingerEl.src.endsWith('.webm.webm')) {
+        stingerEl.src = 'stinger_samochodowka_pzs4.webm.webm';
+        stingerEl.load();
+    }
+};
+
 function showSlide(dataUrl){
     const scr=document.getElementById('slide-screen');
     const img=document.getElementById('slide-img');
     const frm=document.getElementById('web-frame');
     if(!dataUrl) return;
-    frm.style.display='none'; frm.src='';
+    frm.style.display='none'; frm.src='about:blank';
     img.style.display='block';
     scr.style.transition='opacity 0.6s ease-in-out';
     img.src=dataUrl;
     img.style.opacity=1;
     scr.classList.add('visible');
+}
+
+function extractYoutubeId(url){
+    const reg = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/))([a-zA-Z0-9_-]{11})/;
+    const match = url.match(reg);
+    return match ? match.at(1) : null;
 }
 
 function showWebUrl(rawUrl){
@@ -45,14 +59,29 @@ function showWebUrl(rawUrl){
     if(!rawUrl) return;
 
     const cleanUrl = rawUrl.trim();
-    const ytMatch = cleanUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{11})/);
+    const ytId = extractYoutubeId(cleanUrl);
 
-    if(ytMatch && ytMatch.at(1)){
+        if(ytId){
+        const ytBase = ["https", "://", "www", ".", "youtube", ".", "com", "/embed/", ytId].join("");
+        const embedUrl = new URL(ytBase);
+        embedUrl.searchParams.set("autoplay", "1");
+        embedUrl.searchParams.set("mute", "1");
+        embedUrl.searchParams.set("enablejsapi", "1");
+        embedUrl.searchParams.set("rel", "0");
+
         img.style.display='none';
         frm.style.display='block';
-        frm.src=`https://youtube-nocookie.com{ytMatch.at(1)}?autoplay=1&rel=0&modestbranding=1`;
+        frm.style.opacity=1;
+        frm.src=embedUrl.toString();
         scr.style.transition='opacity 0.6s ease-in-out';
         scr.classList.add('visible');
+
+               // Po 1.2 sekundy od startu filmu odblokowujemy dźwięk przez API YouTube
+        setTimeout(() => {
+            ytControl('unMute', []);
+            ytControl('setVolume', [100]);
+            ytControl('playVideo', []);
+        }, 1200);
         return;
     }
 
@@ -68,37 +97,47 @@ function showWebUrl(rawUrl){
     testImg.src = cleanUrl;
 }
 
+function ytControl(cmd, args=[]){
+    const frm=document.getElementById('web-frame');
+    if(!frm || !frm.contentWindow) return;
+    if(cmd === 'pauseVideo'){
+        frm.style.opacity = 0;
+        setTimeout(()=>frm.contentWindow.postMessage(JSON.stringify({event:"command",func:cmd,args:args}),"*"), 300);
+    } else {
+        frm.contentWindow.postMessage(JSON.stringify({event:"command",func:cmd,args:args}),"*");
+        if(cmd === 'playVideo') setTimeout(()=>{ frm.style.opacity = 1; }, 250);
+    }
+}
+
 function hideSlideWithStinger(){
     const scr=document.getElementById('slide-screen');
     const vid=document.getElementById('stinger-vid');
     const frm=document.getElementById('web-frame');
     if(!scr.classList.contains('visible')) return;
 
-    let cutDone = false;
     vid.pause();
     vid.currentTime = 0;
     vid.style.opacity = 1;
 
-    vid.ontimeupdate = () => {
-        if(!cutDone && vid.currentTime >= 1.15){
-            cutDone = true;
-            scr.style.transition = 'none';
+    const playPromise = vid.play();
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            setTimeout(() => {
+                scr.style.transition = 'none';
+                scr.classList.remove('visible');
+                frm.src = 'about:blank';
+            }, 1150);
+        }).catch(() => {
+            scr.style.transition = 'opacity 0.5s ease';
             scr.classList.remove('visible');
-            frm.src = '';
-        }
-    };
+            frm.src = 'about:blank';
+            vid.style.opacity = 0;
+        });
+    }
 
     vid.onended = () => {
         vid.style.opacity = 0;
-        vid.ontimeupdate = null;
     };
-
-    vid.play().catch(()=>{
-        scr.style.transition = 'opacity 0.5s ease';
-        scr.classList.remove('visible');
-        frm.src = '';
-        vid.style.opacity = 0;
-    });
 }
 
 const mqttLib = document.createElement('script');
@@ -122,9 +161,14 @@ mqttLib.onload = () => {
                 if (d.img) cachedSlides[d.idx] = d.img;
                 return;
             }
-            if (d.action === 'showSlideIdx' && cachedSlides[d.idx]) showSlide(cachedSlides[d.idx]);
+            if (d.action === 'showSlideIdx'){
+                if (cachedSlides[d.idx]) showSlide(cachedSlides[d.idx]);
+                else if (d.img) { cachedSlides[d.idx] = d.img; showSlide(d.img); }
+            }
             if (d.action === 'showSlide') showSlide(d.img);
             if (d.action === 'showUrl') showWebUrl(d.url);
+            if (d.action === 'ytPlay') ytControl('playVideo');
+            if (d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
         } catch (e) { console.error(e); }
     });
