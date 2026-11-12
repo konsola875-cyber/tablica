@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>PZS 4 AV - Uroczystości Telebim</title>
 <link href="https://googleapis.com" rel="stylesheet">
+<script src="https://unpkg.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
@@ -19,13 +20,13 @@ body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;colo
 .song-badge{position:absolute;top:210px;left:50%;transform:translateX(-50%) translateY(-22px);z-index:6;font-family:'Rye',serif;font-size:44px;letter-spacing:5px;text-transform:uppercase;padding:8px 36px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 5px 0px #3d0202) drop-shadow(0 8px 16px rgba(0,0,0,0.9));opacity:0;transition:all 1.4s cubic-bezier(0.22,1,0.36,1) 0.85s;white-space:nowrap}
 #song-card.active .song-badge{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.card-inner-glow{position:relative;z-index:5;text-align:center;max-width:72%;margin-top:115px;transform:translateY(18px) scale(0.94);opacity:0;transition:all 1.5s cubic-bezier(0.22,1,0.36,1) 1.25s}
+.card-inner-glow{position:relative;z-index:5;text-align:center;max-width:74%;margin-top:115px;transform:translateY(18px) scale(0.94);opacity:0;transition:all 1.5s cubic-bezier(0.22,1,0.36,1) 1.25s}
 #song-card.active .card-inner-glow{transform:scale(1);opacity:1}
 
 #card-title{font-family:'Rye',serif;font-size:185px;line-height:1.05;margin-bottom:24px;background:repeating-linear-gradient(90deg,#fff3d6 0px,#fff3d6 22px,#ffd29d 22px,#ffd29d 30px);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 10px 0px #3d0202) drop-shadow(0 16px 28px rgba(0,0,0,0.95))}
 #card-artist{font-family:'Rye',serif;font-size:88px;letter-spacing:3px;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 7px 0px #3d0202) drop-shadow(0 12px 22px rgba(0,0,0,0.9))}
 
-/* MOTYW UROCZYSTY / 11 LISTOPADA */
+/* MOTYW UROCZYSTY / FESTIWAL */
 body.theme-gala #song-card{background:radial-gradient(circle at center,#1d3557 0%,#0b1526 85%,#050a14 100%)}
 body.theme-gala #wreath-frame{display:none}
 body.theme-gala #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #d4af37;box-shadow:inset 0 0 0 14px #0b1526,inset 0 0 0 17px rgba(220,20,60,0.75);pointer-events:none}
@@ -67,14 +68,13 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
         <div id="card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:44px;color:#e2e8f0;margin-top:16px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
     </div>
 </div>
-
 <div id="pilot-panel">
     <div style="text-align:center">
         <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI - PZS 4 AV</h2>
-        <div id="conn-badge">🔴 ŁĄCZENIE Z TELEBIMEM...</div>
+        <div id="conn-badge">🔴 ŁĄCZENIE Z SERWEREM...</div>
         <div style="margin-bottom:14px">
             <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 TRYB ŚWIĄTECZNY</button>
-            <button class="btn btn-blue" onclick="switchTheme('gala')">🇵🇱 TRYB UROCZYSTY / 11 LISTOPADA</button>
+            <button class="btn btn-blue" onclick="switchTheme('gala')">🇵🇱 FESTIWAL "MIEJCIE NADZIEJĘ"</button>
         </div>
     </div>
 
@@ -90,16 +90,15 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
             <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ UKRYJ PREZENTACJĘ (STINGER)</button>
             <button class="btn btn-orange" onclick="clearAllSlides()">🗑️ WYCZYŚĆ WSZYSTKIE</button><br>
             <button class="btn btn-green" onclick="sendSlideToCam()">📺 POKAŻ AKTUALNY SLAJD NA NAGRANIU</button>
-            <button class="btn btn-red" onclick="hideSlideFromCam()">✖ SCHOWAJ SLAJD Z NAGRANIA</button>
-            <br>
+            <button class="btn btn-red" onclick="hideSlideFromCam()">✖ SCHOWAJ SLAJD Z NAGRANIA</button><br>
             <button class="btn btn-gold" onclick="setAsMainSlide()">⭐ USTAW WYBRANY SLAJD JAKO TŁO GŁÓWNE</button>
             <button class="btn btn-orange" onclick="clearMainSlide()">🗑️ USUŃ TŁO GŁÓWNE</button>
             <button class="btn btn-red" style="width:100%;margin-top:8px;padding:15px;font-size:16px;border:2px solid #ffcc00" onclick="panicMainSlide()">🛡️ AWARYJNY: POKAŻ SLAJD GŁÓWNY (BAZOWY)</button>
+        </div>
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2d3850">
             <input type="text" id="in-web-url" oninput="syncWebUrlInput()" placeholder="Wklej link z sieci (zdjęcie JPG/PNG lub YouTube)...">
             <button class="btn btn-blue" onclick="sendWebUrlToScreen()">🌐 POKAŻ Z LINKU NA TELEBIMIE</button>
             <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ ZAMKNIJ LINK (STINGER)</button>
-        </div>
         </div>
         <div id="slides-grid"></div>
     </div>
@@ -119,7 +118,7 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
     <div class="p-box">
         <h3>⚡ SZYBKA ZAPOWIEDŹ UTWORU (TRYB RĘCZNY)</h3>
         <input type="text" id="in-title" placeholder="Wpisz tytuł utworu lub pieśni...">
-        <input type="text" id="in-artist" placeholder="Wykonawca (np. Samochodówka Band)...">
+        <input type="text" id="in-artist" placeholder="Wykonawcy | Klasa (np. Jan Kowalski | 4m LO)...">
         <div style="margin-bottom:10px">
             <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Samochodówka Band'">🎸 Samochodówka Band</button>
             <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Wspólne śpiewanie'">🎤 Wspólne śpiewanie</button>
@@ -127,27 +126,84 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
         <button class="btn btn-gold" onclick="triggerManual(false)">🎵 POKAŻ ZAPOWIEDŹ (10s)</button>
         <button class="btn btn-green" onclick="triggerManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
         <button class="btn btn-orange" onclick="unpinAndFade()">⏱️ ZDEJMIJ PINEZKĘ (ZOSTAW 10s)</button>
-                <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
+        <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
     </div>
 
     <div class="p-box">
-        <h3>📋 GOTOWA LISTA UTWORÓW (ODDZIEL KRESKĄ | LUB MYŚLNIKIEM -)</h3>
-        <textarea id="playlist-raw" rows="4" placeholder="Wzór: Rota - Samochodówka Band"></textarea>
+        <h3>📋 GOTOWA LISTA UTWORÓW (WZÓR: Tytuł - Wykonawcy | Klasa)</h3>
+        <textarea id="playlist-raw" rows="4" placeholder="Wzór: Brygada - Michał Nowociński, Sandra Miotk | 4m LO"></textarea>
         <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ</button>
         <div id="playlist-buttons" style="margin-top:12px"></div>
     </div>
 </div>
-<script>
-const HOST_ID="pzs4-wejherowo-koleda-telebim-2026";
-const PDF_HOST_ID="pzs4-wejherowo-koleda-pdf-2026";
-const BELKI_ID="pzs4-wejherowo-koleda-belki-2026";
-const isPilotMode = new URLSearchParams(window.location.search).get('pilot') === '1';
 
-let peer=null,connTelebim=null,connPdf=null,connBelki=null,hideTimeout=null;
-let activePilots=new Array();
-let savedRawList="", savedSpeakersList="", savedMainSlide="", currentTheme="xmas";
-let savedWebUrl="";
+<script>
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+const isPilotMode = new URLSearchParams(window.location.search).get('pilot') === '1';
+const MY_SENDER_ID = "dev_" + Math.random().toString(36).slice(2, 9);
+
+let hideTimeout=null, savedMainSlide="", currentTheme="xmas";
 let slidesArray=new Array(), currentSlideIdx=-1;
+
+const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
+    reconnectPeriod: 2000,
+    keepalive: 30
+});
+
+function pub(subtopic, payload, retainFlag=false){
+    if(client && client.connected){
+        payload.sender = MY_SENDER_ID;
+        client.publish(TOPIC_PREFIX + subtopic, JSON.stringify(payload), { qos: 1, retain: retainFlag });
+    }
+}
+client.on("connect", () => {
+    const b = document.getElementById('conn-badge');
+    if (b) { b.style.background = '#00a859'; b.innerText = '🟢 POŁĄCZONO (MQTT 443 • PANCERNY)'; }
+    
+    client.subscribe(TOPIC_PREFIX + "telebim");
+    client.subscribe(TOPIC_PREFIX + "theme");
+    client.subscribe(TOPIC_PREFIX + "mainslide");
+    
+    if (isPilotMode) {
+        client.subscribe(TOPIC_PREFIX + "list");
+        client.subscribe(TOPIC_PREFIX + "speakers");
+        client.subscribe(TOPIC_PREFIX + "slides");
+        client.subscribe(TOPIC_PREFIX + "activeslide");
+        client.subscribe(TOPIC_PREFIX + "weburl");
+    }
+});
+
+client.on("reconnect", () => {
+    const b = document.getElementById('conn-badge');
+    if (b) { b.style.background = '#f77f00'; b.innerText = '🟠 WZNAWIANIE POŁĄCZENIA...'; }
+});
+
+client.on("offline", () => {
+    const b = document.getElementById('conn-badge');
+    if (b) { b.style.background = '#d62828'; b.innerText = '🔴 BRAK SIECI - CZEKAM NA INTERNET...'; }
+});
+
+client.on("message", (topic, message) => {
+    try {
+        const d = JSON.parse(message.toString());
+        if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
+        if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
+        
+        if (topic === TOPIC_PREFIX + "telebim") {
+            if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin);
+            if (d.action === 'unpin') { clearTimeout(hideTimeout); hideTimeout = setTimeout(() => document.getElementById('song-card').classList.remove('active'), 10000); }
+            if (d.action === 'hide') { clearTimeout(hideTimeout); document.getElementById('song-card').classList.remove('active'); }
+        }
+        
+        if (isPilotMode && d.sender !== MY_SENDER_ID) {
+            if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
+            if (topic === TOPIC_PREFIX + "speakers") { document.getElementById('speakers-raw').value = d.raw || ""; renderSpeakersButtons(d.raw || ""); }
+            if (topic === TOPIC_PREFIX + "slides") { slidesArray = d.slides || []; currentSlideIdx = d.activeIdx ?? -1; renderSlidesGrid(); }
+            if (topic === TOPIC_PREFIX + "activeslide") { currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
+            if (topic === TOPIC_PREFIX + "weburl") { document.getElementById('in-web-url').value = d.url || ""; }
+        }
+    } catch (e) { console.error(e); }
+});
 
 function setupSeamlessLoop(){
     const vA=document.getElementById('vid-a'), vB=document.getElementById('vid-b');
@@ -178,10 +234,6 @@ function setupSeamlessLoop(){
     },100);
 }
 
-function broadcastPilots(senderId, payload){
-    activePilots.forEach(p=>{if(p.open && p.peer!==senderId) p.send(payload)});
-}
-
 function applyThemeLocal(theme){
     currentTheme = theme;
     if(theme === 'gala'){
@@ -195,8 +247,7 @@ function applyThemeLocal(theme){
 
 function switchTheme(theme){
     applyThemeLocal(theme);
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'setTheme',theme:theme});
-    if(connBelki&&connBelki.open) connBelki.send({action:'setTheme',theme:theme});
+    pub("theme", { theme: theme }, true);
 }
 
 function applyMainSlideLocal(dataUrl){
@@ -235,53 +286,6 @@ function displayCard(title,artist,cls,pin){
     clearTimeout(hideTimeout);
     if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),10000);
 }
-
-function initHost(){
-    peer=new Peer(HOST_ID);
-    peer.on('connection',c=>{
-        activePilots.push(c);
-        c.on('open',()=>{
-            c.send({action:'setTheme',theme:currentTheme});
-            if(savedMainSlide) c.send({action:'setMainSlide',img:savedMainSlide});
-            if(savedRawList) c.send({action:'syncList',raw:savedRawList});
-            if(savedSpeakersList) c.send({action:'syncSpeakers',raw:savedSpeakersList});
-            if(slidesArray.length>0) c.send({action:'syncSlides',slides:slidesArray,activeIdx:currentSlideIdx});
-            if(savedWebUrl) c.send({action:'syncWebUrl',url:savedWebUrl});
-        });
-        c.on('data',d=>{
-            if(d.action==='setTheme'){applyThemeLocal(d.theme);broadcastPilots(c.peer,{action:'setTheme',theme:d.theme})}
-            if(d.action==='setMainSlide'){savedMainSlide=d.img;applyMainSlideLocal(d.img);broadcastPilots(c.peer,{action:'setMainSlide',img:d.img})}
-            if(d.action==='show') displayCard(d.title,d.artist,d.cls,d.pin);
-            if(d.action==='unpin'){clearTimeout(hideTimeout);hideTimeout=setTimeout(()=>document.getElementById('song-card').classList.remove('active'),10000)}
-            if(d.action==='hide'){clearTimeout(hideTimeout);document.getElementById('song-card').classList.remove('active')}
-            if(d.action==='syncList'){savedRawList=d.raw;broadcastPilots(c.peer,{action:'syncList',raw:savedRawList})}
-            if(d.action==='syncSpeakers'){savedSpeakersList=d.raw;broadcastPilots(c.peer,{action:'syncSpeakers',raw:savedSpeakersList})}
-            if(d.action==='syncSlides'){slidesArray=d.slides;currentSlideIdx=d.activeIdx;broadcastPilots(c.peer,{action:'syncSlides',slides:slidesArray,activeIdx:currentSlideIdx})}
-            if(d.action==='syncActiveSlide'){currentSlideIdx=d.activeIdx;broadcastPilots(c.peer,{action:'syncActiveSlide',activeIdx:currentSlideIdx})}
-            if(d.action==='syncWebUrl'){savedWebUrl=d.url;broadcastPilots(c.peer,{action:'syncWebUrl',url:savedWebUrl})}
-        });
-        c.on('close',()=>{activePilots=activePilots.filter(p=>p.peer!==c.peer)});
-    });
-}
-function connectPilot(){
-    const b=document.getElementById('conn-badge');
-    b.style.background='#d62828';b.innerText='🔴 ŁĄCZENIE Z TELEBIMEM...';
-    connTelebim=peer.connect(HOST_ID,{reliable:true});
-    connTelebim.on('open',()=>{b.style.background='#00a859';b.innerText='🟢 POŁĄCZONO (MULTI-PILOT)'});
-    connTelebim.on('data',d=>{
-        if(d.action==='setTheme') applyThemeLocal(d.theme);
-        if(d.action==='setMainSlide'){savedMainSlide=d.img;applyMainSlideLocal(d.img)}
-        if(d.action==='syncList'){document.getElementById('playlist-raw').value=d.raw;renderPlaylistButtons(d.raw)}
-        if(d.action==='syncSpeakers'){document.getElementById('speakers-raw').value=d.raw;renderSpeakersButtons(d.raw)}
-        if(d.action==='syncSlides'){slidesArray=d.slides;currentSlideIdx=d.activeIdx;renderSlidesGrid()}
-        if(d.action==='syncActiveSlide'){currentSlideIdx=d.activeIdx;updateSlideSelectionUI()}
-        if(d.action==='syncWebUrl'){document.getElementById('in-web-url').value=d.url}
-    });
-    connTelebim.on('close',()=>{b.style.background='#d62828';b.innerText='🔴 ROZŁĄCZONO - PONAWIAM...';setTimeout(connectPilot,2000)});
-    connPdf=peer.connect(PDF_HOST_ID,{reliable:true});
-    connBelki=peer.connect(BELKI_ID,{reliable:true});
-}
-
 async function handleSlidesUpload(inp){
     const files=Array.from(inp.files||[]);
     if(!files.length) return;
@@ -310,11 +314,11 @@ async function handleSlidesUpload(inp){
             for(let i=1;i<=pdf.numPages;i++){
                 st.innerText=`⏳ Renderowanie strony ${i} z ${pdf.numPages}...`;
                 const page=await pdf.getPage(i);
-                const vp=page.getViewport({scale:1.5});
+                const vp=page.getViewport({scale:1.4});
                 const c=document.createElement('canvas');
                 c.width=vp.width; c.height=vp.height;
                 await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-                slidesArray.push(c.toDataURL('image/jpeg',0.85));
+                slidesArray.push(c.toDataURL('image/jpeg',0.75));
             }
         } else {
             files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
@@ -329,7 +333,7 @@ async function handleSlidesUpload(inp){
         }
         st.innerText=`✅ Załadowano slajdów: ${slidesArray.length}`;
         renderSlidesGrid();
-        if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSlides',slides:slidesArray,activeIdx:-1});
+        pub("slides", { slides: slidesArray, activeIdx: -1 }, true);
     } catch(err) {
         st.innerText="❌ Błąd: " + err.message;
         console.error(err);
@@ -356,12 +360,12 @@ function deleteSingleSlide(idx){
     slidesArray.splice(idx, 1);
     if(wasActive){
         currentSlideIdx = -1;
-        if(connPdf&&connPdf.open) connPdf.send({action:'hideSlide'});
+        pub("pdf", { action: 'hideSlide' });
     } else if(idx < currentSlideIdx){
         currentSlideIdx--;
     }
     renderSlidesGrid();
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSlides',slides:slidesArray,activeIdx:currentSlideIdx});
+    pub("slides", { slides: slidesArray, activeIdx: currentSlideIdx }, true);
 }
 
 function clearAllSlides(){
@@ -371,9 +375,10 @@ function clearAllSlides(){
     currentSlideIdx = -1;
     document.getElementById('slides-file-input').value = '';
     renderSlidesGrid();
-    if(connPdf&&connPdf.open) connPdf.send({action:'hideSlide'});
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSlides',slides:slidesArray,activeIdx:-1});
+    pub("pdf", { action: 'hideSlide' });
+    pub("slides", { slides: [], activeIdx: -1 }, true);
 }
+
 function updateSlideSelectionUI(){
     document.querySelectorAll('.slide-thumb').forEach((el,idx)=>{
         if(idx===currentSlideIdx) el.classList.add('active-slide');
@@ -388,8 +393,8 @@ function selectSlide(idx){
     if(idx<0 || idx>=slidesArray.length) return;
     currentSlideIdx=idx;
     updateSlideSelectionUI();
-    if(connPdf&&connPdf.open) connPdf.send({action:'showSlide',img:slidesArray[idx]});
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncActiveSlide',activeIdx:idx});
+    pub("pdf", { action: 'showSlide', img: slidesArray[idx] });
+    pub("activeslide", { activeIdx: idx }, true);
 }
 
 function stepSlide(dir){
@@ -403,19 +408,8 @@ function stepSlide(dir){
 function hideSlidesOnScreen(){
     currentSlideIdx=-1;
     updateSlideSelectionUI();
-    if(connPdf&&connPdf.open) connPdf.send({action:'hideSlide'});
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncActiveSlide',activeIdx:-1});
-}
-
-function syncWebUrlInput(){
-    const u=document.getElementById('in-web-url').value;
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncWebUrl',url:u});
-}
-
-function sendWebUrlToScreen(){
-    const u=document.getElementById('in-web-url').value.trim();
-    if(!u) return alert("Wklej najpierw link!");
-    if(connPdf&&connPdf.open) connPdf.send({action:'showUrl',url:u});
+    pub("pdf", { action: 'hideSlide' });
+    pub("activeslide", { activeIdx: -1 }, true);
 }
 
 function setAsMainSlide(){
@@ -423,14 +417,14 @@ function setAsMainSlide(){
     const imgData=slidesArray[currentSlideIdx];
     savedMainSlide=imgData;
     applyMainSlideLocal(imgData);
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'setMainSlide',img:imgData});
+    pub("mainslide", { img: imgData }, true);
     alert("✅ Ustawiono jako Slajd Główny!");
 }
 
 function clearMainSlide(){
     savedMainSlide='';
     applyMainSlideLocal('');
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'setMainSlide',img:''});
+    pub("mainslide", { img: '' }, true);
 }
 
 function panicMainSlide(){
@@ -441,15 +435,26 @@ function panicMainSlide(){
 
 function sendSlideToCam(){
     if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw wybierz slajd z listy powyżej!");
-    if(connBelki&&connBelki.open) connBelki.send({action:'showCamSlide',img:slidesArray[currentSlideIdx]});
+    pub("belki", { action: 'showCamSlide', img: slidesArray[currentSlideIdx] });
 }
 
 function hideSlideFromCam(){
-    if(connBelki&&connBelki.open) connBelki.send({action:'hideCamSlide'});
+    pub("belki", { action: 'hideCamSlide' });
+}
+
+function syncWebUrlInput(){
+    const u=document.getElementById('in-web-url').value;
+    pub("weburl", { url: u }, true);
+}
+
+function sendWebUrlToScreen(){
+    const u=document.getElementById('in-web-url').value.trim();
+    if(!u) return alert("Wklej najpierw link!");
+    pub("pdf", { action: 'showUrl', url: u });
 }
 
 function sendSpeaker(name,role){
-    if(connBelki&&connBelki.open) connBelki.send({action:'showSpeaker',name:name,role:role});
+    pub("belki", { action: 'showSpeaker', name: name, role: role });
 }
 
 function triggerSpeakerManual(){
@@ -460,13 +465,13 @@ function triggerSpeakerManual(){
 }
 
 function hideSpeakerNow(){
-    if(connBelki&&connBelki.open) connBelki.send({action:'hideSpeaker'});
+    pub("belki", { action: 'hideSpeaker' });
 }
 
 function buildSpeakersList(){
     const raw=document.getElementById('speakers-raw').value.trim();
     renderSpeakersButtons(raw);
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncSpeakers',raw:raw});
+    pub("speakers", { raw: raw }, true);
 }
 
 function renderSpeakersButtons(raw){
@@ -489,8 +494,8 @@ function renderSpeakersButtons(raw){
 
 function sendSong(title,artist,cls,pin){
     const payload={action:'show',title:title,artist:artist,cls:cls,pin:pin};
-    if(connTelebim&&connTelebim.open) connTelebim.send(payload);
-    if(connBelki&&connBelki.open) connBelki.send(payload);
+    pub("telebim", payload);
+    pub("belki", payload);
 }
 
 function triggerManual(pin){
@@ -505,19 +510,18 @@ function triggerManual(pin){
 }
 
 function unpinAndFade(){
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'unpin'});
-    if(connBelki&&connBelki.open) connBelki.send({action:'unpin'});
+    pub("telebim", { action: 'unpin' });
 }
 
 function hideCardNow(){
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'hide'});
-    if(connBelki&&connBelki.open) connBelki.send({action:'hide'});
+    pub("telebim", { action: 'hide' });
+    pub("belki", { action: 'hide' });
 }
 
 function buildPlaylist(){
     const raw=document.getElementById('playlist-raw').value.trim();
     renderPlaylistButtons(raw);
-    if(connTelebim&&connTelebim.open) connTelebim.send({action:'syncList',raw:raw});
+    pub("list", { raw: raw }, true);
 }
 
 function renderPlaylistButtons(raw){
@@ -544,20 +548,12 @@ function renderPlaylistButtons(raw){
     });
 }
 
-const lib=document.createElement('script');
-lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
-lib.onload=()=>{
-    if(isPilotMode){
-        document.querySelectorAll('.bg-vid').forEach(v=>v.style.display='none');
-        document.getElementById('pilot-panel').style.display='block';
-        peer=new Peer();
-        peer.on('open',()=>connectPilot());
-    }else{
-        setupSeamlessLoop();
-        initHost();
-    }
-};
-document.head.appendChild(lib);
+if(isPilotMode){
+    document.querySelectorAll('.bg-vid').forEach(v=>v.style.display='none');
+    document.getElementById('pilot-panel').style.display='block';
+}else{
+    setupSeamlessLoop();
+}
 </script>
 </body>
 </html>
