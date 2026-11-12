@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>PZS 4 AV - Prezentacja i Linki Telebim</title>
+<script src="https://unpkg.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:transparent;overflow:hidden;width:100vw;height:100vh}
@@ -11,7 +12,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 #slide-screen.visible{opacity:1}
 #slide-img{width:100%;height:100%;object-fit:contain;transition:opacity 0.3s ease;display:none}
 #web-frame{width:100vw;height:100vh;border:none;display:none;background:#fff}
-#stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;display:none}
+#stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;opacity:0}
 </style>
 </head>
 <body>
@@ -19,11 +20,27 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
     <img id="slide-img" src="" alt="">
     <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
 </div>
-<video id="stinger-vid" src="stinger_samochodowka_pzs4.webm.webm" muted playsinline></video>
+<video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
 
 <script>
-const PDF_HOST_ID="pzs4-wejherowo-koleda-pdf-2026";
-let peer=null;
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
+    reconnectPeriod: 2000,
+    keepalive: 30
+});
+
+client.on("connect", () => {
+    client.subscribe(TOPIC_PREFIX + "pdf");
+});
+
+client.on("message", (topic, message) => {
+    try {
+        const d = JSON.parse(message.toString());
+        if (d.action === 'showSlide') showSlide(d.img);
+        if (d.action === 'showUrl') showWebUrl(d.url);
+        if (d.action === 'hideSlide') hideSlideWithStinger();
+    } catch (e) { console.error(e); }
+});
 
 function showSlide(dataUrl){
     const scr=document.getElementById('slide-screen');
@@ -56,11 +73,9 @@ function showWebUrl(rawUrl){
         return;
     }
 
-    // Próba załadowania jako obrazek z internetu (działa z każdym linkiem z Google Grafiki)
     const testImg = new Image();
     testImg.onload = () => showSlide(cleanUrl);
     testImg.onerror = () => {
-        // Jeśli to nie jest plik graficzny, otwieramy jako stronę w ramce
         img.style.display='none';
         frm.style.display='block';
         frm.src=cleanUrl;
@@ -76,34 +91,32 @@ function hideSlideWithStinger(){
     const frm=document.getElementById('web-frame');
     if(!scr.classList.contains('visible')) return;
 
-    vid.style.display='block';
-    vid.currentTime=0;
-    vid.play().catch(()=>{});
+    let cutDone = false;
+    vid.pause();
+    vid.currentTime = 0;
+    vid.style.opacity = 1;
 
-    setTimeout(()=>{
-        scr.style.transition='none';
+    vid.ontimeupdate = () => {
+        if(!cutDone && vid.currentTime >= 1.15){
+            cutDone = true;
+            scr.style.transition = 'none';
+            scr.classList.remove('visible');
+            frm.src = '';
+        }
+    };
+
+    vid.onended = () => {
+        vid.style.opacity = 0;
+        vid.ontimeupdate = null;
+    };
+
+    vid.play().catch(()=>{
+        scr.style.transition = 'opacity 0.5s ease';
         scr.classList.remove('visible');
-        frm.src='';
-    },1200);
-
-    vid.onended=()=>{ vid.style.display='none'; };
-}
-
-function initPdfHost(){
-    peer=new Peer(PDF_HOST_ID);
-    peer.on('connection',c=>{
-        c.on('data',d=>{
-            if(d.action==='showSlide') showSlide(d.img);
-            if(d.action==='showUrl') showWebUrl(d.url);
-            if(d.action==='hideSlide') hideSlideWithStinger();
-        });
+        frm.src = '';
+        vid.style.opacity = 0;
     });
 }
-
-const lib=document.createElement('script');
-lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
-lib.onload=()=>initPdfHost();
-document.head.appendChild(lib);
 </script>
 </body>
 </html>
