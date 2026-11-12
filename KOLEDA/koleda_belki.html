@@ -145,9 +145,9 @@ function hideCamSlide(){
 }
 
 const mqttLib = document.createElement('script');
-mqttLib.src = "https:" + "//://unpkg.com" + "/dist/mqtt.min.js";
+mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => {
-    const client = mqtt.connect("wss:" + "//broker.emqx.io:8084/mqtt", {
+    const client = mqtt.connect("wss:" + "//://hivemq.com", {
         reconnectPeriod: 2000,
         keepalive: 30
     });
