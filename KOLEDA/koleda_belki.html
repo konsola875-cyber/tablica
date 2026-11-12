@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>PZS 4 AV - Nakładka na Kamery</title>
 <link href="https://googleapis.com" rel="stylesheet">
-<script src="https://unpkg.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;width:100vw;height:100vh}
@@ -64,33 +63,9 @@ body.theme-gala #cam-card-artist{background:linear-gradient(180deg,#fceabb 0%,#d
         <div id="cam-card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:42px;color:#e2e8f0;margin-top:14px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
     </div>
 </div>
-
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let songTimer1=null, tickerTimer=null, currentTheme='xmas';
-
-const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
-    reconnectPeriod: 2000,
-    keepalive: 30
-});
-
-client.on("connect", () => {
-    client.subscribe(TOPIC_PREFIX + "belki");
-    client.subscribe(TOPIC_PREFIX + "theme");
-});
-
-client.on("message", (topic, message) => {
-    try {
-        const d = JSON.parse(message.toString());
-        if (topic === TOPIC_PREFIX + "theme" || d.action === 'setTheme') setTheme(d.theme);
-        if (d.action === 'show') showCamSong(d.title, d.artist, d.cls);
-        if (d.action === 'hide') { clearTimeout(songTimer1); document.getElementById('cam-song-card').classList.remove('fullscreen','corner'); }
-        if (d.action === 'showSpeaker') showCamSpeaker(d.name, d.role);
-        if (d.action === 'hideSpeaker') hideCamSpeaker();
-        if (d.action === 'showCamSlide') showCamSlide(d.img);
-        if (d.action === 'hideCamSlide') hideCamSlide();
-    } catch (e) { console.error(e); }
-});
 
 function setTheme(theme){
     currentTheme = theme;
@@ -168,6 +143,34 @@ function showCamSlide(dataUrl){
 function hideCamSlide(){
     document.getElementById('cam-slide-full').classList.remove('active');
 }
+
+const mqttLib = document.createElement('script');
+mqttLib.src = "https:" + "//://unpkg.com" + "/dist/mqtt.min.js";
+mqttLib.onload = () => {
+    const client = mqtt.connect("wss:" + "//broker.emqx.io:8084/mqtt", {
+        reconnectPeriod: 2000,
+        keepalive: 30
+    });
+
+    client.on("connect", () => {
+        client.subscribe(TOPIC_PREFIX + "belki");
+        client.subscribe(TOPIC_PREFIX + "theme");
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const d = JSON.parse(message.toString());
+            if (topic === TOPIC_PREFIX + "theme" || d.action === 'setTheme') setTheme(d.theme);
+            if (d.action === 'show') showCamSong(d.title, d.artist, d.cls);
+            if (d.action === 'hide') { clearTimeout(songTimer1); document.getElementById('cam-song-card').classList.remove('fullscreen','corner'); }
+            if (d.action === 'showSpeaker') showCamSpeaker(d.name, d.role);
+            if (d.action === 'hideSpeaker') hideCamSpeaker();
+            if (d.action === 'showCamSlide') showCamSlide(d.img);
+            if (d.action === 'hideCamSlide') hideCamSlide();
+        } catch (e) { console.error(e); }
+    });
+};
+document.head.appendChild(mqttLib);
 </script>
 </body>
 </html>
