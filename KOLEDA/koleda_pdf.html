@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>PZS 4 AV - Prezentacja i Linki Telebim</title>
-<script src="https://unpkg.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:transparent;overflow:hidden;width:100vw;height:100vh}
@@ -24,23 +23,6 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
-const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
-    reconnectPeriod: 2000,
-    keepalive: 30
-});
-
-client.on("connect", () => {
-    client.subscribe(TOPIC_PREFIX + "pdf");
-});
-
-client.on("message", (topic, message) => {
-    try {
-        const d = JSON.parse(message.toString());
-        if (d.action === 'showSlide') showSlide(d.img);
-        if (d.action === 'showUrl') showWebUrl(d.url);
-        if (d.action === 'hideSlide') hideSlideWithStinger();
-    } catch (e) { console.error(e); }
-});
 
 function showSlide(dataUrl){
     const scr=document.getElementById('slide-screen');
@@ -117,6 +99,29 @@ function hideSlideWithStinger(){
         vid.style.opacity = 0;
     });
 }
+
+const mqttLib = document.createElement('script');
+mqttLib.src = "https:" + "//://unpkg.com" + "/dist/mqtt.min.js";
+mqttLib.onload = () => {
+    const client = mqtt.connect("wss:" + "//broker.emqx.io:8084/mqtt", {
+        reconnectPeriod: 2000,
+        keepalive: 30
+    });
+
+    client.on("connect", () => {
+        client.subscribe(TOPIC_PREFIX + "pdf");
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const d = JSON.parse(message.toString());
+            if (d.action === 'showSlide') showSlide(d.img);
+            if (d.action === 'showUrl') showWebUrl(d.url);
+            if (d.action === 'hideSlide') hideSlideWithStinger();
+        } catch (e) { console.error(e); }
+    });
+};
+document.head.appendChild(mqttLib);
 </script>
 </body>
 </html>
