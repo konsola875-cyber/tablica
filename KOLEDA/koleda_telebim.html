@@ -500,12 +500,11 @@ function startMqttEngine(){
         return;
     }
 
-   const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
-   client = mqtt.connect(brokerUrl, {
-      reconnectPeriod: 2000,
-      keepalive: 30
-});
-
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    client = mqtt.connect(brokerUrl, {
+        reconnectPeriod: 2000,
+        keepalive: 30,
+        connectTimeout: 5000
     });
 
     client.on("connect", () => {
