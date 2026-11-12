@@ -103,9 +103,12 @@ function hideSlideWithStinger(){
 const mqttLib = document.createElement('script');
 mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => {
-    const client = mqtt.connect("wss:" + "//://hivemq.com", {
-        reconnectPeriod: 2000,
-        keepalive: 30
+   const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+client = mqtt.connect(brokerUrl, {
+    reconnectPeriod: 2000,
+    keepalive: 30
+});
+
     });
 
     client.on("connect", () => {
