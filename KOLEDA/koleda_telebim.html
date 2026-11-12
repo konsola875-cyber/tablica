@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>PZS 4 AV - Uroczystości Telebim</title>
 <link href="https://googleapis.com" rel="stylesheet">
-<script src="https://unpkg.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
@@ -145,10 +144,7 @@ const MY_SENDER_ID = "dev_" + Math.random().toString(36).slice(2, 9);
 let hideTimeout=null, savedMainSlide="", currentTheme="xmas";
 let slidesArray=new Array(), currentSlideIdx=-1;
 
-const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
-    reconnectPeriod: 2000,
-    keepalive: 30
-});
+let client = null;
 
 function pub(subtopic, payload, retainFlag=false){
     if(client && client.connected){
@@ -156,54 +152,63 @@ function pub(subtopic, payload, retainFlag=false){
         client.publish(TOPIC_PREFIX + subtopic, JSON.stringify(payload), { qos: 1, retain: retainFlag });
     }
 }
-client.on("connect", () => {
-    const b = document.getElementById('conn-badge');
-    if (b) { b.style.background = '#00a859'; b.innerText = '🟢 POŁĄCZONO (MQTT 443 • PANCERNY)'; }
-    
-    client.subscribe(TOPIC_PREFIX + "telebim");
-    client.subscribe(TOPIC_PREFIX + "theme");
-    client.subscribe(TOPIC_PREFIX + "mainslide");
-    
-    if (isPilotMode) {
-        client.subscribe(TOPIC_PREFIX + "list");
-        client.subscribe(TOPIC_PREFIX + "speakers");
-        client.subscribe(TOPIC_PREFIX + "slides");
-        client.subscribe(TOPIC_PREFIX + "activeslide");
-        client.subscribe(TOPIC_PREFIX + "weburl");
-    }
-});
 
-client.on("reconnect", () => {
-    const b = document.getElementById('conn-badge');
-    if (b) { b.style.background = '#f77f00'; b.innerText = '🟠 WZNAWIANIE POŁĄCZENIA...'; }
-});
+function startMqttEngine(){
+    client = mqtt.connect("wss:" + "//broker.emqx.io:8084/mqtt", {
+        reconnectPeriod: 2000,
+        keepalive: 30
+    });
 
-client.on("offline", () => {
-    const b = document.getElementById('conn-badge');
-    if (b) { b.style.background = '#d62828'; b.innerText = '🔴 BRAK SIECI - CZEKAM NA INTERNET...'; }
-});
-
-client.on("message", (topic, message) => {
-    try {
-        const d = JSON.parse(message.toString());
-        if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
-        if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
-        
-        if (topic === TOPIC_PREFIX + "telebim") {
-            if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin);
-            if (d.action === 'unpin') { clearTimeout(hideTimeout); hideTimeout = setTimeout(() => document.getElementById('song-card').classList.remove('active'), 10000); }
-            if (d.action === 'hide') { clearTimeout(hideTimeout); document.getElementById('song-card').classList.remove('active'); }
+    client.on("connect", () => {
+        const b = document.getElementById('conn-badge');
+        if (b) { b.style.background = '#00a859'; b.innerText = '🟢 POŁĄCZONO (MQTT 443 • PANCERNY)'; }
+        client.subscribe(TOPIC_PREFIX + "telebim");
+        client.subscribe(TOPIC_PREFIX + "theme");
+        client.subscribe(TOPIC_PREFIX + "mainslide");
+        if (isPilotMode) {
+            client.subscribe(TOPIC_PREFIX + "list");
+            client.subscribe(TOPIC_PREFIX + "speakers");
+            client.subscribe(TOPIC_PREFIX + "slides");
+            client.subscribe(TOPIC_PREFIX + "activeslide");
+            client.subscribe(TOPIC_PREFIX + "weburl");
         }
-        
-        if (isPilotMode && d.sender !== MY_SENDER_ID) {
-            if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
-            if (topic === TOPIC_PREFIX + "speakers") { document.getElementById('speakers-raw').value = d.raw || ""; renderSpeakersButtons(d.raw || ""); }
-            if (topic === TOPIC_PREFIX + "slides") { slidesArray = d.slides || []; currentSlideIdx = d.activeIdx ?? -1; renderSlidesGrid(); }
-            if (topic === TOPIC_PREFIX + "activeslide") { currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
-            if (topic === TOPIC_PREFIX + "weburl") { document.getElementById('in-web-url').value = d.url || ""; }
-        }
-    } catch (e) { console.error(e); }
-});
+    });
+
+    client.on("reconnect", () => {
+        const b = document.getElementById('conn-badge');
+        if (b) { b.style.background = '#f77f00'; b.innerText = '🟠 WZNAWIANIE POŁĄCZENIA...'; }
+    });
+
+    client.on("offline", () => {
+        const b = document.getElementById('conn-badge');
+        if (b) { b.style.background = '#d62828'; b.innerText = '🔴 BRAK SIECI - CZEKAM...'; }
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const d = JSON.parse(message.toString());
+            if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
+            if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
+            if (topic === TOPIC_PREFIX + "telebim") {
+                if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin);
+                if (d.action === 'unpin') { clearTimeout(hideTimeout); hideTimeout = setTimeout(() => document.getElementById('song-card').classList.remove('active'), 10000); }
+                if (d.action === 'hide') { clearTimeout(hideTimeout); document.getElementById('song-card').classList.remove('active'); }
+            }
+            if (isPilotMode && d.sender !== MY_SENDER_ID) {
+                if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
+                if (topic === TOPIC_PREFIX + "speakers") { document.getElementById('speakers-raw').value = d.raw || ""; renderSpeakersButtons(d.raw || ""); }
+                if (topic === TOPIC_PREFIX + "slides") { slidesArray = d.slides || []; currentSlideIdx = d.activeIdx ?? -1; renderSlidesGrid(); }
+                if (topic === TOPIC_PREFIX + "activeslide") { currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
+                if (topic === TOPIC_PREFIX + "weburl") { document.getElementById('in-web-url').value = d.url || ""; }
+            }
+        } catch (e) { console.error(e); }
+    });
+}
+
+const mqttLib = document.createElement('script');
+mqttLib.src = "https:" + "//://unpkg.com" + "/dist/mqtt.min.js";
+mqttLib.onload = () => startMqttEngine();
+document.head.appendChild(mqttLib);
 
 function setupSeamlessLoop(){
     const vA=document.getElementById('vid-a'), vB=document.getElementById('vid-b');
