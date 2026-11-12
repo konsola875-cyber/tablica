@@ -23,6 +23,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+let cachedSlides = new Array();
 
 function showSlide(dataUrl){
     const scr=document.getElementById('slide-screen');
@@ -103,15 +104,11 @@ function hideSlideWithStinger(){
 const mqttLib = document.createElement('script');
 mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => {
-   const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
-client = mqtt.connect(brokerUrl, {
-    reconnectPeriod: 2000,
-    keepalive: 30
-});
-
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    const client = mqtt.connect(brokerUrl, {
+        reconnectPeriod: 2000,
+        keepalive: 30
     });
-
-        let cachedSlides = [];
 
     client.on("connect", () => {
         client.subscribe(TOPIC_PREFIX + "pdf");
@@ -131,6 +128,7 @@ client = mqtt.connect(brokerUrl, {
             if (d.action === 'hideSlide') hideSlideWithStinger();
         } catch (e) { console.error(e); }
     });
+};
 document.head.appendChild(mqttLib);
 </script>
 </body>
