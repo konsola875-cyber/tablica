@@ -24,6 +24,17 @@ body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;
 /* MOTYW UROCZYSTY / FESTIWAL */
 body.theme-gala #cam-ticker-wrap{background:linear-gradient(90deg,#0f1c30 0%,#1d3557 50%,#0f1c30 100%);border-color:#d4af37}
 body.theme-gala .ticker-badge{background:linear-gradient(180deg,#ffffff 50%,#dc143c 50%);color:#0f1c30;text-shadow:0 0 8px #fff}
+/* MOTYW UNIWERSALNY / SZKOLNY (FORUM, DEBATY, KONFERENCJE) */
+body.theme-school #cam-ticker-wrap{background:linear-gradient(90deg,#101827 0%,#1e293b 50%,#101827 100%);border-color:#38bdf8}
+body.theme-school .ticker-badge{background:linear-gradient(135deg,#0284c7 0%,#38bdf8 100%);color:#ffffff;text-shadow:0 2px 4px rgba(0,0,0,0.4)}
+body.theme-school #cam-song-card{background:radial-gradient(circle at center,#1e293b 0%,#0f172a 85%,#020617 100%)}
+body.theme-school #cam-wreath{display:none}
+body.theme-school #cam-song-card::after{content:'';position:absolute;inset:35px;border:4px solid #38bdf8;border-radius:24px;box-shadow:inset 0 0 30px rgba(56,189,248,0.2);pointer-events:none}
+body.theme-school .cam-badge,body.theme-school #cam-card-title,body.theme-school #cam-card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-school .cam-badge{border-color:#38bdf8;background:linear-gradient(180deg,#e0f2fe 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #cam-card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #cam-card-artist{background:linear-gradient(180deg,#bae6fd 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+
 
 /* 3. KARTA ZAPOWIEDZI UTWORU / WYSTĘPU */
 #cam-song-card{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:35;background:radial-gradient(circle at center,#a81313 0%,#5c0505 85%,#380202 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;clip-path:circle(0% at 50% 50%);opacity:0;pointer-events:none;transform-origin:bottom left;transition:clip-path 2.5s cubic-bezier(0.25,1,0.5,1),transform 1.8s cubic-bezier(0.22,1,0.36,1),border-radius 1.8s ease,opacity 1.4s ease-in-out}
@@ -42,6 +53,34 @@ body.theme-gala #cam-song-card::after{content:'';position:absolute;inset:35px;bo
 body.theme-gala .cam-badge,body.theme-gala #cam-card-title,body.theme-gala #cam-card-artist{font-family:'Cinzel',serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
 body.theme-gala #cam-card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
 body.theme-gala #cam-card-artist{background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+/* 4. PEŁNOEKRANOWA PLANSZA KOMUNIKATÓW NA NAGRANIU */
+#cam-msg-bar{position:fixed;inset:0;z-index:48;background:radial-gradient(circle at center,#a81313 0%,#410303 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px;text-align:center;opacity:0;transform:scale(0.92);pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
+#cam-msg-bar::after{content:'';position:absolute;inset:32px;border:6px solid #ffcc00;border-radius:28px;box-shadow:0 0 40px rgba(255,204,0,0.4);pointer-events:none}
+#cam-msg-bar.active{transform:scale(1);opacity:1}
+.cam-msg-badge{font-size:32px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#ffcc00;margin-bottom:28px;padding:10px 32px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00}
+#cam-msg-text{font-size:110px;font-weight:900;line-height:1.15;color:#fff3d6;text-transform:uppercase;text-shadow:0 10px 0px #3d0202,0 18px 35px rgba(0,0,0,0.95);max-width:88vw;word-wrap:break-word}
+
+body.theme-gala #cam-msg-bar{background:radial-gradient(circle at center,#1d3557 0%,#070f1c 100%)}
+body.theme-gala #cam-msg-bar::after{border-color:#d4af37}
+body.theme-gala .cam-msg-badge{color:#d4af37;border-color:#d4af37}
+body.theme-gala #cam-msg-text{color:#ffffff;text-shadow:0 10px 0px #050a14}
+
+body.theme-school #cam-msg-bar{background:radial-gradient(circle at center,#1e293b 0%,#020617 100%)}
+body.theme-school #cam-msg-bar::after{border-color:#38bdf8}
+body.theme-school .cam-msg-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #cam-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617}
+
+/* 5. ZEGAR SCOREBOARD U GÓRY EKRANU NA NAGRANIU */
+#cam-timer-pill{position:fixed;top:34px;left:50%;transform:translateX(-50%) translateY(-130px);z-index:42;display:flex;align-items:center;background:linear-gradient(90deg,#6b0505 0%,#b81414 50%,#6b0505 100%);border:3px solid #ffcc00;border-radius:50px;box-shadow:0 14px 35px rgba(0,0,0,0.85);overflow:hidden;opacity:0;pointer-events:none;transition:transform 0.6s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
+#cam-timer-pill.active{transform:translateX(-50%) translateY(0);opacity:1}
+#cam-timer-label{padding:12px 26px;font-size:20px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#fff3d6;white-space:nowrap}
+#cam-timer-digits{background:#ffcc00;color:#4a0404;padding:12px 28px;font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+body.theme-gala #cam-timer-pill{background:linear-gradient(90deg,#0f1c30 0%,#1d3557 50%,#0f1c30 100%);border-color:#d4af37}
+body.theme-gala #cam-timer-digits{background:#d4af37;color:#0f1c30}
+
+body.theme-school #cam-timer-pill{background:linear-gradient(90deg,#101827 0%,#1e293b 50%,#101827 100%);border-color:#38bdf8}
+body.theme-school #cam-timer-digits{background:#38bdf8;color:#0f172a}
 </style>
 </head>
 <body>
@@ -63,21 +102,38 @@ body.theme-gala #cam-card-artist{background:linear-gradient(180deg,#fceabb 0%,#d
         <div id="cam-card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:42px;color:#e2e8f0;margin-top:14px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
     </div>
 </div>
+<div id="cam-msg-bar">
+    <div class="cam-msg-badge">📢 KOMUNIKAT ORGANIZACYJNY</div>
+    <div id="cam-msg-text">PRZERWA</div>
+</div>
+
+<div id="cam-timer-pill">
+    <div id="cam-timer-label">CZAS DO KOŃCA</div>
+    <div id="cam-timer-digits">05:00</div>
+</div>
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let songTimer1=null, tickerTimer=null, currentTheme='xmas';
+let customBadgeText = "";
+let camCountdownInterval = null;
 
 function getDefaultBadge(){
-    return currentTheme === 'gala' ? 'FESTIWAL "MIEJCIE NADZIEJĘ"' : 'Koncert kolęd';
+    if(customBadgeText && customBadgeText.trim() !== '') return customBadgeText.trim();
+    if(currentTheme === 'gala') return 'UROCZYSTOŚĆ PATRIOTYCZNA';
+    if(currentTheme === 'school') return 'PZS NR 4 W WEJHEROWIE';
+    return 'Koncert kolęd';
 }
 
 function setTheme(theme){
     currentTheme = theme;
+    document.body.classList.remove('theme-gala', 'theme-school');
     if(theme === 'gala'){
         document.body.classList.add('theme-gala');
         document.getElementById('ticker-badge-txt').innerText = '🇵🇱 PZS 4 WEJHEROWO';
+    } else if(theme === 'school'){
+        document.body.classList.add('theme-school');
+        document.getElementById('ticker-badge-txt').innerText = '🎓 PZS 4 WEJHEROWO';
     } else {
-        document.body.classList.remove('theme-gala');
         document.getElementById('ticker-badge-txt').innerText = '🎄 NA ŻYWO';
     }
     document.getElementById('cam-badge-txt').innerText = getDefaultBadge();
@@ -149,6 +205,36 @@ function hideCamSlide(){
     document.getElementById('cam-slide-full').classList.remove('active');
 }
 
+function runCamCountdown(endTime, label){
+    clearInterval(camCountdownInterval);
+    const pill = document.getElementById('cam-timer-pill');
+    const lbl = document.getElementById('cam-timer-label');
+    const dig = document.getElementById('cam-timer-digits');
+    lbl.innerText = label || "ODLICZANIE";
+    pill.classList.add('active');
+
+    const tick = () => {
+        const diff = endTime - Date.now();
+        if(diff <= 0){
+            clearInterval(camCountdownInterval);
+            dig.innerText = "KONIEC!";
+            setTimeout(() => stopCamCountdown(), 3000);
+            return;
+        }
+        const totalSec = Math.ceil(diff / 1000);
+        const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        dig.innerText = `${mm}:${ss}`;
+    };
+    tick();
+    camCountdownInterval = setInterval(tick, 250);
+}
+
+function stopCamCountdown(){
+    clearInterval(camCountdownInterval);
+    document.getElementById('cam-timer-pill').classList.remove('active');
+}
+
 const mqttLib = document.createElement('script');
 mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => {
@@ -161,18 +247,46 @@ mqttLib.onload = () => {
     client.on("connect", () => {
         client.subscribe(TOPIC_PREFIX + "belki");
         client.subscribe(TOPIC_PREFIX + "theme");
+        client.subscribe(TOPIC_PREFIX + "custombadge");
+        client.subscribe(TOPIC_PREFIX + "msg");
+        client.subscribe(TOPIC_PREFIX + "timer");
     });
 
     client.on("message", (topic, message) => {
         try {
             const d = JSON.parse(message.toString());
             if (topic === TOPIC_PREFIX + "theme" || d.action === 'setTheme') setTheme(d.theme);
+            if (topic === TOPIC_PREFIX + "msg") {
+    const bar = document.getElementById('cam-msg-bar');
+    const txt = document.getElementById('cam-msg-text');
+    if (d.action === 'show' && d.text) {
+        const cleanTxt = d.text.trim();
+        txt.innerText = cleanTxt;
+        if (cleanTxt.length <= 18) txt.style.fontSize = '135px';
+        else if (cleanTxt.length <= 35) txt.style.fontSize = '100px';
+        else txt.style.fontSize = '75px';
+        bar.classList.add('active');
+    } else {
+        bar.classList.remove('active');
+    }
+}
+if (topic === TOPIC_PREFIX + "timer") {
+    if (d.action === 'start' && d.durationSec) {
+        runCamCountdown(Date.now() + (d.durationSec * 1000), d.label);
+    } else {
+        stopCamCountdown();
+    }
+}
             if (d.action === 'show') showCamSong(d.title, d.artist, d.cls, d.badge);
             if (d.action === 'hide') { clearTimeout(songTimer1); document.getElementById('cam-song-card').classList.remove('fullscreen','corner'); }
             if (d.action === 'showSpeaker') showCamSpeaker(d.name, d.role);
             if (d.action === 'hideSpeaker') hideCamSpeaker();
             if (d.action === 'showCamSlide') showCamSlide(d.img);
             if (d.action === 'hideCamSlide') hideCamSlide();
+            if (topic === TOPIC_PREFIX + "custombadge") {
+    customBadgeText = d.text || "";
+    document.getElementById('cam-badge-txt').innerText = getDefaultBadge();
+}
         } catch (e) { console.error(e); }
     });
 };

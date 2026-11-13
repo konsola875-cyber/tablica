@@ -24,17 +24,38 @@ body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;colo
 #card-title{font-family:'Rye',serif;font-size:185px;line-height:1.05;margin-bottom:24px;background:repeating-linear-gradient(90deg,#fff3d6 0px,#fff3d6 22px,#ffd29d 22px,#ffd29d 30px);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 10px 0px #3d0202) drop-shadow(0 16px 28px rgba(0,0,0,0.95))}
 #card-artist{font-family:'Rye',serif;font-size:88px;letter-spacing:3px;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 7px 0px #3d0202) drop-shadow(0 12px 22px rgba(0,0,0,0.9))}
 
-/* PEŁNOEKRANOWA PLANSZA KOMUNIKATÓW NA TELEBIM */
-#telebim-msg-bar{position:fixed;inset:0;z-index:48;background:radial-gradient(circle at center,rgba(168,19,19,0.96) 0%,rgba(65,3,3,0.98) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px;text-align:center;opacity:0;transform:scale(0.92);pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
+/* PEŁNOEKRANOWA PLANSZA KOMUNIKATÓW NA TELEBIM (100% KRYCIA) */
+#telebim-msg-bar{position:fixed;inset:0;z-index:48;background:radial-gradient(circle at center,#a81313 0%,#410303 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px;text-align:center;opacity:0;transform:scale(0.92);pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
 #telebim-msg-bar::after{content:'';position:absolute;inset:32px;border:6px solid #ffcc00;border-radius:28px;box-shadow:0 0 40px rgba(255,204,0,0.4);pointer-events:none}
 #telebim-msg-bar.active{transform:scale(1);opacity:1}
 .msg-top-badge{font-family:'Montserrat',sans-serif;font-size:34px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#ffcc00;margin-bottom:30px;padding:10px 32px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;text-shadow:0 4px 12px rgba(0,0,0,0.9)}
 #telebim-msg-text{font-family:'Montserrat',sans-serif;font-size:115px;font-weight:900;line-height:1.15;color:#fff3d6;text-transform:uppercase;text-shadow:0 10px 0px #3d0202,0 18px 35px rgba(0,0,0,0.95);max-width:88vw;word-wrap:break-word}
 
-body.theme-gala #telebim-msg-bar{background:radial-gradient(circle at center,rgba(29,53,87,0.97) 0%,rgba(7,15,28,0.99) 100%)}
+body.theme-gala #telebim-msg-bar{background:radial-gradient(circle at center,#1d3557 0%,#070f1c 100%)}
 body.theme-gala #telebim-msg-bar::after{border-color:#d4af37;box-shadow:0 0 40px rgba(212,175,55,0.4)}
 body.theme-gala .msg-top-badge{color:#d4af37;border-color:#d4af37}
 body.theme-gala #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #050a14,0 18px 35px rgba(0,0,0,0.95)}
+
+body.theme-school #telebim-msg-bar{background:radial-gradient(circle at center,#1e293b 0%,#020617 100%)}
+body.theme-school #telebim-msg-bar::after{border-color:#38bdf8;box-shadow:0 0 40px rgba(56,189,248,0.4)}
+body.theme-school .msg-top-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617,0 18px 35px rgba(0,0,0,0.95)}
+
+/* MOTYW UNIWERSALNY / SZKOLNY */
+body.theme-school #song-card{background:radial-gradient(circle at center,#1e293b 0%,#0f172a 85%,#020617 100%)}
+body.theme-school #wreath-frame{display:none}
+body.theme-school #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #38bdf8;border-radius:28px;box-shadow:inset 0 0 35px rgba(56,189,248,0.2);pointer-events:none}
+body.theme-school .song-badge,body.theme-school #card-title,body.theme-school #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-school .song-badge{border-color:#38bdf8;background:linear-gradient(180deg,#e0f2fe 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-artist{background:linear-gradient(180deg,#bae6fd 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school .bg-vid{opacity:0 !important}
+body.theme-school #telebim-msg-bar{background:radial-gradient(circle at center,rgba(30,41,59,0.97) 0%,rgba(2,6,23,0.99) 100%)}
+body.theme-school #telebim-msg-bar::after{border-color:#38bdf8;box-shadow:0 0 40px rgba(56,189,248,0.4)}
+body.theme-school .msg-top-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-school #timer-label-txt{background:rgba(15,23,42,0.92);border-color:#38bdf8;color:#38bdf8}
+body.theme-school #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0f172a,0 20px 45px rgba(0,0,0,0.95)}
 
 #pilot-panel{display:none;position:fixed;inset:0;background:#121722;z-index:5000;padding:20px;overflow-y:auto}
 .p-box{background:#1b2232;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2d3850}
@@ -88,11 +109,15 @@ body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20p
     <div style="text-align:center">
         <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI - PZS 4 AV</h2>
         <div id="conn-badge">🔴 ŁĄCZENIE Z SERWEREM...</div>
-        <div style="margin-bottom:14px">
-            <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 TRYB ŚWIĄTECZNY</button>
-            <button class="btn btn-blue" onclick="switchTheme('gala')">🇵🇱 FESTIWAL "MIEJCIE NADZIEJĘ"</button>
+                <div style="margin-bottom:14px">
+            <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 ŚWIĄTECZNY</button>
+            <button class="btn btn-blue" onclick="switchTheme('school')">🎓 SZKOLNY / DEBATY</button>
+            <button class="btn btn-gold" onclick="switchTheme('gala')">🇵🇱 PATRIOTYCZNY</button>
+        </div>         <div style="max-width:540px;margin:0 auto 10px auto;display:flex;gap:6px;align-items:center">
+            <input type="text" id="in-custom-badge" oninput="syncCustomBadge()" style="margin-bottom:0;text-align:center;font-weight:700" placeholder="Własny nagłówek karty (np. Debaty Oksfordzkie, Występ taneczny)...">
+            <button class="btn btn-orange" style="margin:0;white-space:nowrap" onclick="clearCustomBadge()">↺ Domyślny</button>
         </div>
-    </div>
+       </div>
 
     <div class="p-box" style="border-color:#f77f00">
         <h3>📢 SZYBKI KOMUNIKAT NA TELEBIM</h3>
@@ -212,6 +237,7 @@ let client = null;
 let hideTimeout = null, savedMainSlide = "", currentTheme = "xmas";
 let slidesArray = new Array(), currentSlideIdx = -1;
 let countdownInterval = null;
+let customBadgeText = "";
 
 function pub(subtopic, payload, retainFlag=false){
     if(client && client.connected){
@@ -221,7 +247,23 @@ function pub(subtopic, payload, retainFlag=false){
 }
 
 function getDefaultBadge(){
-    return currentTheme === 'gala' ? 'FESTIWAL "MIEJCIE NADZIEJĘ"' : 'Koncert kolęd';
+    if(customBadgeText && customBadgeText.trim() !== '') return customBadgeText.trim();
+    if(currentTheme === 'gala') return 'UROCZYSTOŚĆ PATRIOTYCZNA';
+    if(currentTheme === 'school') return 'PZS NR 4 W WEJHEROWIE';
+    return 'Koncert kolęd';
+}
+
+function syncCustomBadge(){
+    customBadgeText = document.getElementById('in-custom-badge').value;
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+    pub("custombadge", { text: customBadgeText }, true);
+}
+
+function clearCustomBadge(){
+    customBadgeText = "";
+    document.getElementById('in-custom-badge').value = "";
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+    pub("custombadge", { text: "" }, true);
 }
 
 function setupSeamlessLoop(){
@@ -255,15 +297,15 @@ function setupSeamlessLoop(){
 
 function applyThemeLocal(theme){
     currentTheme = theme;
+    document.body.classList.remove('theme-gala', 'theme-school');
     const baseImg = document.getElementById('base-main-slide');
-    if(theme === 'gala'){
-        document.body.classList.add('theme-gala');
+    if(theme === 'gala' || theme === 'school'){
+        document.body.classList.add(theme === 'gala' ? 'theme-gala' : 'theme-school');
         if(baseImg && savedMainSlide){
             baseImg.src = savedMainSlide;
             baseImg.style.display = 'block';
         }
     } else {
-        document.body.classList.remove('theme-gala');
         if(baseImg) baseImg.style.display = 'none';
         const vA = document.getElementById('vid-a');
         if(vA) vA.play().catch(()=>{});
@@ -274,13 +316,14 @@ function applyThemeLocal(theme){
 function switchTheme(theme){
     applyThemeLocal(theme);
     pub("theme", { theme: theme }, true);
-    if(theme === 'xmas') hideSlidesOnScreen();
+    pub("telebim", { action: 'setTheme', theme: theme });
+    hideSlidesOnScreen();
 }
 
 function applyMainSlideLocal(dataUrl){
     const baseImg=document.getElementById('base-main-slide');
     if(!baseImg) return;
-    if(dataUrl && currentTheme === 'gala'){
+    if(dataUrl && (currentTheme === 'gala' || currentTheme === 'school')){
         baseImg.src=dataUrl;
         baseImg.style.display='block';
     } else {
@@ -447,7 +490,7 @@ function selectSlide(idx){
     if(idx<0 || idx>=slidesArray.length) return;
     currentSlideIdx=idx;
     updateSlideSelectionUI();
-    pub("pdf", { action: 'showSlideIdx', idx: idx, img: slidesArray[idx] });
+    pub("pdf", { action: 'showSlideIdx', idx: idx });
     pub("activeslide", { activeIdx: idx }, true);
 }
 
@@ -550,7 +593,9 @@ function renderSpeakersButtons(raw){
 }
 
 function sendSong(title,artist,cls,pin,badge){
-    const payload={action:'show',title:title,artist:artist,cls:cls,pin:pin,badge:badge||''};
+    hideSlidesOnScreen();
+    const finalBadge = (badge && badge.trim() !== '') ? badge.trim() : customBadgeText;
+    const payload = {action:'show', title:title, artist:artist, cls:cls, pin:pin, badge:finalBadge};
     pub("telebim", payload);
     pub("belki", payload);
 }
@@ -614,6 +659,7 @@ function renderPlaylistButtons(raw){
 }
 
 function sendTelebimMsg(text){
+    hideSlidesOnScreen();
     pub("msg", { action: 'show', text: text });
 }
 
@@ -632,6 +678,7 @@ function hideWebUrlNow(){
 }
 
 function startCountdown(mins){
+    hideSlidesOnScreen();
     const label = document.getElementById('in-timer-label').value.trim() || "DO ROZPOCZĘCIA UROCZYSTOŚCI";
     const durationSec = Math.round(mins * 60);
     pub("timer", { action: 'start', durationSec: durationSec, label: label });
@@ -749,6 +796,7 @@ function startMqttEngine(){
         client.subscribe(TOPIC_PREFIX + "mainslide");
         client.subscribe(TOPIC_PREFIX + "msg");
         client.subscribe(TOPIC_PREFIX + "timer");
+        client.subscribe(TOPIC_PREFIX + "custombadge");
         if (isPilotMode) {
             client.subscribe(TOPIC_PREFIX + "list");
             client.subscribe(TOPIC_PREFIX + "cheerlist");
@@ -784,6 +832,12 @@ function startMqttEngine(){
             if (topic === TOPIC_PREFIX + "msg") {
                 const bar = document.getElementById('telebim-msg-bar');
                 const txt = document.getElementById('telebim-msg-text');
+                if (topic === TOPIC_PREFIX + "custombadge") {
+    customBadgeText = d.text || "";
+    const inp = document.getElementById('in-custom-badge');
+    if (inp && d.sender !== MY_SENDER_ID) inp.value = customBadgeText;
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+}
                 if (bar && txt) {
                     if (d.action === 'show' && d.text) {
                         const cleanTxt = d.text.trim();
@@ -797,11 +851,13 @@ function startMqttEngine(){
                     }
                 }
             }
-            if (topic === TOPIC_PREFIX + "telebim") {
+                        if (topic === TOPIC_PREFIX + "telebim") {
+                if (d.action === 'setTheme') applyThemeLocal(d.theme);
                 if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin, d.badge);
                 if (d.action === 'unpin') { clearTimeout(hideTimeout); hideTimeout = setTimeout(() => document.getElementById('song-card').classList.remove('active'), 10000); }
                 if (d.action === 'hide') { clearTimeout(hideTimeout); document.getElementById('song-card').classList.remove('active'); }
             }
+
             if (isPilotMode && d.sender !== MY_SENDER_ID) {
                 if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
                 if (topic === TOPIC_PREFIX + "cheerlist") { document.getElementById('cheer-raw').value = d.raw || ""; renderCheerButtons(d.raw || ""); }

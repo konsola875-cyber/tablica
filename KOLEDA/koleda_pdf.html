@@ -7,16 +7,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:transparent;overflow:hidden;width:100vw;height:100vh}
-#slide-screen{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.6s ease-in-out;z-index:10}
+#slide-screen{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.55s ease-in-out;z-index:10}
 #slide-screen.visible{opacity:1}
-#slide-img{width:100%;height:100%;object-fit:contain;transition:opacity 0.3s ease;display:none}
+.slide-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity 0.45s ease-in-out}
 #web-frame{width:100vw;height:100vh;border:none;display:none;background:#000;transform:scale(1.14);transition:opacity 0.35s ease;pointer-events:none}
 #stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;opacity:0}
 </style>
 </head>
 <body>
 <div id="slide-screen">
-    <img id="slide-img" src="" alt="">
+    <img id="slide-img-a" class="slide-layer" src="" alt="">
+    <img id="slide-img-b" class="slide-layer" src="" alt="">
     <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
 </div>
 <video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
@@ -24,6 +25,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let cachedSlides = new Array();
+let activeLayer = 'a';
 
 const stingerEl = document.getElementById('stinger-vid');
 stingerEl.onerror = () => {
@@ -35,15 +37,27 @@ stingerEl.onerror = () => {
 
 function showSlide(dataUrl){
     const scr=document.getElementById('slide-screen');
-    const img=document.getElementById('slide-img');
+    const imgA=document.getElementById('slide-img-a');
+    const imgB=document.getElementById('slide-img-b');
     const frm=document.getElementById('web-frame');
     if(!dataUrl) return;
-    frm.style.display='none'; frm.src='about:blank';
-    img.style.display='block';
-    scr.style.transition='opacity 0.6s ease-in-out';
-    img.src=dataUrl;
-    img.style.opacity=1;
-    scr.classList.add('visible');
+
+    frm.style.display='none';
+    frm.src='about:blank';
+
+    const nextImg = (activeLayer === 'a') ? imgB : imgA;
+    const prevImg = (activeLayer === 'a') ? imgA : imgB;
+    activeLayer = (activeLayer === 'a') ? 'b' : 'a';
+
+    nextImg.onload = () => {
+        nextImg.style.zIndex = 2;
+        prevImg.style.zIndex = 1;
+        nextImg.style.opacity = 1;
+        scr.style.transition = 'opacity 0.55s ease-in-out';
+        scr.classList.add('visible');
+        setTimeout(() => { prevImg.style.opacity = 0; }, 460);
+    };
+    nextImg.src = dataUrl;
 }
 
 function extractYoutubeId(url){
@@ -54,14 +68,15 @@ function extractYoutubeId(url){
 
 function showWebUrl(rawUrl){
     const scr=document.getElementById('slide-screen');
-    const img=document.getElementById('slide-img');
+    const imgA=document.getElementById('slide-img-a');
+    const imgB=document.getElementById('slide-img-b');
     const frm=document.getElementById('web-frame');
     if(!rawUrl) return;
 
     const cleanUrl = rawUrl.trim();
     const ytId = extractYoutubeId(cleanUrl);
 
-        if(ytId){
+    if(ytId){
         const ytBase = ["https", "://", "www", ".", "youtube", ".", "com", "/embed/", ytId].join("");
         const embedUrl = new URL(ytBase);
         embedUrl.searchParams.set("autoplay", "1");
@@ -69,18 +84,18 @@ function showWebUrl(rawUrl){
         embedUrl.searchParams.set("enablejsapi", "1");
         embedUrl.searchParams.set("rel", "0");
 
-        img.style.display='none';
-        frm.style.display='block';
-        frm.style.opacity=1;
-        frm.src=embedUrl.toString();
-        scr.style.transition='opacity 0.6s ease-in-out';
+        imgA.style.opacity = 0;
+        imgB.style.opacity = 0;
+        frm.style.display = 'block';
+        frm.style.opacity = 1;
+        frm.src = embedUrl.toString();
+        scr.style.transition = 'opacity 0.55s ease-in-out';
         scr.classList.add('visible');
 
-               // Po 1.2 sekundy od startu filmu odblokowujemy dźwięk przez API YouTube
         setTimeout(() => {
-            ytControl('unMute', []);
-            ytControl('setVolume', [100]);
-            ytControl('playVideo', []);
+            ytControl('unMute', new Array());
+            ytControl('setVolume', new Array(100));
+            ytControl('playVideo', new Array());
         }, 1200);
         return;
     }
@@ -88,16 +103,18 @@ function showWebUrl(rawUrl){
     const testImg = new Image();
     testImg.onload = () => showSlide(cleanUrl);
     testImg.onerror = () => {
-        img.style.display='none';
-        frm.style.display='block';
-        frm.src=cleanUrl;
-        scr.style.transition='opacity 0.6s ease-in-out';
+        imgA.style.opacity = 0;
+        imgB.style.opacity = 0;
+        frm.style.display = 'block';
+        frm.style.opacity = 1;
+        frm.src = cleanUrl;
+        scr.style.transition = 'opacity 0.55s ease-in-out';
         scr.classList.add('visible');
     };
     testImg.src = cleanUrl;
 }
 
-function ytControl(cmd, args=[]){
+function ytControl(cmd, args=new Array()){
     const frm=document.getElementById('web-frame');
     if(!frm || !frm.contentWindow) return;
     if(cmd === 'pauseVideo'){
@@ -113,24 +130,29 @@ function hideSlideWithStinger(){
     const scr=document.getElementById('slide-screen');
     const vid=document.getElementById('stinger-vid');
     const frm=document.getElementById('web-frame');
+    const imgA=document.getElementById('slide-img-a');
+    const imgB=document.getElementById('slide-img-b');
     if(!scr.classList.contains('visible')) return;
 
     vid.pause();
     vid.currentTime = 0;
     vid.style.opacity = 1;
 
+    const cleanup = () => {
+        scr.style.transition = 'none';
+        scr.classList.remove('visible');
+        frm.src = 'about:blank';
+        imgA.style.opacity = 0;
+        imgB.style.opacity = 0;
+    };
+
     const playPromise = vid.play();
     if (playPromise !== undefined) {
         playPromise.then(() => {
-            setTimeout(() => {
-                scr.style.transition = 'none';
-                scr.classList.remove('visible');
-                frm.src = 'about:blank';
-            }, 1150);
+            setTimeout(cleanup, 1150);
         }).catch(() => {
-            scr.style.transition = 'opacity 0.5s ease';
-            scr.classList.remove('visible');
-            frm.src = 'about:blank';
+            scr.style.transition = 'opacity 0.45s ease';
+            cleanup();
             vid.style.opacity = 0;
         });
     }
@@ -167,8 +189,8 @@ mqttLib.onload = () => {
             }
             if (d.action === 'showSlide') showSlide(d.img);
             if (d.action === 'showUrl') showWebUrl(d.url);
-            if (d.action === 'ytPlay') ytControl('playVideo');
-            if (d.action === 'ytPause') ytControl('pauseVideo');
+            if (d.action === 'playVideo' || d.action === 'ytPlay') ytControl('playVideo');
+            if (d.action === 'pauseVideo' || d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
         } catch (e) { console.error(e); }
     });
