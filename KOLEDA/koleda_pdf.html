@@ -12,20 +12,30 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 .slide-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity 0.45s ease-in-out}
 #web-frame{width:100vw;height:100vh;border:none;display:none;background:#000;transform:scale(1.14);transition:opacity 0.35s ease;pointer-events:none}
 #stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;opacity:0}
+#ad-vid{position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;display:none;z-index:5}
 </style>
 </head>
 <body>
 <div id="slide-screen">
     <img id="slide-img-a" class="slide-layer" src="" alt="">
     <img id="slide-img-b" class="slide-layer" src="" alt="">
-    <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>    <video id="ad-vid" src="" loop playsinline></video>
 </div>
 <video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
+<canvas id="tytani-stinger-canvas" width="1920" height="1080" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:60;pointer-events:none;display:none"></canvas>
+</div>
+</div>
 
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let cachedSlides = new Array();
 let activeLayer = 'a';
+let adActiveMemory = false;
+let savedAdUrl = "";
+let savedAdLoop = true;
+let savedAdMuted = false;
+let savedAdTime = 0;
+let pdfCurrentTheme = "xmas";
 
 const stingerEl = document.getElementById('stinger-vid');
 stingerEl.onerror = () => {
@@ -126,6 +136,136 @@ function ytControl(cmd, args=new Array()){
     }
 }
 
+const tytaniLogoImg = new Image();
+tytaniLogoImg.src = "logo_tytani.png";
+const tsSparks = Array.from({length: 65}, () => ({
+    angle: Math.random() * Math.PI * 2,
+    speed: 250 + Math.random() * 850,
+    size: 3 + Math.random() * 6,
+    gold: Math.random() > 0.35
+}));
+
+function tsEaseInOutCubic(t){ return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+function tsEaseOutBack(t){ const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+
+function drawTytaniStingerFrame(ctx, progress){
+    ctx.clearRect(0, 0, 1920, 1080);
+
+    let curtainP = 0;
+    if (progress < 0.32) curtainP = tsEaseInOutCubic(progress / 0.32);
+    else if (progress <= 0.68) curtainP = 1;
+    else curtainP = 1 - tsEaseInOutCubic((progress - 0.68) / 0.32);
+
+    if (curtainP > 0) {
+        const halfW = 960 * curtainP;
+        const gradL = ctx.createLinearGradient(0, 0, halfW, 1080);
+        gradL.addColorStop(0, '#09090b');
+        gradL.addColorStop(0.65, '#4a0000');
+        gradL.addColorStop(1, '#9b0000');
+        ctx.fillStyle = gradL;
+        ctx.fillRect(0, 0, halfW + 2, 1080);
+
+        const gradR = ctx.createLinearGradient(1920, 0, 1920 - halfW, 1080);
+        gradR.addColorStop(0, '#09090b');
+        gradR.addColorStop(0.65, '#4a0000');
+        gradR.addColorStop(1, '#9b0000');
+        ctx.fillStyle = gradR;
+        ctx.fillRect(1920 - halfW - 2, 0, halfW + 2, 1080);
+
+        ctx.fillStyle = '#ffcc00';
+        ctx.shadowColor = '#ffcc00';
+        ctx.shadowBlur = 25;
+        ctx.fillRect(halfW - 10, 0, 10, 1080);
+        ctx.fillRect(1920 - halfW, 0, 10, 1080);
+        ctx.shadowBlur = 0;
+    }
+
+    if (progress >= 0.28 && progress <= 0.65) {
+        const flashT = (progress - 0.28) / 0.37;
+        const radius = 60 + Math.sin(flashT * Math.PI) * 680;
+        const alpha = Math.sin(flashT * Math.PI) * 0.9;
+        const rad = ctx.createRadialGradient(960, 540, 10, 960, 540, radius);
+        rad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+        rad.addColorStop(0.35, `rgba(255, 204, 0, ${alpha * 0.85})`);
+        rad.addColorStop(0.7, `rgba(217, 4, 41, ${alpha * 0.5})`);
+        rad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = rad;
+        ctx.beginPath();
+        ctx.arc(960, 540, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        tsSparks.forEach(s => {
+            const dist = flashT * s.speed;
+            const sx = 960 + Math.cos(s.angle) * dist;
+            const sy = 540 + Math.sin(s.angle) * dist;
+            ctx.fillStyle = s.gold ? `rgba(255,204,0,${alpha})` : `rgba(255,60,60,${alpha})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+        if (progress >= 0.30 && progress <= 0.73) {
+        let logoAlpha = 1, scale = 1;
+        if (progress < 0.42) {
+            const t = (progress - 0.30) / 0.12;
+            scale = 0.2 + 0.8 * tsEaseOutBack(t);
+            logoAlpha = Math.min(1, t * 2);
+        } else if (progress > 0.63) {
+            const t = (progress - 0.63) / 0.10;
+            logoAlpha = 1 - t;
+            scale = 1 - 0.25 * t;
+        }
+
+        ctx.save();
+        ctx.translate(960, 540);
+        ctx.scale(scale, scale);
+        ctx.globalAlpha = Math.max(0, logoAlpha);
+
+        if (tytaniLogoImg.complete && tytaniLogoImg.naturalWidth > 0) {
+            const maxH = 560;
+            const ratio = tytaniLogoImg.naturalWidth / tytaniLogoImg.naturalHeight;
+            const h = maxH;
+            const w = maxH * ratio;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.92)';
+            ctx.shadowBlur = 35;
+            ctx.drawImage(tytaniLogoImg, -w / 2, -h / 2, w, h);
+        } else {
+            ctx.font = '900 155px Montserrat, Arial Black, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillText('TYTANI WEJHEROWO', 0, 40);
+        }
+        ctx.restore();
+    }
+}
+
+function playTytaniCanvasStinger(onMidpoint){
+    const c = document.getElementById('tytani-stinger-canvas');
+    if(!c) return onMidpoint();
+    const ctx = c.getContext('2d');
+    c.style.display = 'block';
+    const duration = 2800;
+    const start = performance.now();
+    let swapped = false;
+
+    function step(now){
+        const p = (now - start) / duration;
+        if(p >= 0.5 && !swapped){
+            swapped = true;
+            onMidpoint();
+        }
+        if(p <= 1){
+            drawTytaniStingerFrame(ctx, p);
+            requestAnimationFrame(step);
+        } else {
+            ctx.clearRect(0, 0, 1920, 1080);
+            c.style.display = 'none';
+        }
+    }
+    requestAnimationFrame(step);
+}
+
 function hideSlideWithStinger(){
     const scr=document.getElementById('slide-screen');
     const vid=document.getElementById('stinger-vid');
@@ -134,22 +274,32 @@ function hideSlideWithStinger(){
     const imgB=document.getElementById('slide-img-b');
     if(!scr.classList.contains('visible')) return;
 
-    vid.pause();
-    vid.currentTime = 0;
-    vid.style.opacity = 1;
-
     const cleanup = () => {
         scr.style.transition = 'none';
         scr.classList.remove('visible');
         frm.src = 'about:blank';
         imgA.style.opacity = 0;
         imgB.style.opacity = 0;
+        const adVid = document.getElementById('ad-vid');
+        if(adVid){
+            if(adActiveMemory && adVid.currentTime > 0) savedAdTime = adVid.currentTime;
+            adVid.pause();
+            adVid.style.display = 'none';
+        }
     };
+
+        if(pdfCurrentTheme === 'tytani'){
+        playTytaniCanvasStinger(cleanup);
+        return;
+    }
+    vid.pause();
+    vid.currentTime = 0;
+    vid.style.opacity = 1;
 
     const playPromise = vid.play();
     if (playPromise !== undefined) {
         playPromise.then(() => {
-            setTimeout(cleanup, 1150);
+            setTimeout(cleanup, 1350);
         }).catch(() => {
             scr.style.transition = 'opacity 0.45s ease';
             cleanup();
@@ -160,6 +310,62 @@ function hideSlideWithStinger(){
     vid.onended = () => {
         vid.style.opacity = 0;
     };
+}
+
+function showAdVideo(srcUrl, isLoop, isMuted, startTime){
+    const scr = document.getElementById('slide-screen');
+    const imgA = document.getElementById('slide-img-a');
+    const imgB = document.getElementById('slide-img-b');
+    const frm = document.getElementById('web-frame');
+    const adVid = document.getElementById('ad-vid');
+    if(!srcUrl) return;
+
+    adActiveMemory = true;
+    savedAdUrl = srcUrl;
+    savedAdLoop = (isLoop !== false);
+    savedAdMuted = !!isMuted;
+
+    imgA.style.opacity = 0;
+    imgB.style.opacity = 0;
+    frm.style.display = 'none';
+    frm.src = 'about:blank';
+
+    adVid.loop = savedAdLoop;
+    adVid.muted = savedAdMuted;
+
+        const playFromSaved = () => {
+        adVid.play().then(() => {
+            if(typeof startTime === 'number' && startTime > 0){
+                adVid.currentTime = startTime;
+            }
+        }).catch(e => console.warn("Autoplay video:", e));
+    };
+
+    if(!adVid.src.endsWith(srcUrl)){
+        adVid.src = srcUrl;
+        adVid.onloadedmetadata = playFromSaved;
+    } else {
+        playFromSaved();
+    }
+
+    adVid.style.display = 'block';
+    scr.style.transition = 'opacity 0.55s ease-in-out';
+    scr.classList.add('visible');
+}
+
+function resumeAdIfRemembered(){
+    if(adActiveMemory && savedAdUrl){
+        showAdVideo(savedAdUrl, savedAdLoop, savedAdMuted, savedAdTime);
+    }
+}
+
+function controlAdVideo(cmd, val){
+    const adVid = document.getElementById('ad-vid');
+    if(!adVid) return;
+    if(cmd === 'play') adVid.play().catch(()=>{});
+    if(cmd === 'pause') adVid.pause();
+    if(cmd === 'loop') adVid.loop = !!val;
+    if(cmd === 'mute') adVid.muted = !!val;
 }
 
 const mqttLib = document.createElement('script');
@@ -174,6 +380,8 @@ mqttLib.onload = () => {
     client.on("connect", () => {
         client.subscribe(TOPIC_PREFIX + "pdf");
         client.subscribe(TOPIC_PREFIX + "slide_item/#");
+        client.subscribe(TOPIC_PREFIX + "theme");
+        client.subscribe(TOPIC_PREFIX + "tournament");
     });
 
     client.on("message", (topic, message) => {
@@ -192,6 +400,24 @@ mqttLib.onload = () => {
             if (d.action === 'playVideo' || d.action === 'ytPlay') ytControl('playVideo');
             if (d.action === 'pauseVideo' || d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
+            if (d.action === 'showAdVideo') showAdVideo(d.url, d.loop, d.muted);
+            if (d.action === 'adPlay') controlAdVideo('play');
+            if (d.action === 'adPause') controlAdVideo('pause');
+            if (d.action === 'adLoop') controlAdVideo('loop', d.loop);
+            if (d.action === 'adMute') controlAdVideo('mute', d.muted);
+            if (d.action === 'stopAdPermanent') { adActiveMemory = false; hideSlideWithStinger(); }
+            if (d.action === 'resumeAd') resumeAdIfRemembered();
+            if (topic === TOPIC_PREFIX + "theme" && d.theme) {
+                pdfCurrentTheme = d.theme;
+                stingerEl.src = (d.theme === 'tytani') ? 'stinger_tytani.webm' : 'stinger_samochodowka_pzs4.webm';
+                stingerEl.load();
+            }
+            if (topic === TOPIC_PREFIX + "tournament" && d.action === 'show') {
+                const scr = document.getElementById('slide-screen');
+                if (scr) { scr.style.transition = 'opacity 0.3s ease'; scr.classList.remove('visible'); }
+                return;
+            }
+
         } catch (e) { console.error(e); }
     });
 };

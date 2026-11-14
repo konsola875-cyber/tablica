@@ -70,21 +70,91 @@ body.theme-school #cam-msg-bar::after{border-color:#38bdf8}
 body.theme-school .cam-msg-badge{color:#38bdf8;border-color:#38bdf8}
 body.theme-school #cam-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617}
 
-/* 5. ZEGAR SCOREBOARD U GÓRY EKRANU NA NAGRANIU */
-#cam-timer-pill{position:fixed;top:34px;left:50%;transform:translateX(-50%) translateY(-130px);z-index:42;display:flex;align-items:center;background:linear-gradient(90deg,#6b0505 0%,#b81414 50%,#6b0505 100%);border:3px solid #ffcc00;border-radius:50px;box-shadow:0 14px 35px rgba(0,0,0,0.85);overflow:hidden;opacity:0;pointer-events:none;transition:transform 0.6s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
-#cam-timer-pill.active{transform:translateX(-50%) translateY(0);opacity:1}
-#cam-timer-label{padding:12px 26px;font-size:20px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#fff3d6;white-space:nowrap}
-#cam-timer-digits{background:#ffcc00;color:#4a0404;padding:12px 28px;font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 5. PEŁNOEKRANOWA PLANSZA ZEGARA NA NAGRANIU (100% KRYCIA) */
+#cam-timer-pill{position:fixed;inset:0;z-index:49;background:radial-gradient(circle at center,#a81313 0%,#410303 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transform:scale(0.92);pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
+#cam-timer-pill::after{content:'';position:absolute;inset:32px;border:6px solid #ffcc00;border-radius:28px;box-shadow:0 0 40px rgba(255,204,0,0.4);pointer-events:none}
+#cam-timer-pill.active{transform:scale(1);opacity:1}
+#cam-timer-label{font-size:36px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ffcc00;padding:12px 36px;border:3px solid #ffcc00;border-radius:50px;background:rgba(61,2,2,0.85);margin-bottom:28px;white-space:nowrap}
+#cam-timer-digits{font-size:220px;font-weight:900;color:#fff3d6;font-variant-numeric:tabular-nums;text-shadow:0 12px 0px #3d0202,0 20px 45px rgba(0,0,0,0.95);line-height:1}
 
-body.theme-gala #cam-timer-pill{background:linear-gradient(90deg,#0f1c30 0%,#1d3557 50%,#0f1c30 100%);border-color:#d4af37}
-body.theme-gala #cam-timer-digits{background:#d4af37;color:#0f1c30}
+body.theme-gala #cam-timer-pill{background:radial-gradient(circle at center,#1d3557 0%,#070f1c 100%)}
+body.theme-gala #cam-timer-pill::after{border-color:#d4af37}
+body.theme-gala #cam-timer-label{background:rgba(11,21,38,0.92);border-color:#d4af37;color:#d4af37}
+body.theme-gala #cam-timer-digits{color:#ffffff;text-shadow:0 12px 0px #050a14,0 20px 45px rgba(0,0,0,0.95)}
 
-body.theme-school #cam-timer-pill{background:linear-gradient(90deg,#101827 0%,#1e293b 50%,#101827 100%);border-color:#38bdf8}
-body.theme-school #cam-timer-digits{background:#38bdf8;color:#0f172a}
+body.theme-school #cam-timer-pill{background:radial-gradient(circle at center,#1e293b 0%,#020617 100%)}
+body.theme-school #cam-timer-pill::after{border-color:#38bdf8}
+body.theme-school #cam-timer-label{background:rgba(15,23,42,0.92);border-color:#38bdf8;color:#38bdf8}
+body.theme-school #cam-timer-digits{color:#ffffff;text-shadow:0 12px 0px #0f172a,0 20px 45px rgba(0,0,0,0.95)}
+
+/* MOTYW SPORTOWY W BELKACH (BARWY SAMOCHODÓWKI: GRANAT + ŻÓŁTY) */
+body.theme-sport #cam-ticker-wrap{background:linear-gradient(90deg,#0f1c30 0%,#1d3557 50%,#0f1c30 100%);border-color:#ffcc00}
+body.theme-sport .ticker-badge{background:#ffcc00;color:#0f1c30;text-shadow:none}
+body.theme-sport #cam-song-card{background:radial-gradient(circle at center,#182c4e 0%,#0c172b 85%,#060c17 100%)}
+body.theme-sport #cam-wreath{display:none}
+body.theme-sport #cam-song-card::after{content:'';position:absolute;inset:35px;border:5px solid #ffcc00;border-radius:24px;box-shadow:inset 0 0 30px rgba(255,204,0,0.22);pointer-events:none}
+body.theme-sport .cam-badge,body.theme-sport #cam-card-title,body.theme-sport #cam-card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-sport .cam-badge{border-color:#ffcc00;background:linear-gradient(180deg,#fff3b0 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #cam-card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #cam-card-artist{background:linear-gradient(180deg,#ffe066 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #cam-msg-bar{background:radial-gradient(circle at center,#182c4e 0%,#060c17 100%)}
+body.theme-sport #cam-msg-bar::after{border-color:#ffcc00}
+body.theme-sport .cam-msg-badge{color:#ffcc00;border-color:#ffcc00}
+body.theme-sport #cam-msg-text{color:#ffffff;text-shadow:0 10px 0px #060c17}
+
+/* PEŁNOEKRANOWY ZEGAR W SPORCIE (SAMOCHODÓWKA) */
+body.theme-sport #cam-timer-pill{background:radial-gradient(circle at center,#182c4e 0%,#060c17 100%)}
+body.theme-sport #cam-timer-pill::after{border-color:#ffcc00;box-shadow:0 0 40px rgba(255,204,0,0.45)}
+body.theme-sport #cam-timer-label{background:rgba(11,22,43,0.92);border-color:#ffcc00;color:#ffcc00}
+body.theme-sport #cam-timer-digits{color:#ffffff;text-shadow:0 12px 0px #060c17,0 20px 45px rgba(0,0,0,0.95)}
+
+/* SCOREBOARD OBS NA NAGRANIU (DOKŁADNIE JAK ZE ZDJĘCIA) */
+#cam-sb-wrapper{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-160px);z-index:25;display:flex;flex-direction:column;align-items:center;opacity:0;pointer-events:none;transition:transform 0.6s cubic-bezier(0.22,1,0.36,1),opacity 0.45s ease}
+body.theme-sport #cam-sb-wrapper{transform:translateX(-50%) translateY(0);opacity:1}
+#cam-sb-overlay{display:flex;align-items:center;background:rgba(20,35,60,0.94);border-radius:8px;border-bottom:3px solid #fc0;box-shadow:0 8px 24px rgba(0,0,0,0.55);overflow:hidden}
+.cam-sb-team{display:flex;align-items:center;padding:10px 20px;min-width:230px;text-transform:uppercase;font-size:18px;font-weight:800;color:#fff}
+.cam-sb-home{justify-content:flex-end}
+.cam-sb-away{justify-content:flex-start}
+.cam-sb-logo{width:40px;height:40px;object-fit:contain;margin:0 10px;display:none}
+.cam-sb-score{font-size:32px;font-weight:900;background:rgba(0,0,0,0.45);padding:10px 25px;color:#fc0}
+#cam-sb-timer{font-size:26px;font-weight:800;padding:0 30px;color:#fff;font-variant-numeric:tabular-nums}
+#cam-sb-period{background:rgba(20,35,60,0.94);color:#fc0;font-size:15px;font-weight:900;padding:3px 14px;border-radius:0 0 6px 6px;border:2px solid #fc0;border-top:none;box-shadow:0 4px 10px rgba(0,0,0,0.4);margin-top:-1px}
+/* MOTYW TYTANI WEJHEROWO NA NAGRANIU */
+body.theme-tytani #cam-ticker-wrap{background:linear-gradient(90deg,#1a0305 0%,#8b0000 50%,#1a0305 100%);border-color:#ffcc00}
+body.theme-tytani .ticker-badge{background:#ffcc00;color:#1a0305;text-shadow:none}
+body.theme-tytani #cam-song-card{background:radial-gradient(circle at center,#8b0000 0%,#2b0303 80%,#09090b 100%)}
+body.theme-tytani #cam-wreath{display:none}
+body.theme-tytani #cam-song-card::after{content:'';position:absolute;inset:35px;border:5px solid #ffcc00;border-radius:24px;box-shadow:inset 0 0 30px rgba(255,204,0,0.25);pointer-events:none}
+body.theme-tytani .cam-badge,body.theme-tytani #cam-card-title,body.theme-tytani #cam-card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-tytani .cam-badge{border-color:#ffcc00;background:linear-gradient(180deg,#fff3b0 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #cam-card-title{background:linear-gradient(180deg,#ffffff 0%,#f1f5f9 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #cam-card-artist{background:linear-gradient(180deg,#ffe066 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #cam-msg-bar{background:radial-gradient(circle at center,#8b0000 0%,#09090b 100%)}
+body.theme-tytani #cam-msg-bar::after{border-color:#ffcc00}
+body.theme-tytani .cam-msg-badge{color:#ffcc00;border-color:#ffcc00}
+body.theme-tytani #cam-msg-text{color:#ffffff;text-shadow:0 10px 0px #1a0202}
+body.theme-tytani #cam-timer-pill{background:radial-gradient(circle at center,#8b0000 0%,#09090b 100%)}
+body.theme-tytani #cam-timer-pill::after{border-color:#ffcc00;box-shadow:0 0 40px rgba(255,204,0,0.45)}
+body.theme-tytani #cam-timer-label{background:rgba(15,5,5,0.92);border-color:#ffcc00;color:#ffcc00}
+body.theme-tytani #cam-timer-digits{color:#ffffff;text-shadow:0 12px 0px #1a0202,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-tytani #cam-sb-wrapper{transform:translateX(-50%) translateY(0);opacity:1}
+body.theme-tytani #cam-sb-overlay{background:rgba(24,4,7,0.95);border-bottom:3px solid #ffcc00}
+body.theme-tytani .cam-sb-score{background:rgba(139,0,0,0.65);color:#ffcc00}
+body.theme-tytani #cam-sb-period{background:#1a0305;color:#ffcc00;border-color:#ffcc00}
 </style>
 </head>
 <body>
 <div id="cam-slide-full"><img id="cam-full-img" src="" alt=""></div>
+<div id="cam-sb-wrapper">
+    <div id="cam-sb-overlay">
+        <div class="cam-sb-team cam-sb-home"><span id="sb-disp-home-name">GOSPODARZE</span><img class="cam-sb-logo" id="sb-disp-home-logo" src="" alt=""></div>
+        <div id="sb-disp-home-score" class="cam-sb-score">0</div>
+        <div id="cam-sb-timer">00:00</div>
+        <div id="sb-disp-away-score" class="cam-sb-score">0</div>
+        <div class="cam-sb-team cam-sb-away"><img class="cam-sb-logo" id="sb-disp-away-logo" src="" alt=""><span id="sb-disp-away-name">GOŚCIE</span></div>
+    </div>
+    <div id="cam-sb-period">POŁOWA 1</div>
+</div>
 
 <div id="cam-ticker-wrap">
     <div class="ticker-badge" id="ticker-badge-txt">🎄 NA ŻYWO</div>
@@ -121,18 +191,26 @@ function getDefaultBadge(){
     if(customBadgeText && customBadgeText.trim() !== '') return customBadgeText.trim();
     if(currentTheme === 'gala') return 'UROCZYSTOŚĆ PATRIOTYCZNA';
     if(currentTheme === 'school') return 'PZS NR 4 W WEJHEROWIE';
+    if(currentTheme === 'sport') return 'ZAWODY SPORTOWE PZS 4';
+    if(currentTheme === 'tytani') return 'KS TYTANI WEJHEROWO';
     return 'Koncert kolęd';
 }
 
 function setTheme(theme){
     currentTheme = theme;
-    document.body.classList.remove('theme-gala', 'theme-school');
+    document.body.classList.remove('theme-gala', 'theme-school', 'theme-sport', 'theme-tytani');
     if(theme === 'gala'){
         document.body.classList.add('theme-gala');
         document.getElementById('ticker-badge-txt').innerText = '🇵🇱 PZS 4 WEJHEROWO';
     } else if(theme === 'school'){
         document.body.classList.add('theme-school');
         document.getElementById('ticker-badge-txt').innerText = '🎓 PZS 4 WEJHEROWO';
+    } else if(theme === 'sport'){
+        document.body.classList.add('theme-sport');
+        document.getElementById('ticker-badge-txt').innerText = '⚽ SPORT NA ŻYWO';
+    } else if(theme === 'tytani'){
+        document.body.classList.add('theme-tytani');
+        document.getElementById('ticker-badge-txt').innerText = '🛡️ KS TYTANI WEJHEROWO';
     } else {
         document.getElementById('ticker-badge-txt').innerText = '🎄 NA ŻYWO';
     }
@@ -235,6 +313,22 @@ function stopCamCountdown(){
     document.getElementById('cam-timer-pill').classList.remove('active');
 }
 
+function renderCamScoreboard(st){
+    if(!st) return;
+    document.getElementById('sb-disp-home-name').innerText = st.homeName || "GOSPODARZE";
+    document.getElementById('sb-disp-away-name').innerText = st.awayName || "GOŚCIE";
+    const hL = document.getElementById('sb-disp-home-logo');
+    if(st.homeLogo){ hL.src = st.homeLogo; hL.style.display = "block"; } else { hL.style.display = "none"; }
+    const aL = document.getElementById('sb-disp-away-logo');
+    if(st.awayLogo){ aL.src = st.awayLogo; aL.style.display = "block"; } else { aL.style.display = "none"; }
+    document.getElementById('sb-disp-home-score').innerText = st.homeScore ?? 0;
+    document.getElementById('sb-disp-away-score').innerText = st.awayScore ?? 0;
+    document.getElementById('cam-sb-period').innerText = st.period || 1;
+    const m = Math.floor((st.time || 0) / 60).toString().padStart(2, '0');
+    const s = ((st.time || 0) % 60).toString().padStart(2, '0');
+    document.getElementById('cam-sb-timer').innerText = `${m}:${s}`;
+}
+
 const mqttLib = document.createElement('script');
 mqttLib.src = "mqtt.min.js";
 mqttLib.onload = () => {
@@ -250,12 +344,14 @@ mqttLib.onload = () => {
         client.subscribe(TOPIC_PREFIX + "custombadge");
         client.subscribe(TOPIC_PREFIX + "msg");
         client.subscribe(TOPIC_PREFIX + "timer");
+        client.subscribe(TOPIC_PREFIX + "scoreboard");
     });
 
     client.on("message", (topic, message) => {
         try {
             const d = JSON.parse(message.toString());
             if (topic === TOPIC_PREFIX + "theme" || d.action === 'setTheme') setTheme(d.theme);
+            if (topic === TOPIC_PREFIX + "scoreboard" && d.state) renderCamScoreboard(d.state);
             if (topic === TOPIC_PREFIX + "msg") {
     const bar = document.getElementById('cam-msg-bar');
     const txt = document.getElementById('cam-msg-text');

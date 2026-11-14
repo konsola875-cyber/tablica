@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>PZS 4 AV - Uroczystości Telebim</title>
 <link href="https://googleapis.com" rel="stylesheet">
+<link href="https://googleapis.com" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
@@ -80,6 +81,130 @@ input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526
 #timer-digits{font-family:'Montserrat',sans-serif;font-size:230px;font-weight:900;line-height:1;color:#fff3d6;text-shadow:0 12px 0px #3d0202,0 20px 45px rgba(0,0,0,0.95);font-variant-numeric:tabular-nums}
 body.theme-gala #timer-label-txt{background:rgba(15,28,48,0.92);border-color:#d4af37;color:#d4af37}
 body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20px 45px rgba(0,0,0,0.95)}
+/* MOTYW SPORTOWY / SCOREBOARD */
+body.theme-sport{background:#040d0a}
+body.theme-sport .bg-vid{opacity:0 !important}
+body.theme-sport #wreath-frame{display:none}
+body.theme-sport #song-card{background:radial-gradient(circle at center,#0b291e 0%,#05140f 85%,#020806 100%)}
+body.theme-sport #song-card::after{content:'';position:absolute;inset:45px;border:5px solid #00e676;border-radius:28px;box-shadow:inset 0 0 40px rgba(0,230,118,0.22);pointer-events:none}
+body.theme-sport .song-badge,body.theme-sport #card-title,body.theme-sport #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-sport .song-badge{border-color:#00e676;background:linear-gradient(180deg,#b9f6ca 0%,#00e676 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-title{background:linear-gradient(180deg,#ffffff 0%,#e0f2f1 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-artist{background:linear-gradient(180deg,#69f0ae 0%,#00c853 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #telebim-msg-bar{background:radial-gradient(circle at center,#0b291e 0%,#030b08 100%)}
+body.theme-sport #telebim-msg-bar::after{border-color:#00e676;box-shadow:0 0 40px rgba(0,230,118,0.45)}
+body.theme-sport .msg-top-badge{color:#00e676;border-color:#00e676}
+body.theme-sport #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020806,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-sport #telebim-timer-box{background:radial-gradient(circle at center,rgba(11,41,30,0.97) 0%,rgba(3,11,8,0.99) 100%)}
+body.theme-sport #timer-label-txt{background:rgba(4,18,13,0.92);border-color:#00e676;color:#00e676}
+body.theme-sport #timer-digits{color:#ffffff;text-shadow:0 12px 0px #020806,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-sport #pilot-panel{background:#07130f}
+body.theme-sport .p-box{background:#0e211b;border-color:#1c4538}
+body.theme-sport .p-box h3{color:#00e676}
+body.theme-sport input,body.theme-sport textarea{background:#06100d;border-color:#1e4d3e}
+.btn-sport{background:#00e676;color:#04120d}
+#sport-pilot-section{display:none}
+body.theme-sport #sport-pilot-section{display:block}
+body.theme-sport #songs-pilot-section{display:none}
+.sb-mini-preview{display:flex;align-items:center;justify-content:center;background:#06120e;border:2px solid #00e676;border-radius:10px;padding:12px;margin-bottom:14px;gap:14px;flex-wrap:wrap}
+.sb-mini-team{font-size:18px;font-weight:900;text-transform:uppercase;color:#fff}
+.sb-mini-score{font-size:28px;font-weight:900;background:#00e676;color:#04120d;padding:4px 14px;border-radius:6px}
+.sb-mini-time{font-size:24px;font-weight:900;color:#ffcc00;font-variant-numeric:tabular-nums;padding:0 10px}
+.sb-mini-period{font-size:13px;background:#1c4538;color:#69f0ae;padding:4px 10px;border-radius:20px;font-weight:800}
+.sb-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.sb-team-card{background:#091713;border:1px solid #1c4538;border-radius:8px;padding:12px;text-align:center}
+.sb-team-card h4{color:#69f0ae;margin-bottom:8px;font-size:16px;text-transform:uppercase}
+/* MOTYW PATRIOTYCZNY (GALA) */
+body.theme-gala #telebim-msg-bar{background:radial-gradient(circle at center,#1d3557 0%,#070f1c 100%)}
+body.theme-gala #telebim-msg-bar::after{border-color:#d4af37;box-shadow:0 0 40px rgba(212,175,55,0.4)}
+body.theme-gala .msg-top-badge{color:#d4af37;border-color:#d4af37}
+body.theme-gala #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #050a14,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-gala #song-card{background:radial-gradient(circle at center,#1d3557 0%,#0b1526 85%,#050a14 100%)}
+body.theme-gala #wreath-frame{display:none}
+body.theme-gala #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #d4af37;box-shadow:inset 0 0 0 12px #0b1526,inset 0 0 0 15px rgba(220,20,60,0.7);pointer-events:none}
+body.theme-gala .song-badge,body.theme-gala #card-title,body.theme-gala #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-gala .song-badge{border-color:#d4af37;background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #card-artist{background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #telebim-timer-box{background:radial-gradient(circle at center,rgba(29,53,87,0.97) 0%,rgba(5,10,20,0.99) 100%)}
+body.theme-gala #timer-label-txt{background:rgba(11,21,38,0.92);border-color:#d4af37;color:#d4af37}
+body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #050a14,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-gala .bg-vid{opacity:0 !important}
+
+/* MOTYW SZKOLNY / DEBATY */
+body.theme-school #song-card{background:radial-gradient(circle at center,#1e293b 0%,#0f172a 85%,#020617 100%)}
+body.theme-school #wreath-frame{display:none}
+body.theme-school #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #38bdf8;border-radius:28px;box-shadow:inset 0 0 35px rgba(56,189,248,0.2);pointer-events:none}
+body.theme-school .song-badge,body.theme-school #card-title,body.theme-school #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-school .song-badge{border-color:#38bdf8;background:linear-gradient(180deg,#e0f2fe 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-artist{background:linear-gradient(180deg,#bae6fd 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school .bg-vid{opacity:0 !important}
+body.theme-school #telebim-msg-bar{background:radial-gradient(circle at center,rgba(30,41,59,0.97) 0%,rgba(2,6,23,0.99) 100%)}
+body.theme-school #telebim-msg-bar::after{border-color:#38bdf8;box-shadow:0 0 40px rgba(56,189,248,0.4)}
+body.theme-school .msg-top-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-school #telebim-timer-box{background:radial-gradient(circle at center,rgba(30,41,59,0.97) 0%,rgba(2,6,23,0.99) 100%)}
+body.theme-school #timer-label-txt{background:rgba(15,23,42,0.92);border-color:#38bdf8;color:#38bdf8}
+body.theme-school #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0f172a,0 20px 45px rgba(0,0,0,0.95)}
+
+/* MOTYW SPORTOWY / SCOREBOARD (BARWY SAMOCHODÓWKI: GRANAT + ŻÓŁTY) */
+body.theme-sport{background:#0b1324}
+body.theme-sport .bg-vid{opacity:0 !important}
+body.theme-sport #wreath-frame{display:none}
+body.theme-sport #song-card{background:radial-gradient(circle at center,#182c4e 0%,#0c172b 85%,#060c17 100%)}
+body.theme-sport #song-card::after{content:'';position:absolute;inset:45px;border:5px solid #ffcc00;border-radius:28px;box-shadow:inset 0 0 40px rgba(255,204,0,0.22);pointer-events:none}
+body.theme-sport .song-badge,body.theme-sport #card-title,body.theme-sport #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-sport .song-badge{border-color:#ffcc00;background:linear-gradient(180deg,#fff3b0 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-artist{background:linear-gradient(180deg,#ffe066 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #telebim-msg-bar{background:radial-gradient(circle at center,#182c4e 0%,#060c17 100%)}
+body.theme-sport #telebim-msg-bar::after{border-color:#ffcc00;box-shadow:0 0 40px rgba(255,204,0,0.45)}
+body.theme-sport .msg-top-badge{color:#ffcc00;border-color:#ffcc00}
+body.theme-sport #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #060c17,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-sport #telebim-timer-box{background:radial-gradient(circle at center,rgba(24,44,78,0.97) 0%,rgba(6,12,23,0.99) 100%)}
+body.theme-sport #timer-label-txt{background:rgba(11,22,43,0.92);border-color:#ffcc00;color:#ffcc00}
+body.theme-sport #timer-digits{color:#ffffff;text-shadow:0 12px 0px #060c17,0 20px 45px rgba(0,0,0,0.95)}
+/* MOTYW TYTANI WEJHEROWO (CZERWONY + CZARNY + ZŁOTY) */
+body.theme-tytani{background:#09090b}
+body.theme-tytani .bg-vid{opacity:0 !important}
+body.theme-tytani #wreath-frame{display:none}
+body.theme-tytani #song-card{background:radial-gradient(circle at center,#8b0000 0%,#2b0303 80%,#09090b 100%)}
+body.theme-tytani #song-card::after{content:'';position:absolute;inset:45px;border:5px solid #ffcc00;border-radius:28px;box-shadow:inset 0 0 45px rgba(217,4,41,0.45);pointer-events:none}
+body.theme-tytani .song-badge,body.theme-tytani #card-title,body.theme-tytani #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-tytani .song-badge{border-color:#ffcc00;background:linear-gradient(180deg,#fff3b0 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #card-title{background:linear-gradient(180deg,#ffffff 0%,#f1f5f9 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #card-artist{background:linear-gradient(180deg,#ffe066 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #telebim-msg-bar{background:radial-gradient(circle at center,#8b0000 0%,#09090b 100%)}
+body.theme-tytani #telebim-msg-bar::after{border-color:#ffcc00;box-shadow:0 0 40px rgba(255,204,0,0.45)}
+body.theme-tytani .msg-top-badge{color:#ffcc00;border-color:#ffcc00}
+body.theme-tytani #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #1a0202,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-tytani #telebim-timer-box{background:radial-gradient(circle at center,rgba(139,0,0,0.97) 0%,rgba(9,9,11,0.99) 100%)}
+body.theme-tytani #timer-label-txt{background:rgba(15,5,5,0.92);border-color:#ffcc00;color:#ffcc00}
+body.theme-tytani #timer-digits{color:#ffffff;text-shadow:0 12px 0px #1a0202,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-tytani #pilot-panel{background:#0e0b0c}
+body.theme-tytani .p-box{background:#1b1214;border-color:#59141d}
+body.theme-tytani .p-box h3{color:#ffcc00}
+body.theme-tytani input,body.theme-tytani textarea{background:#0b0809;border-color:#6e1823}
+.btn-tytani{background:linear-gradient(135deg,#d90429 0%,#8b0000 100%);color:#ffcc00;border:2px solid #ffcc00}
+body.theme-tytani #sport-pilot-section{display:block}
+body.theme-tytani #songs-pilot-section{display:none}
+#tytani-video-section{display:none}
+body.theme-tytani #tytani-video-section{display:block}
+/* PLANSZA TURNIEJOWA (KOLEJNOŚĆ MECZÓW + KLASYFIKACJA KOŃCOWA 1:1 JAK Z PPT) */
+#tournament-board{position:fixed;inset:0;z-index:44;background:url('tlo_turniej.jpg') center/cover no-repeat #06111f;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:75px 80px 50px 80px;text-align:center;opacity:0;pointer-events:none;transition:opacity 0.5s ease}
+#tournament-board.active{opacity:1}
+.tb-header{font-family:'Roboto Slab',serif;font-size:68px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:8px;line-height:1.1}
+.tb-subheader{font-family:'Roboto Slab',serif;font-size:54px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:24px}
+.tb-list{display:flex;flex-direction:column;gap:22px;width:100%;max-width:1550px;margin-top:36px}
+.tb-match-row{font-family:'Roboto Slab',serif;font-size:48px;font-weight:900;color:#ffe600;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
+.tb-match-num{margin-right:16px}
+.tb-match-score{color:#5bc0eb;margin-left:16px}
+.tb-rank-row{font-family:'Roboto Slab',serif;font-size:48px;font-weight:900;text-transform:uppercase;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
+.tb-rank-1{color:#ffe600}
+.tb-rank-2{color:#a8b2bd}
+.tb-rank-3{color:#d9822b}
+.tb-rank-other{color:#ffffff}
 </style>
 </head>
 <body>
@@ -105,19 +230,163 @@ body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20p
     <div id="timer-label-txt">DO ROZPOCZĘCIA UROCZYSTOŚCI</div>
     <div id="timer-digits">05:00</div>
 </div>
+       <body>
+<video id="vid-a" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:1"></video>
+<video id="vid-b" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:0"></video>
+<img id="base-main-slide" src="" alt="" style="position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#050b14;z-index:2;display:none">
+
+<div id="song-card">
+    <div id="wreath-frame"></div>
+    <div class="song-badge">Koncert kolęd</div>
+    <div class="card-inner-glow">
+        <div id="card-title">Cicha noc</div>
+        <div id="card-artist">Samochodówka Band</div>
+        <div id="card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:44px;color:#e2e8f0;margin-top:16px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
+    </div>
+</div>
+
+<div id="telebim-msg-bar">
+    <div class="msg-top-badge">📢 KOMUNIKAT ORGANIZACYJNY</div>
+    <div id="telebim-msg-text">CISZA NA SALI</div>
+</div>
+<div id="telebim-timer-box">
+    <div id="timer-label-txt">DO ROZPOCZĘCIA UROCZYSTOŚCI</div>
+    <div id="timer-digits">05:00</div>
+</div>
+<div id="tournament-board">
+    <div class="tb-header" id="tb-disp-title">KOLEJNOŚĆ MECZÓW</div>
+    <div class="tb-subheader" id="tb-disp-sub">GRUPA C</div>
+    <div class="tb-list" id="tb-disp-rows"></div>
+</div>
+
 <div id="pilot-panel">
     <div style="text-align:center">
-        <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI - PZS 4 AV</h2>
+        <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI I SPORTU - PZS 4 AV</h2>
         <div id="conn-badge">🔴 ŁĄCZENIE Z SERWEREM...</div>
-                <div style="margin-bottom:14px">
+        <div style="margin-bottom:14px">
             <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 ŚWIĄTECZNY</button>
             <button class="btn btn-blue" onclick="switchTheme('school')">🎓 SZKOLNY / DEBATY</button>
             <button class="btn btn-gold" onclick="switchTheme('gala')">🇵🇱 PATRIOTYCZNY</button>
-        </div>         <div style="max-width:540px;margin:0 auto 10px auto;display:flex;gap:6px;align-items:center">
-            <input type="text" id="in-custom-badge" oninput="syncCustomBadge()" style="margin-bottom:0;text-align:center;font-weight:700" placeholder="Własny nagłówek karty (np. Debaty Oksfordzkie, Występ taneczny)...">
+            <button class="btn btn-sport" onclick="switchTheme('sport')">⚽ SPORTOWY / SCOREBOARD</button>
+            <button class="btn btn-tytani" onclick="switchTheme('tytani')">🛡️ TYTANI</button>
+        </div>
+        <div style="max-width:540px;margin:0 auto 10px auto;display:flex;gap:6px;align-items:center">
+            <input type="text" id="in-custom-badge" oninput="syncCustomBadge()" style="margin-bottom:0;text-align:center;font-weight:700" placeholder="Własny nagłówek karty (np. Debaty, Turniej Piłki Nożnej)...">
             <button class="btn btn-orange" style="margin:0;white-space:nowrap" onclick="clearCustomBadge()">↺ Domyślny</button>
         </div>
-       </div>
+    </div>
+
+    <div id="sport-pilot-section" class="p-box" style="border-color:#00e676">
+        <h3>⚽ PANEL TABLICY WYNIKÓW (SCOREBOARD NA NAGRANIU)</h3>
+        <div class="sb-mini-preview">
+            <span class="sb-mini-team" id="pv-home-name">GOSPODARZE</span>
+            <span class="sb-mini-score" id="pv-home-score">0</span>
+            <span class="sb-mini-time" id="pv-timer">00:00</span>
+            <span class="sb-mini-score" id="pv-away-score">0</span>
+            <span class="sb-mini-team" id="pv-away-name">GOŚCIE</span>
+            <span class="sb-mini-period">POŁOWA: <span id="pv-period">1</span></span>
+        </div>
+
+        <div class="sb-grid-2">
+            <div>
+                <input type="text" id="sb-home-name" placeholder="Nazwa Gospodarzy" oninput="updateSbSettings()">
+                <input type="text" id="sb-home-logo" placeholder="Logo Gospodarzy (URL)" oninput="updateSbSettings()">
+            </div>
+            <div>
+                <input type="text" id="sb-away-name" placeholder="Nazwa Gości" oninput="updateSbSettings()">
+                <input type="text" id="sb-away-logo" placeholder="Logo Gości (URL)" oninput="updateSbSettings()">
+            </div>
+        </div>
+        <div style="text-align:center;margin-bottom:14px">
+            <button class="btn btn-orange" onclick="swapSbSides()">⇄ ZAMIEŃ DRUŻYNY STRONAMI</button>
+        </div>
+
+        <div class="sb-grid-2">
+            <div class="sb-team-card">
+                <h4 id="sb-home-title">GOSPODARZE</h4>
+                <button class="btn btn-sport" onclick="changeSbScore('home', 1)">+1 PUNKT</button>
+                <button class="btn btn-red" onclick="changeSbScore('home', -1)">-1</button>
+            </div>
+            <div class="sb-team-card">
+                <h4 id="sb-away-title">GOŚCIE</h4>
+                <button class="btn btn-sport" onclick="changeSbScore('away', 1)">+1 PUNKT</button>
+                <button class="btn btn-red" onclick="changeSbScore('away', -1)">-1</button>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding-top:10px;border-top:1px solid #1c4538">
+            <div style="margin-bottom:10px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap">
+                <span>Auto-stop (min):</span>
+                <input type="number" id="sb-target-time" value="12" min="1" max="90" style="width:75px;margin-bottom:0;text-align:center" onchange="updateSbSettings()">
+                <span>| Połowa:</span>
+                <button class="btn btn-blue" style="padding:6px 12px" onclick="changeSbPeriod(-1)">-</button>
+                <strong id="sb-period-val" style="font-size:20px;color:#00e676">1</strong>
+                <button class="btn btn-blue" style="padding:6px 12px" onclick="changeSbPeriod(1)">+</button>
+            </div>
+            <button class="btn btn-green" onclick="toggleSbTimer()">▶️ START / ⏸️ PAUZA</button>
+            <button class="btn btn-orange" onclick="resetSbTimerOnly()">↺ RESET CZASU</button>
+            <button class="btn btn-red" onclick="resetSbAll()">🗑️ RESET MECZU</button>
+        </div>
+                <div style="margin-top:18px;padding-top:16px;border-top:2px solid #ffcc00">
+            <h3 style="color:#ffcc00;margin-bottom:10px">📋 ROZPISKA MECZÓW / KLASYFIKACJA NA TELEBIM</h3>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+                <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('matches')">📋 KOLEJNOŚĆ MECZÓW</button>
+                <button class="btn btn-blue" style="flex:1" onclick="switchTbTab('standings')">🏆 KLASYFIKACJA KOŃCOWA</button>
+            </div>
+
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                    <span style="font-size:13px;font-weight:700;color:#ccc">Kolor meczów:</span>
+                    <button type="button" class="btn" style="background:#ffe600;color:#111;padding:6px 12px" onclick="setTbTextColor('#ffe600')">Żółty</button>
+                    <button type="button" class="btn" style="background:#ffffff;color:#111;padding:6px 12px" onclick="setTbTextColor('#ffffff')">Biały</button>
+                    <button type="button" class="btn" style="background:#5bc0eb;color:#111;padding:6px 12px" onclick="setTbTextColor('#5bc0eb')">Niebieski</button>
+                    <button type="button" class="btn" style="background:#ff4d6d;color:#fff;padding:6px 12px" onclick="setTbTextColor('#ff4d6d')">Czerwony</button>
+                    <button type="button" class="btn" style="background:#00e676;color:#111;padding:6px 12px" onclick="setTbTextColor('#00e676')">Zielony</button>
+                    <input type="color" id="tb-text-color" value="#ffe600" oninput="syncTbInputs()" style="width:44px;height:34px;padding:2px;margin:0;cursor:pointer" title="Dowolny kolor">
+                </div>
+    
+            <div id="tb-tab-matches">
+                <input type="text" id="tb-group-name" value="GRUPA C" oninput="syncTbInputs()" placeholder="Podtytuł (np. GRUPA C, PÓŁFINAŁY, TURNIEJ DZIEWCZĄT)...">
+                <textarea id="tb-matches-raw" rows="6" oninput="syncTbInputs()" placeholder="Wpisuj mecze linia po linii (wzór: PZS 2 Wejherowo - II LO Rumia | 5:1):&#10;PZS 2 Wejherowo - II LO Rumia | 5:1&#10;ZKiW Kniewo - PZS 2 Rumia | 0:7&#10;PZS 2 Wejherowo - ZKiW Kniewo |"></textarea>
+                <small style="color:#ccc;display:block;margin-bottom:8px">Wskazówka: Po znaku <b>|</b> wpisz wynik (np. <b>| 5:1</b>). Jeśli mecz jeszcze się nie odbył, zostaw puste po nazwie drużyn.</small>
+                <button class="btn btn-green" onclick="publishTournamentBoard('matches')">📺 POKAŻ / AKTUALIZUJ MECZE NA TELEBIMIE</button>
+            </div>
+
+            <div id="tb-tab-standings" style="display:none">
+                <input type="text" id="tb-rank-1" oninput="syncTbInputs()" placeholder="I MIEJSCE (np. PZS 4 WEJHEROWO)">
+                <input type="text" id="tb-rank-2" oninput="syncTbInputs()" placeholder="II MIEJSCE (np. ZKIW GNIEWINO)">
+                <input type="text" id="tb-rank-3" oninput="syncTbInputs()" placeholder="III MIEJSCE (np. PZS REDA)">
+                <input type="text" id="tb-rank-4" oninput="syncTbInputs()" placeholder="IV MIEJSCE (np. PZS 2 WEJHEROWO)">
+                <input type="text" id="tb-rank-5" oninput="syncTbInputs()" placeholder="V MIEJSCE (np. PZS 3 WEJHEROWO)">
+                <input type="text" id="tb-rank-6" oninput="syncTbInputs()" placeholder="VI MIEJSCE (np. PZS 2 RUMIA)">
+                <button class="btn btn-gold" onclick="publishTournamentBoard('standings')">🏆 POKAŻ KLASYFIKACJĘ KOŃCOWĄ</button>
+            </div>
+
+            <div style="margin-top:8px">
+                <button class="btn btn-red" onclick="hideTournamentBoard()">✖ UKRYJ PLANSZĘ Z TELEBIMU</button>
+            </div>
+        </div>
+    </div>
+        <div id="tytani-video-section" class="p-box" style="border-color:#ffcc00">
+        <h3>🎬 REKLAMY WIDEO TYTANI (MP4 / MOV — DO 2 GB)</h3>
+        <p style="font-size:13px;color:#ccc;margin-bottom:10px">
+            Wrzuć plik <b>.mp4</b> lub <b>.mov</b> (np. 534 MB) do folderu z plikami lub wpisz jego nazwę / link poniżej, aby odtworzyć bez opóźnień:
+        </p>
+        <input type="text" id="in-ad-video-path" value="reklamy_tytani.mp4" placeholder="Nazwa pliku w folderze (np. reklamy_tytani.mp4 lub reklamy.mov) lub URL...">
+        <div style="margin-bottom:10px">
+            <input type="file" id="ad-file-picker" accept="video/mp4,video/quicktime,video/*" style="display:none" onchange="pickLocalAdFile(this)">
+            <button class="btn btn-blue" onclick="document.getElementById('ad-file-picker').click()">📂 WYBIERZ PLIK Z KOMPUTERA (MP4/MOV)</button>
+            <span id="ad-file-info" style="font-size:13px;color:#ffcc00;margin-left:8px"></span>
+        </div>
+        <div style="margin-bottom:10px">
+            <button class="btn btn-tytani" onclick="startAdVideoNow()">▶️ ODTWÓRZ REKLAMY NA TELEBIMIE</button>
+            <button class="btn btn-orange" onclick="pauseAdVideoNow()">⏸️ PAUZA</button>
+            <button class="btn btn-red" onclick="pub('pdf', { action: 'stopAdPermanent' })">✖ ZAMKNIJ REKLAMY (STINGER)</button>
+        </div>
+        <div>
+            <button id="btn-ad-loop" class="btn btn-green" onclick="toggleAdLoopState()">🔁 PĘTLA: WŁĄCZONA</button>
+            <button id="btn-ad-mute" class="btn btn-orange" onclick="toggleAdMuteState()">🔊 DŹWIĘK: WŁĄCZONY</button>
+        </div>
+    </div>
 
     <div class="p-box" style="border-color:#f77f00">
         <h3>📢 SZYBKI KOMUNIKAT NA TELEBIM</h3>
@@ -191,7 +460,7 @@ body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20p
         <div id="speakers-buttons" style="margin-top:10px"></div>
     </div>
 
-    <div class="p-box" style="border-color:#ffcc00">
+    <div id="songs-pilot-section" class="p-box" style="border-color:#ffcc00">
         <h3>🎵 ZAPOWIEDZI PIOSENEK / PIEŚNI</h3>
         <input type="text" id="in-title" placeholder="Wpisz tytuł utworu lub pieśni...">
         <input type="text" id="in-artist" placeholder="Wykonawcy | Klasa (np. Jan Kowalski | 4m LO)...">
@@ -211,7 +480,7 @@ body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20p
 
     <div class="p-box" style="border-color:#d90429">
         <h3>📣 CHEERLEADERKI / WYSTĘPY TANECZNE</h3>
-        <input type="text" id="in-cheer-badge" value="Cheerleaderki PZS 4" placeholder="Nagłówek karty (np. Cheerleaderki PZS 4 lub Występ taneczny)...">
+            <input type="text" id="in-cheer-badge" value="Pokaz tańca" placeholder="Nagłówek karty (np. Pokaz tańca, Występ taneczny)...">
         <div style="margin-bottom:10px">
             <button class="btn btn-pink" onclick="document.getElementById('in-cheer-badge').value='Cheerleaderki PZS 4'">📣 Cheerleaderki PZS 4</button>
             <button class="btn btn-pink" onclick="document.getElementById('in-cheer-badge').value='Występ taneczny'">💃 Występ taneczny</button>
@@ -250,6 +519,8 @@ function getDefaultBadge(){
     if(customBadgeText && customBadgeText.trim() !== '') return customBadgeText.trim();
     if(currentTheme === 'gala') return 'UROCZYSTOŚĆ PATRIOTYCZNA';
     if(currentTheme === 'school') return 'PZS NR 4 W WEJHEROWIE';
+    if(currentTheme === 'sport') return 'ZAWODY SPORTOWE PZS 4';
+    if(currentTheme === 'tytani') return 'KS TYTANI WEJHEROWO';
     return 'Koncert kolęd';
 }
 
@@ -297,14 +568,17 @@ function setupSeamlessLoop(){
 
 function applyThemeLocal(theme){
     currentTheme = theme;
-    document.body.classList.remove('theme-gala', 'theme-school');
+    document.body.classList.remove('theme-gala', 'theme-school', 'theme-sport', 'theme-tytani');
     const baseImg = document.getElementById('base-main-slide');
-    if(theme === 'gala' || theme === 'school'){
-        document.body.classList.add(theme === 'gala' ? 'theme-gala' : 'theme-school');
+    if(theme === 'gala' || theme === 'school' || theme === 'sport'){
+        document.body.classList.add('theme-' + theme);
         if(baseImg && savedMainSlide){
             baseImg.src = savedMainSlide;
             baseImg.style.display = 'block';
         }
+    } else if(theme === 'tytani'){
+        document.body.classList.add('theme-tytani');
+        if(baseImg) baseImg.style.display = 'none';
     } else {
         if(baseImg) baseImg.style.display = 'none';
         const vA = document.getElementById('vid-a');
@@ -356,7 +630,10 @@ function displayCard(title,artist,cls,pin,badge){
 
     card.classList.add('active');
     clearTimeout(hideTimeout);
-    if(!pin) hideTimeout=setTimeout(()=>card.classList.remove('active'),10000);
+       if(!pin) hideTimeout=setTimeout(()=>{
+        card.classList.remove('active');
+        if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+    },10000);
 }
 
 function compressSlideCanvas(sourceCanvasOrImg){
@@ -619,6 +896,7 @@ function unpinAndFade(){
 function hideCardNow(){
     pub("telebim", { action: 'hide' });
     pub("belki", { action: 'hide' });
+    if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
 }
 
 function buildPlaylist(){
@@ -671,6 +949,7 @@ function triggerTelebimMsgManual(){
 
 function hideTelebimMsgNow(){
     pub("msg", { action: 'hide' });
+    if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
 }
 
 function hideWebUrlNow(){
@@ -692,6 +971,7 @@ function startCountdownCustom(){
 
 function stopCountdownNow(){
     pub("timer", { action: 'stop' }, true);
+    if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
 }
 
 function runLocalCountdown(endTime, label){
@@ -710,7 +990,10 @@ function runLocalCountdown(endTime, label){
             clearInterval(countdownInterval);
             dig.innerText = "ZACZYNAMY!";
             dig.style.fontSize = "135px";
-            setTimeout(() => stopLocalCountdown(), 3000);
+                        setTimeout(() => {
+                stopLocalCountdown();
+                if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+            }, 3000);
             return;
         }
         dig.style.fontSize = "230px";
@@ -768,11 +1051,17 @@ function renderCheerButtons(raw){
             row.className = 'song-item';
             row.style.borderLeftColor = '#d90429';
             row.innerHTML = `<div><strong style="color:#ff4d6d">${t}</strong><br><small style="color:#ddd">${a}</small>${cls ? `<br><small style="color:#aaa;font-style:italic">${cls}</small>` : ''}</div>
-            <div><button class="btn btn-pink" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false,'Cheerleaderki PZS 4')">▶️ 10s</button>
-            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true,'Cheerleaderki PZS 4')">📌</button></div>`;
+            <div><button class="btn btn-pink" onclick="sendCheerItem('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false)">▶️ 10s</button>
+            <button class="btn btn-green" onclick="sendCheerItem('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true)">📌</button></div>`;
             box.appendChild(row);
         }
     });
+}
+
+function sendCheerItem(t, a, cls, pin){
+    const badgeEl = document.getElementById('in-cheer-badge');
+    const currentBadge = (badgeEl && badgeEl.value.trim()) ? badgeEl.value.trim() : "Pokaz tańca";
+    sendSong(t, a, cls, pin, currentBadge);
 }
 
 function startMqttEngine(){
@@ -797,7 +1086,9 @@ function startMqttEngine(){
         client.subscribe(TOPIC_PREFIX + "msg");
         client.subscribe(TOPIC_PREFIX + "timer");
         client.subscribe(TOPIC_PREFIX + "custombadge");
+        client.subscribe(TOPIC_PREFIX + "tournament");
         if (isPilotMode) {
+            client.subscribe(TOPIC_PREFIX + "tournament_draft");
             client.subscribe(TOPIC_PREFIX + "list");
             client.subscribe(TOPIC_PREFIX + "cheerlist");
             client.subscribe(TOPIC_PREFIX + "speakers");
@@ -805,6 +1096,7 @@ function startMqttEngine(){
             client.subscribe(TOPIC_PREFIX + "slide_item/#");
             client.subscribe(TOPIC_PREFIX + "activeslide");
             client.subscribe(TOPIC_PREFIX + "weburl");
+            client.subscribe(TOPIC_PREFIX + "scoreboard");
         }
     });
 
@@ -821,6 +1113,12 @@ function startMqttEngine(){
             const d = JSON.parse(message.toString());
             if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
             if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
+            if (topic === TOPIC_PREFIX + "tournament") applyTournamentBoard(d);
+            if (topic === TOPIC_PREFIX + "scoreboard" && d.state && d.sender !== MY_SENDER_ID) {
+                sbState = d.state;
+                localStorage.setItem('pzs4_sb_state', JSON.stringify(sbState));
+                renderSbPilotUI();
+            }
             if (topic === TOPIC_PREFIX + "timer") {
     if (d.action === 'start' && d.durationSec) {
         const localEndTime = Date.now() + (d.durationSec * 1000);
@@ -851,11 +1149,20 @@ function startMqttEngine(){
                     }
                 }
             }
-                        if (topic === TOPIC_PREFIX + "telebim") {
+                 if (topic === TOPIC_PREFIX + "telebim") {
                 if (d.action === 'setTheme') applyThemeLocal(d.theme);
                 if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin, d.badge);
-                if (d.action === 'unpin') { clearTimeout(hideTimeout); hideTimeout = setTimeout(() => document.getElementById('song-card').classList.remove('active'), 10000); }
-                if (d.action === 'hide') { clearTimeout(hideTimeout); document.getElementById('song-card').classList.remove('active'); }
+                if (d.action === 'unpin') {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = setTimeout(() => {
+                        document.getElementById('song-card').classList.remove('active');
+                        if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+                    }, 10000);
+                }
+                if (d.action === 'hide') {
+                    clearTimeout(hideTimeout);
+                    document.getElementById('song-card').classList.remove('active');
+                }
             }
 
             if (isPilotMode && d.sender !== MY_SENDER_ID) {
@@ -872,6 +1179,10 @@ function startMqttEngine(){
                 }
                 if (topic === TOPIC_PREFIX + "activeslide") { currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
                 if (topic === TOPIC_PREFIX + "weburl") { document.getElementById('in-web-url').value = d.url || ""; }
+                if (topic === TOPIC_PREFIX + "tournament") applyTournamentBoard(d);
+                if (topic === TOPIC_PREFIX + "tournament_draft" && isPilotMode && d.sender !== MY_SENDER_ID) {
+                fillTbPilotInputs(d);
+            }
             }
         } catch (e) { console.error(e); }
     });
@@ -891,6 +1202,286 @@ mqttLib.onerror = () => {
     const b = document.getElementById('conn-badge');
     if (b) { b.style.background = '#d62828'; b.innerText = '❌ WRZUĆ PLIK mqtt.min.js DO FOLDERU!'; }
 };
+let sbState = JSON.parse(localStorage.getItem('pzs4_sb_state')) || {
+    homeName: "GOSPODARZE", awayName: "GOŚCIE",
+    homeLogo: "", awayLogo: "",
+    homeScore: 0, awayScore: 0,
+    time: 0, targetTime: 12, period: 1
+};
+let sbTimer = null, sbRunning = false;
+
+function sendSbState(){
+    localStorage.setItem('pzs4_sb_state', JSON.stringify(sbState));
+    renderSbPilotUI();
+    pub("scoreboard", { state: sbState }, true);
+}
+
+function renderSbPilotUI(){
+    const el = (id) => document.getElementById(id);
+    if(!el('pv-home-name')) return;
+    el('pv-home-name').innerText = sbState.homeName;
+    el('pv-away-name').innerText = sbState.awayName;
+    el('pv-home-score').innerText = sbState.homeScore;
+    el('pv-away-score').innerText = sbState.awayScore;
+    el('pv-period').innerText = sbState.period || 1;
+    el('sb-home-title').innerText = sbState.homeName;
+    el('sb-away-title').innerText = sbState.awayName;
+    el('sb-period-val').innerText = sbState.period || 1;
+
+    const m = Math.floor(sbState.time / 60).toString().padStart(2, '0');
+    const s = (sbState.time % 60).toString().padStart(2, '0');
+    el('pv-timer').innerText = `${m}:${s}`;
+
+    if(document.activeElement && document.activeElement.tagName !== 'INPUT'){
+        el('sb-home-name').value = sbState.homeName;
+        el('sb-away-name').value = sbState.awayName;
+        el('sb-home-logo').value = sbState.homeLogo;
+        el('sb-away-logo').value = sbState.awayLogo;
+        el('sb-target-time').value = sbState.targetTime || 12;
+    }
+}
+
+function updateSbSettings(){
+    sbState.homeName = document.getElementById('sb-home-name').value || "GOSPODARZE";
+    sbState.awayName = document.getElementById('sb-away-name').value || "GOŚCIE";
+    sbState.homeLogo = document.getElementById('sb-home-logo').value || "";
+    sbState.awayLogo = document.getElementById('sb-away-logo').value || "";
+    sbState.targetTime = parseInt(document.getElementById('sb-target-time').value, 10) || 12;
+    sendSbState();
+}
+
+function changeSbScore(side, val){
+    if(side === 'home') sbState.homeScore = Math.max(0, sbState.homeScore + val);
+    if(side === 'away') sbState.awayScore = Math.max(0, sbState.awayScore + val);
+    sendSbState();
+}
+
+function changeSbPeriod(val){
+    sbState.period = Math.max(1, (sbState.period || 1) + val);
+    sendSbState();
+}
+
+function swapSbSides(){
+    [sbState.homeName, sbState.awayName] = [sbState.awayName, sbState.homeName];
+    [sbState.homeLogo, sbState.awayLogo] = [sbState.awayLogo, sbState.homeLogo];
+    [sbState.homeScore, sbState.awayScore] = [sbState.awayScore, sbState.homeScore];
+    sendSbState();
+}
+
+function toggleSbTimer(){
+    sbRunning = !sbRunning;
+    if(sbRunning){
+        sbTimer = setInterval(() => {
+            sbState.time++;
+            const limit = (parseInt(document.getElementById('sb-target-time').value, 10) || 12) * 60;
+            if(sbState.time >= limit){
+                clearInterval(sbTimer);
+                sbRunning = false;
+                sbState.time = limit;
+                sendSbState();
+                setTimeout(() => {
+                    sbState.time = 0;
+                    sbState.period = (sbState.period || 1) + 1;
+                    swapSbSides();
+                }, 3000);
+            } else {
+                sendSbState();
+            }
+        }, 1000);
+    } else {
+        clearInterval(sbTimer);
+    }
+}
+
+function resetSbTimerOnly(){
+    if(confirm("Zresetować CZAS meczu do 00:00?")){
+        clearInterval(sbTimer);
+        sbRunning = false;
+        sbState.time = 0;
+        sendSbState();
+    }
+}
+
+function resetSbAll(){
+    if(confirm("Zresetować CAŁY MECZ (wynik i czas)?")){
+        clearInterval(sbTimer);
+        sbRunning = false;
+        sbState = { homeName: "GOSPODARZE", awayName: "GOŚCIE", homeLogo: "", awayLogo: "", homeScore: 0, awayScore: 0, time: 0, targetTime: 12, period: 1 };
+        sendSbState();
+    }
+}
+let adLoopEnabled = true;
+let adMutedEnabled = false;
+
+function pickLocalAdFile(inp){
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    document.getElementById('ad-file-info').innerText = `Wybrano: ${file.name} (${sizeMB} MB)`;
+    document.getElementById('in-ad-video-path').value = file.name;
+}
+
+function startAdVideoNow(){
+    const path = document.getElementById('in-ad-video-path').value.trim();
+    if(!path) return alert("Wpisz nazwę pliku wideo (.mp4 / .mov) lub wybierz go z listy!");
+        pub("pdf", {
+        action: 'showAdVideo',
+        url: path,
+        loop: adLoopEnabled,
+        muted: adMutedEnabled,
+        startTime: 0
+    });
+}
+
+function pauseAdVideoNow(){
+    pub("pdf", { action: 'adPause' });
+}
+
+function toggleAdLoopState(){
+    adLoopEnabled = !adLoopEnabled;
+    const btn = document.getElementById('btn-ad-loop');
+    btn.innerText = adLoopEnabled ? "🔁 PĘTLA: WŁĄCZONA" : "➡️ PĘTLA: WYŁĄCZONA";
+    btn.className = adLoopEnabled ? "btn btn-green" : "btn btn-orange";
+    pub("pdf", { action: 'adLoop', loop: adLoopEnabled });
+}
+
+function toggleAdMuteState(){
+    adMutedEnabled = !adMutedEnabled;
+    const btn = document.getElementById('btn-ad-mute');
+    btn.innerText = adMutedEnabled ? "🔇 DŹWIĘK: WYCISZONY" : "🔊 DŹWIĘK: WŁĄCZONY";
+    btn.className = adMutedEnabled ? "btn btn-red" : "btn btn-orange";
+    pub("pdf", { action: 'adMute', muted: adMutedEnabled });
+}
+
+function switchTbTab(tab){
+    document.getElementById('tb-tab-matches').style.display = (tab === 'matches') ? 'block' : 'none';
+    document.getElementById('tb-tab-standings').style.display = (tab === 'standings') ? 'block' : 'none';
+}
+
+function setTbTextColor(hex){
+    document.getElementById('tb-text-color').value = hex;
+    syncTbInputs();
+    publishTournamentBoard('matches');
+}
+
+function getTbDraftObject(){
+    return {
+        sub: document.getElementById('tb-group-name').value,
+        raw: document.getElementById('tb-matches-raw').value,
+        color: document.getElementById('tb-text-color').value,
+        ranks: Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value)
+    };
+}
+
+function syncTbInputs(){
+    pub("tournament_draft", getTbDraftObject(), true);
+}
+
+function fillTbPilotInputs(d){
+    if(!d) return;
+    if(typeof d.sub === 'string') document.getElementById('tb-group-name').value = d.sub;
+    if(typeof d.raw === 'string') document.getElementById('tb-matches-raw').value = d.raw;
+    if(typeof d.color === 'string') document.getElementById('tb-text-color').value = d.color;
+    if(Array.isArray(d.ranks)){
+        Array.of(1, 2, 3, 4, 5, 6).forEach((num, idx) => {
+            const inp = document.getElementById('tb-rank-' + num);
+            if(inp && typeof d.ranks.at(idx) === 'string') inp.value = d.ranks.at(idx);
+        });
+    }
+}
+
+function publishTournamentBoard(mode){
+    hideSlidesOnScreen();
+    syncTbInputs();
+    if(mode === 'matches'){
+        const sub = document.getElementById('tb-group-name').value.trim();
+        const raw = document.getElementById('tb-matches-raw').value.trim();
+        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw }, true);
+    } else {
+        const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
+        pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
+    }
+        if(mode === 'matches'){
+        const sub = document.getElementById('tb-group-name').value.trim();
+        const raw = document.getElementById('tb-matches-raw').value.trim();
+        const color = document.getElementById('tb-text-color').value || '#ffe600';
+        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: color }, true);
+    }
+}
+
+function hideTournamentBoard(){
+    pub("tournament", { action: 'hide' }, true);
+}
+
+function applyTournamentBoard(d){
+    const board = document.getElementById('tournament-board');
+    const titleEl = document.getElementById('tb-disp-title');
+    const subEl = document.getElementById('tb-disp-sub');
+    const rowsEl = document.getElementById('tb-disp-rows');
+    if(!board || !rowsEl) return;
+        if(d.mode === 'matches'){
+        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+        const baseColor = d.color || '#ffe600';
+
+        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
+        lines.forEach((line, idx) => {
+            let cleanLine = line;
+            let rowColor = baseColor;
+            if(/\[bialy\]/i.test(cleanLine)){ rowColor = '#ffffff'; cleanLine = cleanLine.replace(/\[bialy\]/i, ''); }
+            else if(/\[czerwony\]/i.test(cleanLine)){ rowColor = '#ff4d6d'; cleanLine = cleanLine.replace(/\[czerwony\]/i, ''); }
+            else if(/\[zielony\]/i.test(cleanLine)){ rowColor = '#00e676'; cleanLine = cleanLine.replace(/\[zielony\]/i, ''); }
+            else if(/\[niebieski\]/i.test(cleanLine)){ rowColor = '#5bc0eb'; cleanLine = cleanLine.replace(/\[niebieski\]/i, ''); }
+
+            const parts = cleanLine.split('|');
+            const teams = (parts.at(0) || '').trim();
+            const score = (parts.at(1) || '').trim();
+            const div = document.createElement('div');
+            div.className = 'tb-match-row';
+            div.style.color = rowColor;
+            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
+            rowsEl.appendChild(div);
+        });
+    }
+    if(d.action === 'hide'){
+        board.classList.remove('active');
+        return;
+    }
+
+    rowsEl.innerHTML = '';
+    if(d.mode === 'matches'){
+        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+
+        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
+        lines.forEach((line, idx) => {
+            const parts = line.split('|');
+            const teams = (parts.at(0) || '').trim();
+            const score = (parts.at(1) || '').trim();
+            const div = document.createElement('div');
+            div.className = 'tb-match-row';
+            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
+            rowsEl.appendChild(div);
+        });
+    } else if(d.mode === 'standings'){
+        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
+        subEl.style.display = 'none';
+        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
+        (d.ranks || Array.of()).forEach((team, idx) => {
+            if(!team) return;
+            const div = document.createElement('div');
+            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
+            div.className = `tb-rank-row ${cls}`;
+            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
+            rowsEl.appendChild(div);
+        });
+    }
+    board.classList.add('active');
+}
+
+if(isPilotMode) renderSbPilotUI();
 document.head.appendChild(mqttLib);
 </script>
 </body>
