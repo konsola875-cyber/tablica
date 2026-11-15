@@ -11,7 +11,7 @@ body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;
 .pen-col{display:flex;flex-direction:column;gap:6px;width:230px}
 .pen-col-home{align-items:flex-start}
 .pen-col-away{align-items:flex-end}
-.pen-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(24,4,7,0.95);border:2px solid #ffcc00;border-left:6px solid #d90429;border-radius:6px;padding:5px 12px;box-shadow:0 6px 16px rgba(0,0,0,0.75);min-width:165px;animation:popIn 0.35s cubic-bezier(0.22,1,0.36,1)}
+.pen-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(24,4,7,0.95);border:2px solid #ffcc00;border-left:6px solid #d90429;border-radius:6px;padding:5px 12px;box-shadow:0 6px 16px rgba(0,0,0,0.75);min-width:165px}
 .pen-col-away .pen-pill{border-left:2px solid #ffcc00;border-right:6px solid #d90429}
 .pen-player{font-size:15px;font-weight:900;color:#fff;text-transform:uppercase}
 .pen-time{font-size:16px;font-weight:900;color:#ffcc00;font-variant-numeric:tabular-nums;background:rgba(139,0,0,0.7);padding:2px 8px;border-radius:4px}
@@ -41,7 +41,7 @@ function renderPenalties(state){
         const s = (p.timeLeft % 60).toString().padStart(2, '0');
         const el = document.createElement('div');
         el.className = 'pen-pill';
-        el.innerHTML = `<span class="pen-player">🟥 #${p.num}</span><span class="pen-time">${m}:${s}</span>`;
+        el.innerHTML = `<span class="pen-player">🟥 ${p.num}</span><span class="pen-time">${m}:${s}</span>`;
         if(p.side === 'away' || p.team === state.awayName){
             awayBox.appendChild(el);
         } else {

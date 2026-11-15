@@ -34,14 +34,14 @@ function showSubBanner(d){
     const card = document.getElementById('sub-card');
     if(!card) return;
     document.getElementById('sub-team-name').innerText = `🔄 ZMIANA — ${d.team || 'DRUŻYNA'}`;
-    document.getElementById('disp-out-num').innerText = `#${d.outNum}`;
-    document.getElementById('disp-in-num').innerText = `#${d.inNum}`;
+    document.getElementById('disp-out-num').innerText = `${d.outNum}`;
+    document.getElementById('disp-in-num').innerText = `${d.inNum}`;
 
     clearTimeout(subTimeout);
     card.classList.add('active');
     subTimeout = setTimeout(() => {
         card.classList.remove('active');
-    }, 6000);
+    }, 10000);
 }
 
 function startMqtt(){
