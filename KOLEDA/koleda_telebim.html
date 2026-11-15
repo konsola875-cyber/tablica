@@ -205,11 +205,12 @@ body.theme-tytani #tytani-video-section{display:block}
 .tb-rank-2{color:#a8b2bd}
 .tb-rank-3{color:#d9822b}
 .tb-rank-other{color:#ffffff}
+body.theme-tytani #tb-pilot-box{display:none !important}
 </style>
 </head>
 <body>
-<video id="vid-a" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:1"></video>
-<video id="vid-b" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:0"></video>
+<video id="vid-a" class="bg-vid" src="tlo_koleda.mp4.mp4" preload="auto" muted playsinline style="opacity:1"></video>
+<video id="vid-b" class="bg-vid" src="tlo_koleda.mp4.mp4" preload="auto" muted playsinline style="opacity:0"></video>
 <img id="base-main-slide" src="" alt="" style="position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#050b14;z-index:2;display:none">
 
 <div id="song-card">
@@ -327,7 +328,7 @@ body.theme-tytani #tytani-video-section{display:block}
             <button class="btn btn-orange" onclick="resetSbTimerOnly()">↺ RESET CZASU</button>
             <button class="btn btn-red" onclick="resetSbAll()">🗑️ RESET MECZU</button>
         </div>
-                <div style="margin-top:18px;padding-top:16px;border-top:2px solid #ffcc00">
+                <div id="tb-pilot-box" style="margin-top:18px;padding-top:16px;border-top:2px solid #ffcc00">
             <h3 style="color:#ffcc00;margin-bottom:10px">📋 ROZPISKA MECZÓW / KLASYFIKACJA NA TELEBIM</h3>
             <div style="display:flex;gap:8px;margin-bottom:10px">
                 <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('matches')">📋 KOLEJNOŚĆ MECZÓW</button>
@@ -582,7 +583,16 @@ function applyThemeLocal(theme){
     } else {
         if(baseImg) baseImg.style.display = 'none';
         const vA = document.getElementById('vid-a');
-        if(vA) vA.play().catch(()=>{});
+        const vB = document.getElementById('vid-b');
+        if(vA && vB){
+            vA.style.transition = 'none';
+            vB.style.transition = 'none';
+            vA.style.opacity = 1;
+            vB.style.opacity = 0;
+            vA.style.zIndex = 2;
+            vB.style.zIndex = 1;
+            if(vA.paused) vA.play().catch(()=>{});
+        }
     }
     document.querySelector('.song-badge').innerText = getDefaultBadge();
 }
@@ -871,6 +881,7 @@ function renderSpeakersButtons(raw){
 
 function sendSong(title,artist,cls,pin,badge){
     hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
     const finalBadge = (badge && badge.trim() !== '') ? badge.trim() : customBadgeText;
     const payload = {action:'show', title:title, artist:artist, cls:cls, pin:pin, badge:finalBadge};
     pub("telebim", payload);
@@ -938,6 +949,7 @@ function renderPlaylistButtons(raw){
 
 function sendTelebimMsg(text){
     hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
     pub("msg", { action: 'show', text: text });
 }
 
@@ -948,8 +960,12 @@ function triggerTelebimMsgManual(){
 }
 
 function hideTelebimMsgNow(){
-    pub("msg", { action: 'hide' });
-    if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+    if(currentTheme === 'tytani'){
+        pub("pdf", { action: 'resumeAd' });
+        setTimeout(() => pub("msg", { action: 'hide' }), 1350);
+    } else {
+        pub("msg", { action: 'hide' });
+    }
 }
 
 function hideWebUrlNow(){
@@ -958,6 +974,7 @@ function hideWebUrlNow(){
 
 function startCountdown(mins){
     hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
     const label = document.getElementById('in-timer-label').value.trim() || "DO ROZPOCZĘCIA UROCZYSTOŚCI";
     const durationSec = Math.round(mins * 60);
     pub("timer", { action: 'start', durationSec: durationSec, label: label });
@@ -970,8 +987,12 @@ function startCountdownCustom(){
 }
 
 function stopCountdownNow(){
-    pub("timer", { action: 'stop' }, true);
-    if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+    if(currentTheme === 'tytani'){
+        pub("pdf", { action: 'resumeAd' });
+        setTimeout(() => pub("timer", { action: 'stop' }, true), 1350);
+    } else {
+        pub("timer", { action: 'stop' }, true);
+    }
 }
 
 function runLocalCountdown(endTime, label){

@@ -353,8 +353,21 @@ function showAdVideo(srcUrl, isLoop, isMuted, startTime){
     scr.classList.add('visible');
 }
 
+function pauseAdAndSaveTime(){
+    const adVid = document.getElementById('ad-vid');
+    if(adVid && adActiveMemory){
+        if(adVid.currentTime > 0) savedAdTime = adVid.currentTime;
+        adVid.pause();
+    }
+}
+
 function resumeAdIfRemembered(){
-    if(adActiveMemory && savedAdUrl){
+    if(!adActiveMemory || !savedAdUrl) return;
+    if(pdfCurrentTheme === 'tytani'){
+        playTytaniCanvasStinger(() => {
+            showAdVideo(savedAdUrl, savedAdLoop, savedAdMuted, savedAdTime);
+        });
+    } else {
         showAdVideo(savedAdUrl, savedAdLoop, savedAdMuted, savedAdTime);
     }
 }
@@ -406,6 +419,8 @@ mqttLib.onload = () => {
             if (d.action === 'adLoop') controlAdVideo('loop', d.loop);
             if (d.action === 'adMute') controlAdVideo('mute', d.muted);
             if (d.action === 'stopAdPermanent') { adActiveMemory = false; hideSlideWithStinger(); }
+            if (d.action === 'resumeAd') resumeAdIfRemembered();
+            if (d.action === 'pauseAd') pauseAdAndSaveTime();
             if (d.action === 'resumeAd') resumeAdIfRemembered();
             if (topic === TOPIC_PREFIX + "theme" && d.theme) {
                 pdfCurrentTheme = d.theme;
