@@ -2,48 +2,75 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>PZS 4 AV - Zmiany</title>
+<title>KS Tytani Wejherowo - Zmiana Zawodników</title>
+<link href="https://googleapis.com" rel="stylesheet">
 <style>
-body{margin:0;font-family:sans-serif;background:transparent;overflow:hidden;color:#fff;font-weight:700}
-#wrapper{padding:15px;display:flex;flex-direction:column;gap:6px;opacity:0;transform:translateX(-45px) scale(0.95);transition:transform 0.85s cubic-bezier(0.16,1,0.3,1),opacity 0.65s ease}
-#wrapper.active{opacity:1;transform:translateX(0)}
-#sub-badge{background:#fc0;color:#14233c;font-size:12px;padding:4px 12px;border-radius:4px;letter-spacing:1.5px;width:fit-content;text-align:center;text-transform:uppercase;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-#sub-box{background:rgba(20,35,60,.95);border-left:5px solid #fc0;border-bottom:2px solid #fc0;border-radius:6px;padding:10px 16px;box-shadow:0 4px 12px rgba(0,0,0,.5);width:fit-content}
-.sub-header{font-size:12px;color:#fc0;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-.sub-row{display:flex;align-items:center;gap:12px;font-size:16px}
-.sub-out,.sub-in{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:4px}
-.sub-out{background:#f33}
-.sub-in{background:#0a5}
-.sub-label{font-size:11px;letter-spacing:0.5px;opacity:0.95}
-.sub-num{font-size:19px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;color:#fff;width:100vw;height:100vh}
+#sub-card{position:fixed;bottom:46px;left:50%;transform:translateX(-50%) translateY(150px);opacity:0;pointer-events:none;background:rgba(24,4,7,0.96);border:3px solid #ffcc00;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,0.85);overflow:hidden;min-width:440px;transition:transform 0.55s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease;z-index:30}
+#sub-card.active{transform:translateX(-50%) translateY(0);opacity:1}
+.sub-header{background:linear-gradient(90deg,#8b0000 0%,#d90429 50%,#8b0000 100%);color:#ffcc00;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:7px 20px;text-align:center;border-bottom:2px solid #ffcc00}
+.sub-body{display:flex;align-items:center;justify-content:space-around;padding:14px 24px;gap:24px}
+.sub-row{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:900}
+.sub-out{color:#ff4d6d}
+.sub-in{color:#00e676}
+.sub-num{background:rgba(255,255,255,0.1);padding:4px 12px;border-radius:6px;color:#fff;border:1px solid rgba(255,255,255,0.25)}
 </style>
 </head>
 <body>
-<div id="wrapper">
-<div id="sub-badge">ZMIANA</div>
-<div id="sub-box">
-<div class="sub-header" id="sub-team">DRUŻYNA</div>
-<div class="sub-row">
-<span class="sub-out">▼ <span class="sub-label">SCHODZI</span> <span class="sub-num" id="num-out">0</span></span>
-<span class="sub-in">▲ <span class="sub-label">WCHODZI</span> <span class="sub-num" id="num-in">0</span></span>
+<div id="sub-card">
+    <div class="sub-header" id="sub-team-name">ZMIANA — TYTANI WEJHEROWO</div>
+    <div class="sub-body">
+        <div class="sub-row sub-out"><span>⬇️ SCHODZI</span><span class="sub-num" id="disp-out-num">#0</span></div>
+        <div class="sub-row sub-in"><span>⬆️ WCHODZI</span><span class="sub-num" id="disp-in-num">#0</span></div>
+    </div>
 </div>
-</div>
-</div>
+
 <script>
-const ZMIANY_ID="pzs4-wejherowo-zmiany-host-2026";
-let hideTimer=null;
-function showSub(data){
-const wrap=document.getElementById('wrapper');
-document.getElementById('sub-team').innerText=data.team;
-document.getElementById('num-out').innerText=data.outNum;
-document.getElementById('num-in').innerText=data.inNum;
-wrap.classList.add('active');
-clearTimeout(hideTimer);
-hideTimer=setTimeout(()=>{wrap.classList.remove('active')},12000);
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+let subTimeout = null;
+
+function showSubBanner(d){
+    const card = document.getElementById('sub-card');
+    if(!card) return;
+    document.getElementById('sub-team-name').innerText = `🔄 ZMIANA — ${d.team || 'DRUŻYNA'}`;
+    document.getElementById('disp-out-num').innerText = `#${d.outNum}`;
+    document.getElementById('disp-in-num').innerText = `#${d.inNum}`;
+
+    clearTimeout(subTimeout);
+    card.classList.add('active');
+    subTimeout = setTimeout(() => {
+        card.classList.remove('active');
+    }, 6000);
 }
-const lib=document.createElement('script');
-lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
-lib.onload=()=>{const p=new Peer(ZMIANY_ID);p.on('connection',c=>c.on('data',d=>{if(d&&d.type==='sub')showSub(d)}))};
+
+function startMqtt(){
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    const client = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
+
+    client.on("connect", () => {
+        client.subscribe(TOPIC_PREFIX + "zmiany");
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const d = JSON.parse(message.toString());
+            if(topic === TOPIC_PREFIX + "zmiany" && d.action === 'sub'){
+                showSubBanner(d);
+            }
+        } catch(e) { console.error(e); }
+    });
+}
+
+const lib = document.createElement('script');
+lib.src = "KOLEDA/mqtt.min.js";
+lib.onerror = () => {
+    const fallback = document.createElement('script');
+    fallback.src = "mqtt.min.js";
+    fallback.onload = startMqtt;
+    document.head.appendChild(fallback);
+};
+lib.onload = startMqtt;
 document.head.appendChild(lib);
 </script>
 </body>

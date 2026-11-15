@@ -2,40 +2,81 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>PZS 4 AV - Kary</title>
+<title>KS Tytani Wejherowo - Kary Czasowe</title>
+<link href="https://googleapis.com" rel="stylesheet">
 <style>
-body{margin:0;font-family:sans-serif;background:transparent;overflow:hidden;color:#fff;font-weight:700}
-#wrapper{padding:15px;display:none;flex-direction:column;gap:6px}
-#pen-header{background:#f33;color:#fff;font-size:12px;padding:3px 10px;border-radius:4px;letter-spacing:1px;width:fit-content;text-transform:uppercase;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-#penalties-box{display:flex;flex-direction:column;gap:8px}
-.pen-card{display:flex;align-items:center;background:rgba(20,35,60,.95);border-left:5px solid #f33;border-bottom:2px solid #fc0;border-radius:6px;padding:8px 15px;box-shadow:0 4px 12px rgba(0,0,0,.5);width:fit-content;animation:slideIn .3s ease-out}
-.pen-team{font-size:13px;color:#fc0;text-transform:uppercase;margin-right:10px}
-.pen-num{background:#f33;color:#fff;padding:4px 8px;border-radius:4px;font-size:18px;margin-right:12px}
-.pen-time{font-size:22px;letter-spacing:1px}
-@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;color:#fff;width:100vw;height:100vh}
+#penalties-container{position:fixed;top:98px;left:50%;transform:translateX(-50%);width:740px;display:flex;justify-content:space-between;pointer-events:none;z-index:20}
+.pen-col{display:flex;flex-direction:column;gap:6px;width:230px}
+.pen-col-home{align-items:flex-start}
+.pen-col-away{align-items:flex-end}
+.pen-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(24,4,7,0.95);border:2px solid #ffcc00;border-left:6px solid #d90429;border-radius:6px;padding:5px 12px;box-shadow:0 6px 16px rgba(0,0,0,0.75);min-width:165px;animation:popIn 0.35s cubic-bezier(0.22,1,0.36,1)}
+.pen-col-away .pen-pill{border-left:2px solid #ffcc00;border-right:6px solid #d90429}
+.pen-player{font-size:15px;font-weight:900;color:#fff;text-transform:uppercase}
+.pen-time{font-size:16px;font-weight:900;color:#ffcc00;font-variant-numeric:tabular-nums;background:rgba(139,0,0,0.7);padding:2px 8px;border-radius:4px}
+@keyframes popIn{0%{opacity:0;transform:translateY(-10px) scale(0.9)}100%{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 </head>
 <body>
-<div id="wrapper">
-<div id="pen-header">KARY</div>
-<div id="penalties-box"></div>
+<div id="penalties-container">
+    <div class="pen-col pen-col-home" id="pen-home-list"></div>
+    <div class="pen-col pen-col-away" id="pen-away-list"></div>
 </div>
+
 <script>
-const KARY_ID="pzs4-wejherowo-kary-host-2026";
-function renderPenalties(list){
-const wrap=document.getElementById('wrapper'),box=document.getElementById('penalties-box');
-if(!list||list.length===0){wrap.style.display='none';box.innerHTML='';return}
-wrap.style.display='flex';
-const activeIds=list.map(p=>'pen-'+p.id);
-Array.from(box.children).forEach(el=>{if(!activeIds.includes(el.id))el.remove()});
-list.forEach(p=>{
-let m=Math.floor(p.timeLeft/60).toString().padStart(2,'0'),s=(p.timeLeft%60).toString().padStart(2,'0');
-let card=document.getElementById('pen-'+p.id);
-if(!card){card=document.createElement('div');card.id='pen-'+p.id;card.className='pen-card';card.innerHTML=`<span class="pen-team">${p.team}</span><span class="pen-num">${p.num}</span><span class="pen-time">${m}:${s}</span>`;box.appendChild(card)}else{card.querySelector('.pen-time').innerText=`${m}:${s}`}
-})}
-const lib=document.createElement('script');
-lib.src="https:"+"//unpkg.com"+"/peerjs@1.5.4"+"/dist/peerjs.min.js";
-lib.onload=()=>{const p=new Peer(KARY_ID);p.on('connection',c=>c.on('data',d=>{if(d&&d.penalties)renderPenalties(d.penalties)}))};
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+
+function renderPenalties(state){
+    const homeBox = document.getElementById('pen-home-list');
+    const awayBox = document.getElementById('pen-away-list');
+    if(!homeBox || !awayBox) return;
+    homeBox.innerHTML = '';
+    awayBox.innerHTML = '';
+    if(!state || !Array.isArray(state.penalties)) return;
+
+    state.penalties.forEach(p => {
+        if(!p || p.timeLeft <= 0) return;
+        const m = Math.floor(p.timeLeft / 60).toString().padStart(2, '0');
+        const s = (p.timeLeft % 60).toString().padStart(2, '0');
+        const el = document.createElement('div');
+        el.className = 'pen-pill';
+        el.innerHTML = `<span class="pen-player">🟥 #${p.num}</span><span class="pen-time">${m}:${s}</span>`;
+        if(p.side === 'away' || p.team === state.awayName){
+            awayBox.appendChild(el);
+        } else {
+            homeBox.appendChild(el);
+        }
+    });
+}
+
+function startMqtt(){
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    const client = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
+
+    client.on("connect", () => {
+        client.subscribe(TOPIC_PREFIX + "scoreboard");
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const d = JSON.parse(message.toString());
+            if(topic === TOPIC_PREFIX + "scoreboard" && d.state){
+                renderPenalties(d.state);
+            }
+        } catch(e) { console.error(e); }
+    });
+}
+
+const lib = document.createElement('script');
+lib.src = "KOLEDA/mqtt.min.js";
+lib.onerror = () => {
+    const fallback = document.createElement('script');
+    fallback.src = "mqtt.min.js";
+    fallback.onload = startMqtt;
+    document.head.appendChild(fallback);
+};
+lib.onload = startMqtt;
 document.head.appendChild(lib);
 </script>
 </body>
