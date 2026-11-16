@@ -20,6 +20,8 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
     <img id="slide-img-a" class="slide-layer" src="" alt="">
     <img id="slide-img-b" class="slide-layer" src="" alt="">
     <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe><video id="ad-vid" src="" loop playsinline></video><video id="ad-vid-b" src="" playsinline></video>
+    <video id="ad-vid" src="" loop playsinline></video>
+    <video id="ad-vid-b" src="" playsinline></video>
 </div>
 <video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
 <canvas id="tytani-stinger-canvas" width="1920" height="1080" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:60;pointer-events:none;display:none"></canvas>
@@ -36,9 +38,6 @@ let savedAdLoop = true;
 let savedAdMuted = false;
 let savedAdTime = 0;
 let pdfCurrentTheme = "xmas";
-let lineupQueue = [];
-let lineupIndex = 0;
-let isLineupPlaying = false;
 let lineupPipMeta = [];
 
 const stingerEl = document.getElementById('stinger-vid');
@@ -376,16 +375,19 @@ function resumeAdIfRemembered(){
     }
 }
 
+let lineupQueue = [];
+let lineupIndex = 0;
+let isLineupPlaying = false;
 let activeLineupVid = 'a';
 
-function startLineupSequence(list, pipList){
+
+function startLineupSequence(list){
     if(!Array.isArray(list) || list.length === 0) return;
-    lineupPipMeta = Array.isArray(pipList) ? pipList : [];
     pauseAdAndSaveTime();
     const adA = document.getElementById('ad-vid');
     const adB = document.getElementById('ad-vid-b');
-    if(adA){ adA.style.display = 'none'; adA.style.opacity = 1; }
-    if(adB){ adB.style.display = 'none'; adB.style.opacity = 1; }
+    if(adA){ adA.style.display = 'none'; adA.style.opacity = 1; adA.style.transform = 'translateX(0%)'; }
+    if(adB){ adB.style.display = 'none'; adB.style.opacity = 1; adB.style.transform = 'translateX(0%)'; }
 
     lineupQueue = list;
     lineupIndex = 0;
@@ -404,14 +406,6 @@ function playNextLineupItem(isFirst){
     const currEl = document.getElementById(activeLineupVid === 'a' ? 'ad-vid' : 'ad-vid-b');
     const prevEl = document.getElementById(activeLineupVid === 'a' ? 'ad-vid-b' : 'ad-vid');
     const srcUrl = lineupQueue[lineupIndex];
-        if(client && client.connected){
-        client.publish(TOPIC_PREFIX + "lineup_pip", JSON.stringify({
-            action: 'step',
-            index: lineupIndex,
-            total: lineupQueue.length,
-            item: lineupPipMeta.at(lineupIndex) || { img: '', title: srcUrl.replace(/\.[^/.]+$/, '') }
-        }));
-    }
 
     currEl.loop = false;
     currEl.muted = false;
@@ -428,12 +422,10 @@ function playNextLineupItem(isFirst){
         scr.style.transition = 'opacity 0.4s ease';
         scr.classList.add('visible');
     } else {
-        // Ustawiamy nowego zawodnika tuż za prawą krawędzią ekranu
         currEl.style.transition = 'none';
         currEl.style.transform = 'translateX(100%)';
-        void currEl.offsetWidth; // wymuszenie przeliczenia pozycji przed animacją
+        void currEl.offsetWidth;
 
-        // Jednoczesny wjazd nowego z prawej i wyjazd starego w lewo!
         currEl.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
         currEl.style.transform = 'translateX(0%)';
 
@@ -449,8 +441,29 @@ function playNextLineupItem(isFirst){
         }
     }
 
+        const isLastItem = (lineupIndex === lineupQueue.length - 1);
+    let earlyStingerTriggered = false;
+
+    if(isLastItem){
+        currEl.ontimeupdate = () => {
+            if(!isLineupPlaying || earlyStingerTriggered) return;
+            if(currEl.duration && (currEl.duration - currEl.currentTime) <= 0.95){
+                earlyStingerTriggered = true;
+                currEl.ontimeupdate = null;
+                finishLineupSequence();
+            }
+        };
+    } else {
+        currEl.ontimeupdate = null;
+    }
+
     currEl.onended = () => {
         if(!isLineupPlaying) return;
+        currEl.ontimeupdate = null;
+        if(isLastItem){
+            if(!earlyStingerTriggered) finishLineupSequence();
+            return;
+        }
         lineupIndex++;
         activeLineupVid = (activeLineupVid === 'a') ? 'b' : 'a';
         playNextLineupItem(false);
@@ -459,6 +472,7 @@ function playNextLineupItem(isFirst){
     currEl.onerror = () => {
         console.warn("Pominięto brakujący plik wideo:", srcUrl);
         if(!isLineupPlaying) return;
+        currEl.ontimeupdate = null;
         lineupIndex++;
         playNextLineupItem(isFirst);
     };
@@ -467,30 +481,38 @@ function playNextLineupItem(isFirst){
 }
 
 function finishLineupSequence(){
-        if(client && client.connected){
-        client.publish(TOPIC_PREFIX + "lineup_pip", JSON.stringify({ action: 'hide' }));
-    }
     isLineupPlaying = false;
     lineupQueue = [];
     const adA = document.getElementById('ad-vid');
     const adB = document.getElementById('ad-vid-b');
-    [adA, adB].forEach(v => {
-        if(v){
-            v.onended = null;
-            v.onerror = null;
-            v.onplaying = null;
-            v.pause();
-            v.style.transition = 'none';
-            v.style.transform = 'translateX(0%)';
-            v.style.opacity = 1;
-        }
-    });
-    if(adB) adB.style.display = 'none';
 
-    if(adActiveMemory && savedAdUrl){
-        resumeAdIfRemembered();
+    const cleanupAndResume = () => {
+        [adA, adB].forEach(v => {
+            if(v){
+                v.onended = null;
+                v.onerror = null;
+                v.ontimeupdate = null;
+                v.pause();
+                v.style.transition = 'none';
+                v.style.transform = 'translateX(0%)';
+                v.style.opacity = 1;
+            }
+        });
+        if(adB) adB.style.display = 'none';
+
+        if(adActiveMemory && savedAdUrl){
+            showAdVideo(savedAdUrl, savedAdLoop, savedAdMuted, savedAdTime);
+        } else {
+            const scr = document.getElementById('slide-screen');
+            if(scr){ scr.style.transition = 'none'; scr.classList.remove('visible'); }
+            if(adA){ adA.pause(); adA.style.display = 'none'; }
+        }
+    };
+
+    if(pdfCurrentTheme === 'tytani'){
+        playTytaniCanvasStinger(cleanupAndResume);
     } else {
-        hideSlideWithStinger();
+        cleanupAndResume();
     }
 }
 
@@ -549,7 +571,7 @@ mqttLib.onload = () => {
                 stingerEl.src = (d.theme === 'tytani') ? 'stinger_tytani.webm' : 'stinger_samochodowka_pzs4.webm';
                 stingerEl.load();
             }
-            if (d.action === 'startLineup') startLineupSequence(d.list, d.pipList);
+            if (d.action === 'startLineup') startLineupSequence(d.list);
             if (d.action === 'stopLineup') finishLineupSequence();
 
         } catch (e) { console.error(e); }

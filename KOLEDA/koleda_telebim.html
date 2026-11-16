@@ -1701,25 +1701,79 @@ function saveTytaniLineup(){
     pub("lineup_draft", { raw: val }, true);
 }
 
+let pipSyncTimers = [];
+
+function clearPipSyncTimers(){
+    pipSyncTimers.forEach(t => clearTimeout(t));
+    pipSyncTimers = [];
+    pub("lineup_pip", { action: 'hide' });
+}
+
 function startTytaniLineup(){
     const raw = document.getElementById('in-tytani-lineup').value.trim();
     const lines = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
-    if(lines.length === 0) return alert("Wpisz przynajmniej jeden plik wideo (np. intro_tytani.mp4 | SKLAD/intro.jpg)!");
+    if(lines.length === 0) return alert("Wpisz przynajmniej jeden plik wideo!");
     saveTytaniLineup();
+    clearPipSyncTimers();
 
-    const videoFiles = lines.map(l => (l.split('|').at(0) || '').trim());
-    const pipItems = lines.map(l => {
-        const parts = l.split('|');
-        const file = (parts.at(0) || '').trim();
-        const imgUrl = (parts.at(1) || '').trim();
-        const title = (parts.at(2) || file.replace(/\.[^/.]+$/, '')).trim();
-        return { file: file, img: imgUrl, title: title };
+    const videoFiles = [];
+    const schedule = [];
+
+    lines.forEach(line => {
+        const parts = line.split('|');
+        const file = (parts[0] || '').trim();
+        const sec = parseFloat((parts[1] || '5').trim()) || 5;
+        const imgUrl = (parts[2] || '').trim();
+        if(file){
+            videoFiles.push(file);
+            schedule.push({ sec: sec, img: imgUrl });
+        }
     });
 
-    pub("pdf", { action: 'startLineup', list: videoFiles, pipList: pipItems });
+    // 1. Wysyłamy czystą listę plików wideo do koleda_pdf.html (niczego nie zmieniamy w telebimie!)
+    pub("pdf", { action: 'startLineup', list: videoFiles });
+
+    // Wstępne pobranie wszystkich screenów u Śmigla w czasie trwania Intro
+    const allImgs = schedule.map(s => s.img).filter(u => u !== '');
+    if(allImgs.length > 0) pub("lineup_pip", { action: 'preload', images: allImgs });
+
+    // 2. Harmonogram wysyłania zdjęć do okienka PiP u EL Śmigla
+    let elapsedMs = 0;
+    const totalSlides = schedule.filter(s => s.img !== '').length;
+    let visibleIdx = 0;
+
+    schedule.forEach(step => {
+        const currentDelay = elapsedMs;
+        if(step.img){
+            const slideNum = visibleIdx;
+            const t = setTimeout(() => {
+                pub("lineup_pip", {
+                    action: 'step',
+                    index: slideNum,
+                    total: totalSlides || 1,
+                    item: { img: step.img, title: '' }
+                });
+            }, currentDelay);
+            pipSyncTimers.push(t);
+            visibleIdx++;
+        } else {
+            const t = setTimeout(() => {
+                pub("lineup_pip", { action: 'hide' });
+            }, currentDelay);
+            pipSyncTimers.push(t);
+        }
+        elapsedMs += Math.round(step.sec * 1000);
+    });
+
+    // Automatyczne schowanie okienka PiP po zakończeniu ostatniego zawodnika
+    const endTimer = setTimeout(() => {
+        pub("lineup_pip", { action: 'hide' });
+    }, elapsedMs);
+    pipSyncTimers.push(endTimer);
 }
 
 function stopTytaniLineup(){
+    clearPipSyncTimers();
     pub("pdf", { action: 'stopLineup' });
 }
 document.head.appendChild(mqttLib);
