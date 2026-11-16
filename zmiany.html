@@ -74,6 +74,14 @@ function updatePipLineup(d){
     const counter = document.getElementById('pip-step-counter');
     if(!box || !stage) return;
 
+        if(d.action === 'preload' && Array.isArray(d.images)){
+        d.images.forEach(src => {
+            if(!src) return;
+            const preImg = new Image();
+            preImg.src = src;
+        });
+        return;
+    }
     if(d.action === 'hide'){
         box.classList.remove('active');
         setTimeout(() => { stage.innerHTML = ''; }, 600);
