@@ -192,7 +192,7 @@ body.theme-tytani #songs-pilot-section{display:none}
 #tytani-video-section{display:none}
 body.theme-tytani #tytani-video-section{display:block}
 /* PLANSZA TURNIEJOWA (KOLEJNOŚĆ MECZÓW + KLASYFIKACJA KOŃCOWA 1:1 JAK Z PPT) */
-#tournament-board{position:fixed;inset:0;z-index:44;background:url('tlo_turniej.jpg') center/cover no-repeat #06111f;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:75px 80px 50px 80px;text-align:center;opacity:0;pointer-events:none;transition:opacity 0.5s ease}
+#tournament-board::before{content:'';position:absolute;inset:0;background:url('tlo_turniej.jpg') center/cover no-repeat;transform:scale(1.06);z-index:-1}
 #tournament-board.active{opacity:1}
 .tb-header{font-family:'Roboto Slab',serif;font-size:68px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:8px;line-height:1.1}
 .tb-subheader{font-family:'Roboto Slab',serif;font-size:54px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:24px}
@@ -206,6 +206,15 @@ body.theme-tytani #tytani-video-section{display:block}
 .tb-rank-3{color:#d9822b}
 .tb-rank-other{color:#ffffff}
 body.theme-tytani #tb-pilot-box{display:none !important}
+#tournament-board{inset:-6px !important;border:none !important;outline:none !important}
+#tournament-board::before{inset:-30px !important;transform:scale(1.08) !important}
+#tournament-board{align-items:center !important;text-align:center !important}
+.tb-list{align-items:center !important;width:100% !important;margin-left:auto !important;margin-right:auto !important}
+.tb-header,.tb-subheader,.tb-match-row,.tb-rank-row{text-align:center !important;width:100% !important}
+#tournament-board{padding-top:25px !important}
+.tb-header{line-height:1.35 !important;padding-top:12px !important}
+#tytani-lineup-section{display:none}
+body.theme-tytani #tytani-lineup-section{display:block}
 </style>
 </head>
 <body>
@@ -342,7 +351,7 @@ body.theme-tytani #tb-pilot-box{display:none !important}
                     <button type="button" class="btn" style="background:#5bc0eb;color:#111;padding:6px 12px" onclick="setTbTextColor('#5bc0eb')">Niebieski</button>
                     <button type="button" class="btn" style="background:#ff4d6d;color:#fff;padding:6px 12px" onclick="setTbTextColor('#ff4d6d')">Czerwony</button>
                     <button type="button" class="btn" style="background:#00e676;color:#111;padding:6px 12px" onclick="setTbTextColor('#00e676')">Zielony</button>
-                    <input type="color" id="tb-text-color" value="#ffe600" oninput="syncTbInputs()" style="width:44px;height:34px;padding:2px;margin:0;cursor:pointer" title="Dowolny kolor">
+                    <input type="color" id="tb-text-color" value="#ffe600" onchange="setTbTextColor(this.value)" style="width:44px;height:34px;padding:2px;margin:0;cursor:pointer" title="Dowolny kolor">
                 </div>
     
             <div id="tb-tab-matches">
@@ -378,6 +387,17 @@ body.theme-tytani #tb-pilot-box{display:none !important}
             <button class="btn btn-blue" onclick="document.getElementById('ad-file-picker').click()">📂 WYBIERZ PLIK Z KOMPUTERA (MP4/MOV)</button>
             <span id="ad-file-info" style="font-size:13px;color:#ffcc00;margin-left:8px"></span>
         </div>
+            <div id="tytani-lineup-section" class="p-box" style="border-color:#d90429">
+        <h3>🔥 PREZENTACJA ZAWODNIKÓW (INTRO + SKŁAD -> POWRÓT DO REKLAM)</h3>
+        <p style="font-size:13px;color:#ccc;margin-bottom:8px">
+            Wpisz nazwy plików wideo z folderu <b>KOLEDA</b> (linia po linii — najpierw intro 20s, potem zawodnicy 5s). Po ostatnim filmie włączy się stinger i wrócą reklamy:
+        </p>
+        <textarea id="in-tytani-lineup" rows="6" oninput="saveTytaniLineup()" placeholder="intro_tytani.mp4&#10;zawodnik1.mp4&#10;zawodnik2.mp4&#10;zawodnik3.mp4"></textarea>
+        <div style="margin-top:8px">
+            <button class="btn btn-tytani" onclick="startTytaniLineup()">🔥 START PREZENTACJI SKŁADU</button>
+            <button class="btn btn-red" onclick="stopTytaniLineup()">⏹️ PRZERWIJ I WRÓĆ DO REKLAM</button>
+        </div>
+    </div>
         <div style="margin-bottom:10px">
             <button class="btn btn-tytani" onclick="startAdVideoNow()">▶️ ODTWÓRZ REKLAMY NA TELEBIMIE</button>
             <button class="btn btn-orange" onclick="pauseAdVideoNow()">⏸️ PAUZA</button>
@@ -510,6 +530,10 @@ let countdownInterval = null;
 let customBadgeText = "";
 
 function pub(subtopic, payload, retainFlag=false){
+    if(subtopic === 'pdf' && payload && payload.action !== 'pauseAd' && payload.action !== 'stopAdPermanent'){
+        const tb = document.getElementById('tournament-board');
+        if(tb && tb.classList.contains('active')) hideTournamentBoard();
+    }
     if(client && client.connected){
         payload.sender = MY_SENDER_ID;
         client.publish(TOPIC_PREFIX + subtopic, JSON.stringify(payload), { qos: 1, retain: retainFlag });
@@ -1110,6 +1134,7 @@ function startMqttEngine(){
         client.subscribe(TOPIC_PREFIX + "tournament");
         if (isPilotMode) {
             client.subscribe(TOPIC_PREFIX + "tournament_draft");
+            client.subscribe(TOPIC_PREFIX + "lineup_draft");
             client.subscribe(TOPIC_PREFIX + "list");
             client.subscribe(TOPIC_PREFIX + "cheerlist");
             client.subscribe(TOPIC_PREFIX + "speakers");
@@ -1204,6 +1229,13 @@ function startMqttEngine(){
                 if (topic === TOPIC_PREFIX + "tournament_draft" && isPilotMode && d.sender !== MY_SENDER_ID) {
                 fillTbPilotInputs(d);
             }
+            }
+                        if (topic === TOPIC_PREFIX + "lineup_draft" && isPilotMode && d.sender !== MY_SENDER_ID && typeof d.raw === 'string') {
+                const inp = document.getElementById('in-tytani-lineup');
+                if(inp && document.activeElement !== inp){
+                    inp.value = d.raw;
+                    localStorage.setItem('pzs4_tytani_lineup', d.raw);
+                }
             }
         } catch (e) { console.error(e); }
     });
@@ -1379,8 +1411,12 @@ function switchTbTab(tab){
     document.getElementById('tb-tab-standings').style.display = (tab === 'standings') ? 'block' : 'none';
 }
 
+let selectedTbColor = '#ffe600';
+
 function setTbTextColor(hex){
-    document.getElementById('tb-text-color').value = hex;
+    selectedTbColor = hex;
+    const inp = document.getElementById('tb-text-color');
+    if(inp) inp.value = hex;
     syncTbInputs();
     publishTournamentBoard('matches');
 }
@@ -1389,7 +1425,7 @@ function getTbDraftObject(){
     return {
         sub: document.getElementById('tb-group-name').value,
         raw: document.getElementById('tb-matches-raw').value,
-        color: document.getElementById('tb-text-color').value,
+        color: selectedTbColor,
         ranks: Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value)
     };
 }
@@ -1402,7 +1438,11 @@ function fillTbPilotInputs(d){
     if(!d) return;
     if(typeof d.sub === 'string') document.getElementById('tb-group-name').value = d.sub;
     if(typeof d.raw === 'string') document.getElementById('tb-matches-raw').value = d.raw;
-    if(typeof d.color === 'string') document.getElementById('tb-text-color').value = d.color;
+    if(typeof d.color === 'string' && d.color){
+        selectedTbColor = d.color;
+        const inp = document.getElementById('tb-text-color');
+        if(inp) inp.value = d.color;
+    }
     if(Array.isArray(d.ranks)){
         Array.of(1, 2, 3, 4, 5, 6).forEach((num, idx) => {
             const inp = document.getElementById('tb-rank-' + num);
@@ -1414,24 +1454,23 @@ function fillTbPilotInputs(d){
 function publishTournamentBoard(mode){
     hideSlidesOnScreen();
     syncTbInputs();
-    if(mode === 'matches'){
-        const sub = document.getElementById('tb-group-name').value.trim();
-        const raw = document.getElementById('tb-matches-raw').value.trim();
-        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw }, true);
-    } else {
-        const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
-        pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
-    }
+    const sendBoard = () => {
         if(mode === 'matches'){
-        const sub = document.getElementById('tb-group-name').value.trim();
-        const raw = document.getElementById('tb-matches-raw').value.trim();
-        const color = document.getElementById('tb-text-color').value || '#ffe600';
-        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: color }, true);
-    }
+            const sub = document.getElementById('tb-group-name').value.trim();
+            const raw = document.getElementById('tb-matches-raw').value.trim();
+            pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
+        } else {
+            const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
+            pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
+        }
+    };
+    setTimeout(sendBoard, 1000);
 }
 
 function hideTournamentBoard(){
     pub("tournament", { action: 'hide' }, true);
+    const board = document.getElementById('tournament-board');
+    if(board) board.classList.remove('active');
 }
 
 function applyTournamentBoard(d){
@@ -1440,20 +1479,42 @@ function applyTournamentBoard(d){
     const subEl = document.getElementById('tb-disp-sub');
     const rowsEl = document.getElementById('tb-disp-rows');
     if(!board || !rowsEl) return;
-        if(d.mode === 'matches'){
+
+    if(d.action === 'hide'){
+        board.classList.remove('active');
+        return;
+    }
+
+    rowsEl.innerHTML = '';
+    if(d.mode === 'matches'){
         titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
         subEl.innerText = d.sub || '';
         subEl.style.display = d.sub ? 'block' : 'none';
         const baseColor = d.color || '#ffe600';
 
+        const colorMap = {
+            'bialy': '#ffffff', 'biały': '#ffffff',
+            'zolty': '#ffe600', 'żółty': '#ffe600', 'zloty': '#ffd700', 'złoty': '#ffd700',
+            'czerwony': '#ff4d6d',
+            'zielony': '#00e676',
+            'niebieski': '#5bc0eb',
+            'rozowy': '#ff66c4', 'różowy': '#ff66c4',
+            'pomaranczowy': '#ff9f1c', 'pomarańczowy': '#ff9f1c',
+            'fioletowy': '#b5179e',
+            'szary': '#adb5bd'
+        };
+
         const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
         lines.forEach((line, idx) => {
             let cleanLine = line;
             let rowColor = baseColor;
-            if(/\[bialy\]/i.test(cleanLine)){ rowColor = '#ffffff'; cleanLine = cleanLine.replace(/\[bialy\]/i, ''); }
-            else if(/\[czerwony\]/i.test(cleanLine)){ rowColor = '#ff4d6d'; cleanLine = cleanLine.replace(/\[czerwony\]/i, ''); }
-            else if(/\[zielony\]/i.test(cleanLine)){ rowColor = '#00e676'; cleanLine = cleanLine.replace(/\[zielony\]/i, ''); }
-            else if(/\[niebieski\]/i.test(cleanLine)){ rowColor = '#5bc0eb'; cleanLine = cleanLine.replace(/\[niebieski\]/i, ''); }
+            const tagMatch = cleanLine.match(/\[([^\]]+)\]/);
+            if(tagMatch){
+                const key = tagMatch.at(1).trim().toLowerCase();
+                if(colorMap[key]) rowColor = colorMap[key];
+                else if(key.startsWith('#')) rowColor = key;
+                cleanLine = cleanLine.replace(/\[[^\]]+\]/, '');
+            }
 
             const parts = cleanLine.split('|');
             const teams = (parts.at(0) || '').trim();
@@ -1464,11 +1525,21 @@ function applyTournamentBoard(d){
             div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
             rowsEl.appendChild(div);
         });
+    } else if(d.mode === 'standings'){
+        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
+        subEl.style.display = 'none';
+        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
+        (d.ranks || Array.of()).forEach((team, idx) => {
+            if(!team) return;
+            const div = document.createElement('div');
+            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
+            div.className = `tb-rank-row ${cls}`;
+            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
+            rowsEl.appendChild(div);
+        });
     }
-    if(d.action === 'hide'){
-        board.classList.remove('active');
-        return;
-    }
+    board.classList.add('active');
+
 
     rowsEl.innerHTML = '';
     if(d.mode === 'matches'){
@@ -1503,6 +1574,154 @@ function applyTournamentBoard(d){
 }
 
 if(isPilotMode) renderSbPilotUI();
+selectedTbColor = '#ffe600';
+
+function setTbTextColor(hex){
+    selectedTbColor = hex;
+    const inp = document.getElementById('tb-text-color');
+    if(inp) inp.value = hex;
+    syncTbInputs();
+    publishTournamentBoard('matches');
+}
+
+function getTbDraftObject(){
+    return {
+        sub: document.getElementById('tb-group-name').value,
+        raw: document.getElementById('tb-matches-raw').value,
+        color: selectedTbColor,
+        ranks: Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value)
+    };
+}
+
+function fillTbPilotInputs(d){
+    if(!d) return;
+    if(typeof d.sub === 'string') document.getElementById('tb-group-name').value = d.sub;
+    if(typeof d.raw === 'string') document.getElementById('tb-matches-raw').value = d.raw;
+    if(typeof d.color === 'string' && d.color){
+        selectedTbColor = d.color;
+        const inp = document.getElementById('tb-text-color');
+        if(inp) inp.value = d.color;
+    }
+    if(Array.isArray(d.ranks)){
+        Array.of(1, 2, 3, 4, 5, 6).forEach((num, idx) => {
+            const inp = document.getElementById('tb-rank-' + num);
+            if(inp && typeof d.ranks.at(idx) === 'string') inp.value = d.ranks.at(idx);
+        });
+    }
+}
+
+function publishTournamentBoard(mode){
+    hideSlidesOnScreen();
+    syncTbInputs();
+    if(mode === 'matches'){
+        const sub = document.getElementById('tb-group-name').value.trim();
+        const raw = document.getElementById('tb-matches-raw').value.trim();
+        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
+    } else {
+        const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
+        pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
+    }
+}
+
+function applyTournamentBoard(d){
+    const board = document.getElementById('tournament-board');
+    const titleEl = document.getElementById('tb-disp-title');
+    const subEl = document.getElementById('tb-disp-sub');
+    const rowsEl = document.getElementById('tb-disp-rows');
+    if(!board || !rowsEl) return;
+
+    if(d.action === 'hide'){
+        board.classList.remove('active');
+        return;
+    }
+
+    rowsEl.innerHTML = '';
+    if(d.mode === 'matches'){
+        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+        const baseColor = d.color || '#ffe600';
+
+        const colorMap = {
+            'bialy': '#ffffff', 'biały': '#ffffff',
+            'zolty': '#ffe600', 'żółty': '#ffe600', 'zloty': '#ffd700', 'złoty': '#ffd700',
+            'czerwony': '#ff4d6d',
+            'zielony': '#00e676',
+            'niebieski': '#5bc0eb',
+            'rozowy': '#ff66c4', 'różowy': '#ff66c4',
+            'pomaranczowy': '#ff9f1c', 'pomarańczowy': '#ff9f1c',
+            'fioletowy': '#b5179e',
+            'szary': '#adb5bd'
+        };
+
+        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
+        lines.forEach((line, idx) => {
+            let cleanLine = line;
+            let rowColor = baseColor;
+            const tagMatch = cleanLine.match(/\[([^\]]+)\]/);
+            if(tagMatch){
+                const key = tagMatch.at(1).trim().toLowerCase();
+                if(colorMap[key]) rowColor = colorMap[key];
+                else if(key.startsWith('#')) rowColor = key;
+                cleanLine = cleanLine.replace(/\[[^\]]+\]/, '');
+            }
+
+            const parts = cleanLine.split('|');
+            const teams = (parts.at(0) || '').trim();
+            const score = (parts.at(1) || '').trim();
+            const div = document.createElement('div');
+            div.className = 'tb-match-row';
+            div.style.setProperty('color', rowColor, 'important');
+            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
+            rowsEl.appendChild(div);
+        });
+    } else if(d.mode === 'standings'){
+        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
+        subEl.style.display = 'none';
+        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
+        (d.ranks || Array.of()).forEach((team, idx) => {
+            if(!team) return;
+            const div = document.createElement('div');
+            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
+            div.className = `tb-rank-row ${cls}`;
+            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
+            rowsEl.appendChild(div);
+        });
+    }
+    board.classList.add('active');
+}
+const savedLineupTxt = localStorage.getItem('pzs4_tytani_lineup');
+if(savedLineupTxt && document.getElementById('in-tytani-lineup')){
+    document.getElementById('in-tytani-lineup').value = savedLineupTxt;
+}
+
+function saveTytaniLineup(){
+    const val = document.getElementById('in-tytani-lineup').value;
+    localStorage.setItem('pzs4_tytani_lineup', val);
+    pub("lineup_draft", { raw: val }, true);
+}
+
+function startTytaniLineup(){
+    const raw = document.getElementById('in-tytani-lineup').value.trim();
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
+    if(lines.length === 0) return alert("Wpisz przynajmniej jeden plik wideo (np. intro_tytani.mp4 | SKLAD/intro.jpg)!");
+    saveTytaniLineup();
+
+    const videoFiles = lines.map(l => (l.split('|').at(0) || '').trim());
+    const pipItems = lines.map(l => {
+        const parts = l.split('|');
+        const file = (parts.at(0) || '').trim();
+        const imgUrl = (parts.at(1) || '').trim();
+        const title = (parts.at(2) || file.replace(/\.[^/.]+$/, '')).trim();
+        return { file: file, img: imgUrl, title: title };
+    });
+
+    pub("pdf", { action: 'startLineup', list: videoFiles, pipList: pipItems });
+}
+
+function stopTytaniLineup(){
+    pub("pdf", { action: 'stopLineup' });
+}
 document.head.appendChild(mqttLib);
 </script>
 </body>

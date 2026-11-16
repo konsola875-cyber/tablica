@@ -12,14 +12,14 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 .slide-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity 0.45s ease-in-out}
 #web-frame{width:100vw;height:100vh;border:none;display:none;background:#000;transform:scale(1.14);transition:opacity 0.35s ease;pointer-events:none}
 #stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;opacity:0}
-#ad-vid{position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;display:none;z-index:5}
+#ad-vid,#ad-vid-b{position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;display:none;z-index:5;transition:transform 0.55s cubic-bezier(0.22,1,0.36,1)}
 </style>
 </head>
 <body>
 <div id="slide-screen">
     <img id="slide-img-a" class="slide-layer" src="" alt="">
     <img id="slide-img-b" class="slide-layer" src="" alt="">
-    <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>    <video id="ad-vid" src="" loop playsinline></video>
+    <iframe id="web-frame" src="" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe><video id="ad-vid" src="" loop playsinline></video><video id="ad-vid-b" src="" playsinline></video>
 </div>
 <video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
 <canvas id="tytani-stinger-canvas" width="1920" height="1080" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:60;pointer-events:none;display:none"></canvas>
@@ -36,6 +36,10 @@ let savedAdLoop = true;
 let savedAdMuted = false;
 let savedAdTime = 0;
 let pdfCurrentTheme = "xmas";
+let lineupQueue = [];
+let lineupIndex = 0;
+let isLineupPlaying = false;
+let lineupPipMeta = [];
 
 const stingerEl = document.getElementById('stinger-vid');
 stingerEl.onerror = () => {
@@ -372,6 +376,124 @@ function resumeAdIfRemembered(){
     }
 }
 
+let activeLineupVid = 'a';
+
+function startLineupSequence(list, pipList){
+    if(!Array.isArray(list) || list.length === 0) return;
+    lineupPipMeta = Array.isArray(pipList) ? pipList : [];
+    pauseAdAndSaveTime();
+    const adA = document.getElementById('ad-vid');
+    const adB = document.getElementById('ad-vid-b');
+    if(adA){ adA.style.display = 'none'; adA.style.opacity = 1; }
+    if(adB){ adB.style.display = 'none'; adB.style.opacity = 1; }
+
+    lineupQueue = list;
+    lineupIndex = 0;
+    isLineupPlaying = true;
+    activeLineupVid = 'a';
+    playNextLineupItem(true);
+}
+
+function playNextLineupItem(isFirst){
+    if(!isLineupPlaying || lineupIndex >= lineupQueue.length){
+        finishLineupSequence();
+        return;
+    }
+
+    const scr = document.getElementById('slide-screen');
+    const currEl = document.getElementById(activeLineupVid === 'a' ? 'ad-vid' : 'ad-vid-b');
+    const prevEl = document.getElementById(activeLineupVid === 'a' ? 'ad-vid-b' : 'ad-vid');
+    const srcUrl = lineupQueue[lineupIndex];
+        if(client && client.connected){
+        client.publish(TOPIC_PREFIX + "lineup_pip", JSON.stringify({
+            action: 'step',
+            index: lineupIndex,
+            total: lineupQueue.length,
+            item: lineupPipMeta.at(lineupIndex) || { img: '', title: srcUrl.replace(/\.[^/.]+$/, '') }
+        }));
+    }
+
+    currEl.loop = false;
+    currEl.muted = false;
+    currEl.onended = null;
+    currEl.onerror = null;
+    currEl.src = srcUrl;
+    currEl.style.display = 'block';
+    currEl.style.zIndex = 6;
+    if(prevEl) prevEl.style.zIndex = 5;
+
+    if(isFirst){
+        currEl.style.transition = 'none';
+        currEl.style.transform = 'translateX(0%)';
+        scr.style.transition = 'opacity 0.4s ease';
+        scr.classList.add('visible');
+    } else {
+        // Ustawiamy nowego zawodnika tuż za prawą krawędzią ekranu
+        currEl.style.transition = 'none';
+        currEl.style.transform = 'translateX(100%)';
+        void currEl.offsetWidth; // wymuszenie przeliczenia pozycji przed animacją
+
+        // Jednoczesny wjazd nowego z prawej i wyjazd starego w lewo!
+        currEl.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
+        currEl.style.transform = 'translateX(0%)';
+
+        if(prevEl){
+            prevEl.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
+            prevEl.style.transform = 'translateX(-100%)';
+            setTimeout(() => {
+                if(prevEl.style.transform === 'translateX(-100%)'){
+                    prevEl.pause();
+                    prevEl.style.display = 'none';
+                }
+            }, 580);
+        }
+    }
+
+    currEl.onended = () => {
+        if(!isLineupPlaying) return;
+        lineupIndex++;
+        activeLineupVid = (activeLineupVid === 'a') ? 'b' : 'a';
+        playNextLineupItem(false);
+    };
+
+    currEl.onerror = () => {
+        console.warn("Pominięto brakujący plik wideo:", srcUrl);
+        if(!isLineupPlaying) return;
+        lineupIndex++;
+        playNextLineupItem(isFirst);
+    };
+
+    currEl.play().catch(e => console.warn("Błąd odtwarzania prezentacji:", e));
+}
+
+function finishLineupSequence(){
+        if(client && client.connected){
+        client.publish(TOPIC_PREFIX + "lineup_pip", JSON.stringify({ action: 'hide' }));
+    }
+    isLineupPlaying = false;
+    lineupQueue = [];
+    const adA = document.getElementById('ad-vid');
+    const adB = document.getElementById('ad-vid-b');
+    [adA, adB].forEach(v => {
+        if(v){
+            v.onended = null;
+            v.onerror = null;
+            v.onplaying = null;
+            v.pause();
+            v.style.transition = 'none';
+            v.style.transform = 'translateX(0%)';
+            v.style.opacity = 1;
+        }
+    });
+    if(adB) adB.style.display = 'none';
+
+    if(adActiveMemory && savedAdUrl){
+        resumeAdIfRemembered();
+    } else {
+        hideSlideWithStinger();
+    }
+}
+
 function controlAdVideo(cmd, val){
     const adVid = document.getElementById('ad-vid');
     if(!adVid) return;
@@ -427,11 +549,8 @@ mqttLib.onload = () => {
                 stingerEl.src = (d.theme === 'tytani') ? 'stinger_tytani.webm' : 'stinger_samochodowka_pzs4.webm';
                 stingerEl.load();
             }
-            if (topic === TOPIC_PREFIX + "tournament" && d.action === 'show') {
-                const scr = document.getElementById('slide-screen');
-                if (scr) { scr.style.transition = 'opacity 0.3s ease'; scr.classList.remove('visible'); }
-                return;
-            }
+            if (d.action === 'startLineup') startLineupSequence(d.list, d.pipList);
+            if (d.action === 'stopLineup') finishLineupSequence();
 
         } catch (e) { console.error(e); }
     });
