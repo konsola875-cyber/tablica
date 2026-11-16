@@ -81,6 +81,11 @@ function updatePipLineup(d){
     }
 
     if(d.action === 'step' && d.item){
+            if(d.action === 'step' && d.item){
+        if(!d.item.img && !d.item.title){
+            box.classList.remove('active');
+            return;
+        }
         counter.innerText = `${(d.index || 0) + 1} / ${d.total || 1}`;
         const prevSlide = stage.querySelector('.pip-slide.current');
 
