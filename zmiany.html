@@ -2,11 +2,13 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>KS Tytani Wejherowo - Zmiana Zawodników</title>
+<title>KS Tytani Wejherowo - Zmiany i Skład PiP</title>
 <link href="https://googleapis.com" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;color:#fff;width:100vw;height:100vh}
+
+/* BELKA ZMIANY ZAWODNIKÓW (DÓŁ ŚRODEK) */
 #sub-card{position:fixed;bottom:46px;left:50%;transform:translateX(-50%) translateY(150px);opacity:0;pointer-events:none;background:rgba(24,4,7,0.96);border:3px solid #ffcc00;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,0.85);overflow:hidden;min-width:440px;transition:transform 0.55s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease;z-index:30}
 #sub-card.active{transform:translateX(-50%) translateY(0);opacity:1}
 .sub-header{background:linear-gradient(90deg,#8b0000 0%,#d90429 50%,#8b0000 100%);color:#ffcc00;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:7px 20px;text-align:center;border-bottom:2px solid #ffcc00}
@@ -15,15 +17,37 @@ body{font-family:'Montserrat',sans-serif;background:transparent;overflow:hidden;
 .sub-out{color:#ff4d6d}
 .sub-in{color:#00e676}
 .sub-num{background:rgba(255,255,255,0.1);padding:4px 12px;border-radius:6px;color:#fff;border:1px solid rgba(255,255,255,0.25)}
+
+/* OKIENKO PIP PREZENTACJI ZAWODNIKÓW (PRAWY DOLNY RÓG TRANSMISJI) */
+#pip-lineup-box{position:fixed;bottom:34px;right:34px;width:440px;background:rgba(20,4,7,0.96);border:4px solid #ffcc00;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,0.9);overflow:hidden;transform:translateX(520px);opacity:0;pointer-events:none;transition:transform 0.6s cubic-bezier(0.22,1,0.36,1),opacity 0.45s ease;z-index:35}
+#pip-lineup-box.active{transform:translateX(0);opacity:1}
+.pip-top-bar{background:linear-gradient(90deg,#8b0000 0%,#d90429 50%,#8b0000 100%);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #ffcc00}
+.pip-badge{font-size:13px;font-weight:900;color:#ffcc00;letter-spacing:1.2px;text-transform:uppercase}
+.pip-counter{font-size:12px;font-weight:900;background:#1a0305;color:#fff;padding:2px 8px;border-radius:4px;border:1px solid #ffcc00}
+.pip-stage{position:relative;width:100%;height:248px;background:#0a0a0c;overflow:hidden}
+.pip-slide{position:absolute;inset:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 0.55s cubic-bezier(0.22,1,0.36,1)}
+.pip-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.pip-fallback{padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;height:100%;background:radial-gradient(circle at center,#590000 0%,#09090b 100%)}
+.pip-fallback img{width:110px;height:110px;object-fit:contain}
+.pip-fallback-title{font-size:24px;font-weight:900;color:#ffcc00;text-transform:uppercase;text-shadow:0 4px 10px rgba(0,0,0,0.9)}
 </style>
 </head>
 <body>
+
 <div id="sub-card">
     <div class="sub-header" id="sub-team-name">ZMIANA — TYTANI WEJHEROWO</div>
     <div class="sub-body">
-        <div class="sub-row sub-out"><span>⬇️ SCHODZI</span><span class="sub-num" id="disp-out-num">#0</span></div>
-        <div class="sub-row sub-in"><span>⬆️ WCHODZI</span><span class="sub-num" id="disp-in-num">#0</span></div>
+        <div class="sub-row sub-out"><span>⬇️ SCHODZI</span><span class="sub-num" id="disp-out-num">0</span></div>
+        <div class="sub-row sub-in"><span>⬆️ WCHODZI</span><span class="sub-num" id="disp-in-num">0</span></div>
     </div>
+</div>
+
+<div id="pip-lineup-box">
+    <div class="pip-top-bar">
+        <span class="pip-badge">🛡️ SKŁAD TYTANÓW</span>
+        <span class="pip-counter" id="pip-step-counter">1 / 1</span>
+    </div>
+    <div class="pip-stage" id="pip-stage"></div>
 </div>
 
 <script>
@@ -44,12 +68,60 @@ function showSubBanner(d){
     }, 10000);
 }
 
+function updatePipLineup(d){
+    const box = document.getElementById('pip-lineup-box');
+    const stage = document.getElementById('pip-stage');
+    const counter = document.getElementById('pip-step-counter');
+    if(!box || !stage) return;
+
+    if(d.action === 'hide'){
+        box.classList.remove('active');
+        setTimeout(() => { stage.innerHTML = ''; }, 600);
+        return;
+    }
+
+    if(d.action === 'step' && d.item){
+        counter.innerText = `${(d.index || 0) + 1} / ${d.total || 1}`;
+        const prevSlide = stage.querySelector('.pip-slide.current');
+
+        const newSlide = document.createElement('div');
+        newSlide.className = 'pip-slide current';
+        if(d.item.img){
+            newSlide.innerHTML = `<img src="${d.item.img}" alt="" onerror="this.parentElement.innerHTML='<div class=\\'pip-fallback\\'><img src=\\'KOLEDA/logo_tytani.png\\'><div class=\\'pip-fallback-title\\'>${(d.item.title || '').replace(/'/g,'')}</div></div>'">`;
+        } else {
+            newSlide.innerHTML = `<div class="pip-fallback"><img src="KOLEDA/logo_tytani.png" alt=""><div class="pip-fallback-title">${d.item.title || 'TYTANI WEJHEROWO'}</div></div>`;
+        }
+
+        if(!box.classList.contains('active') || !prevSlide){
+            stage.innerHTML = '';
+            newSlide.style.transform = 'translateX(0%)';
+            stage.appendChild(newSlide);
+            box.classList.add('active');
+        } else {
+            newSlide.style.transition = 'none';
+            newSlide.style.transform = 'translateX(100%)';
+            stage.appendChild(newSlide);
+            void newSlide.offsetWidth;
+
+            newSlide.style.transition = 'transform 0.55s cubic-bezier(0.22,1,0.36,1)';
+            newSlide.style.transform = 'translateX(0%)';
+
+            prevSlide.classList.remove('current');
+            prevSlide.style.transform = 'translateX(-100%)';
+            setTimeout(() => {
+                if(prevSlide.parentElement) prevSlide.remove();
+            }, 580);
+        }
+    }
+}
+
 function startMqtt(){
     const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
     const client = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
 
     client.on("connect", () => {
         client.subscribe(TOPIC_PREFIX + "zmiany");
+        client.subscribe(TOPIC_PREFIX + "lineup_pip");
     });
 
     client.on("message", (topic, message) => {
@@ -57,6 +129,9 @@ function startMqtt(){
             const d = JSON.parse(message.toString());
             if(topic === TOPIC_PREFIX + "zmiany" && d.action === 'sub'){
                 showSubBanner(d);
+            }
+            if(topic === TOPIC_PREFIX + "lineup_pip"){
+                updatePipLineup(d);
             }
         } catch(e) { console.error(e); }
     });
