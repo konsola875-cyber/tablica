@@ -500,8 +500,19 @@ function finishLineupSequence(){
         });
         if(adB) adB.style.display = 'none';
 
-        if(adActiveMemory && savedAdUrl){
-            showAdVideo(savedAdUrl, savedAdLoop, savedAdMuted, savedAdTime);
+        if(adActiveMemory && savedAdUrl && adA){
+            adA.loop = savedAdLoop;
+            adA.muted = savedAdMuted;
+            adA.src = savedAdUrl;
+            adA.style.display = 'block';
+            adA.onloadedmetadata = () => {
+                if(savedAdTime > 0 && savedAdTime < adA.duration){
+                    adA.currentTime = savedAdTime;
+                }
+                adA.play().catch(()=>{});
+            };
+            const scr = document.getElementById('slide-screen');
+            if(scr){ scr.style.transition = 'none'; scr.classList.add('visible'); }
         } else {
             const scr = document.getElementById('slide-screen');
             if(scr){ scr.style.transition = 'none'; scr.classList.remove('visible'); }
