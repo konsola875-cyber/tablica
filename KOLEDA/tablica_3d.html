@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Czytnik Tablicy 3D-Sport -> System AV (Web Serial + MQTT)</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:#0b1320;color:#fff;padding:24px;line-height:1.5}
+.container{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.header{background:linear-gradient(90deg,#112240,#1d3557);border:2px solid #ffcc00;border-radius:14px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:900;color:#ffcc00;text-transform:uppercase}
+.status-pill{padding:6px 14px;border-radius:50px;font-size:13px;font-weight:800;background:#2b090c;border:1px solid #ff4d6d;color:#ff4d6d}
+.status-pill.ok{background:#072b18;border-color:#00e676;color:#00e676}
+
+.card{background:#111c30;border:1px solid #233554;border-radius:12px;padding:18px}
+.card h2{font-size:16px;font-weight:800;color:#5bc0eb;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+select,button{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;padding:11px 18px;border-radius:8px;border:none;cursor:pointer}
+select{background:#0b1320;color:#fff;border:2px solid #3a506b}
+.btn-connect{background:#00e676;color:#051b0e}
+.btn-connect:hover{background:#00c865}
+.btn-disconnect{background:#ff4d6d;color:#fff;display:none}
+.btn-copy{background:#ffcc00;color:#111}
+.btn-clear{background:#233554;color:#ccc}
+
+.live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px}
+.metric{background:#0b1320;border:1px solid #233554;border-radius:10px;padding:14px;text-align:center}
+.metric-label{font-size:12px;color:#8d99ae;font-weight:700;text-transform:uppercase}
+.metric-val{font-size:32px;font-weight:900;color:#ffcc00;margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+.log-box{background:#060b14;border:1px solid #1d3557;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;height:260px;overflow-y:auto;color:#a8dadc;white-space:pre-wrap;word-break:break-all}
+.hex-line{color:#ffd166;margin-bottom:4px}
+.ascii-line{color:#06d6a0;margin-bottom:10px;border-bottom:1px dashed #1d3557;padding-bottom:6px}
+
+.switch-row{display:flex;align-items:center;gap:12px;background:#1a0b12;border:2px solid #ff4d6d;padding:12px 16px;border-radius:10px}
+.switch-row.active{background:#082617;border-color:#00e676}
+input[type="checkbox"]{width:22px;height:22px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>🔌 Czytnik Tablicy 3D-Sport -> System Live</h1>
+            <div style="font-size:13px;color:#a8dadc;margin-top:2px">Odczyt z konwertera USB–RS485 (Web Serial API) i wysyłka na HiveMQ</div>
+        </div>
+        <div style="display:flex;gap:10px">
+            <span id="mqtt-badge" class="status-pill">MQTT: ŁĄCZENIE...</span>
+            <span id="serial-badge" class="status-pill">PORT USB: ROZŁĄCZONY</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>1. Połączenie z konwerterem USB–RS485</h2>
+        <div class="controls">
+            <label for="baud-select" style="font-size:13px;font-weight:700">Prędkość (Baudrate):</label>
+            <select id="baud-select">
+                <option value="9600" selected>9600 bps (Najczęstsza w 3D-Sport)</option>
+                <option value="19200">19200 bps</option>
+                <option value="38400">38400 bps</option>
+                <option value="57600">57600 bps</option>
+                <option value="115200">115200 bps</option>
+                <option value="4800">4800 bps</option>
+            </select>
+            <button id="btn-connect" class="btn-connect" onclick="connectSerial()">🔌 POŁĄCZ Z PORTEM USB (COM)</button>
+            <button id="btn-disconnect" class="btn-disconnect" onclick="disconnectSerial()">✖ ROZŁĄCZ</button>
+        </div>
+        <p style="font-size:12px;color:#8d99ae;margin-top:10px">
+            Wskazówka: Jeśli po połączeniu i uruchomieniu zegara na tablicy pojawiają się krzaczki zamiast cyfr, rozłącz port, zmień prędkość i połącz ponownie.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>2. Tryb pracy (Bezpieczny test vs Wysyłka na żywo)</h2>
+        <div id="live-switch-box" class="switch-row">
+            <input type="checkbox" id="chk-live-broadcast" onchange="toggleBroadcastBox()">
+            <label for="chk-live-broadcast" style="font-weight:800;font-size:15px;cursor:pointer">
+                📡 WYSYŁAJ DANE NA ŻYWO DO SYSTEMU (TELEBIM + SCOREBOARD + ŚMIGIEL)
+            </label>
+        </div>
+
+        <div class="live-grid">
+            <div class="metric">
+                <div class="metric-label">Czas meczu</div>
+                <div class="metric-val" id="val-clock">--:--</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Gospodarze</div>
+                <div class="metric-val" id="val-home">-</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Goście</div>
+                <div class="metric-val" id="val-away">-</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Odebrane ramki</div>
+                <div class="metric-val" id="val-packets" style="color:#00e676">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <h2 style="margin:0">3. Podgląd surowych danych z kabla (HEX + ASCII)</h2>
+            <div style="display:flex;gap:8px">
+                <button class="btn-copy" onclick="copyLastFrames()">📋 KOPIUJ OSTATNIE RAMKI (DO ANALIZY)</button>
+                <button class="btn-clear" onclick="clearLogs()">🗑️ WYCZYŚĆ</button>
+            </div>
+        </div>
+        <div id="serial-log" class="log-box">Oczekiwanie na połączenie z konwerterem USB–RS485...</div>
+    </div>
+</div>
+<script>
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+let mqttClient = null;
+let port = null;
+let reader = null;
+let keepReading = false;
+let packetCounter = 0;
+let lastCapturedLog = "";
+let lastSentState = "";
+
+function appendLog(txt){
+    const logBox = document.getElementById('serial-log');
+    if(!logBox) return;
+    const div = document.createElement('div');
+    div.style.color = '#8ecae6';
+    div.innerText = txt;
+    logBox.appendChild(div);
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+function initMqtt(){
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    mqttClient = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
+    const badge = document.getElementById('mqtt-badge');
+
+    mqttClient.on("connect", () => {
+        badge.innerText = "MQTT: POŁĄCZONO";
+        badge.classList.add('ok');
+    });
+    mqttClient.on("offline", () => {
+        badge.innerText = "MQTT: ROZŁĄCZONO";
+        badge.classList.remove('ok');
+    });
+}
+
+function toggleBroadcastBox(){
+    const chk = document.getElementById('chk-live-broadcast');
+    const box = document.getElementById('live-switch-box');
+    box.classList.toggle('active', chk.checked);
+}
+
+async function connectSerial(){
+    if(!("serial" in navigator)){
+        alert("Twoja przeglądarka nie obsługuje Web Serial API. Otwórz ten plik w Google Chrome lub Microsoft Edge!");
+        return;
+    }
+    try {
+        port = await navigator.serial.requestPort();
+        const baudRate = parseInt(document.getElementById('baud-select').value, 10) || 9600;
+        await port.open({ baudRate: baudRate, dataBits: 8, stopBits: 1, parity: "none" });
+
+        document.getElementById('btn-connect').style.display = 'none';
+        document.getElementById('btn-disconnect').style.display = 'inline-block';
+        const sBadge = document.getElementById('serial-badge');
+        sBadge.innerText = `PORT USB: AKTYWNY (${baudRate} bps)`;
+        sBadge.classList.add('ok');
+
+        appendLog(`--- Połączono z portem szeregowym (${baudRate} bps) ---`);
+        keepReading = true;
+        readLoop();
+    } catch(err) {
+        console.error(err);
+        alert("Nie udało się otworzyć portu USB: " + err.message);
+    }
+}
+
+async function disconnectSerial(){
+    keepReading = false;
+    try {
+        if(reader){ await reader.cancel(); reader = null; }
+        if(port){ await port.close(); port = null; }
+    } catch(e){}
+    document.getElementById('btn-connect').style.display = 'inline-block';
+    document.getElementById('btn-disconnect').style.display = 'none';
+    const sBadge = document.getElementById('serial-badge');
+    sBadge.innerText = "PORT USB: ROZŁĄCZONY";
+    sBadge.classList.remove('ok');
+}
+
+async function readLoop(){
+    let byteBuffer = [];
+    let flushTimer = null;
+
+    const flushFrame = () => {
+        if(byteBuffer.length === 0) return;
+        const frame = byteBuffer.slice();
+        byteBuffer = [];
+        packetCounter++;
+        document.getElementById('val-packets').innerText = packetCounter;
+        processIncomingFrame(frame);
+    };
+
+    while(port && port.readable && keepReading){
+        reader = port.readable.getReader();
+        try {
+            while(true){
+                const { value, done } = await reader.read();
+                if(done) break;
+                if(value && value.length > 0){
+                    for(let i = 0; i < value.length; i++){
+                        byteBuffer.push(value[i]);
+                    }
+                    clearTimeout(flushTimer);
+                    flushTimer = setTimeout(flushFrame, 25);
+                    if(byteBuffer.length >= 64) flushFrame();
+                }
+            }
+        } catch(error) {
+            appendLog(`[Błąd odczytu]: ${error.message}`);
+        } finally {
+            reader.releaseLock();
+        }
+    }
+}
+
+function processIncomingFrame(bytes){
+    const hexStr = bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+    const asciiStr = bytes.map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
+
+    const logBox = document.getElementById('serial-log');
+    const entry = document.createElement('div');
+    entry.innerHTML = `<div class="hex-line">HEX [${bytes.length}B]: ${hexStr}</div><div class="ascii-line">TXT: ${asciiStr}</div>`;
+    logBox.appendChild(entry);
+
+    while(logBox.children.length > 40){
+        logBox.removeChild(logBox.firstChild);
+    }
+    logBox.scrollTop = logBox.scrollHeight;
+    lastCapturedLog = `HEX: ${hexStr}\nTXT: ${asciiStr}`;
+
+    parse3DSportFrame(bytes, asciiStr);
+}
+
+function parse3DSportFrame(bytes, asciiStr){
+    const timeMatch = asciiStr.match(/(\d{2}):(\d{2})/);
+    if(timeMatch){
+        const clockStr = `${timeMatch[1]}:${timeMatch[2]}`;
+        document.getElementById('val-clock').innerText = clockStr;
+
+        if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+            if(lastSentState !== clockStr){
+                lastSentState = clockStr;
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    clock: clockStr
+                }));
+            }
+        }
+    }
+}
+
+function copyLastFrames(){
+    const logBox = document.getElementById('serial-log');
+    const text = logBox ? logBox.innerText : lastCapturedLog;
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Skopiowano odebrane ramki do schowka! Wklej je w rozmowie, a dopasujemy dekoder co do jednego bajtu.");
+    });
+}
+
+function clearLogs(){
+    document.getElementById('serial-log').innerHTML = '';
+    packetCounter = 0;
+    document.getElementById('val-packets').innerText = '0';
+}
+
+const mqttScript = document.createElement('script');
+mqttScript.src = "mqtt.min.js";
+mqttScript.onerror = () => {
+    const cdn = document.createElement('script');
+    cdn.src = "https://unpkg.com";
+    cdn.onload = initMqtt;
+    document.head.appendChild(cdn);
+};
+mqttScript.onload = initMqtt;
+document.head.appendChild(mqttScript);
+</script>
+</body>
+</html>
