@@ -238,6 +238,130 @@ body:not(.theme-sport) #tournament-board{display:none !important;opacity:0 !impo
 .kc-title{font-size:48px !important;margin-bottom:6px !important;line-height:1.1 !important}
 .kc-frame{width:1540px !important;height:835px !important;border-radius:28px !important}
 .kc-badge{margin-top:8px !important;font-size:20px !important;padding:6px 24px !important}
+/* PRZYCISK PANIKI BLACKOUT */
+#blackout-overlay{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s ease}
+#blackout-overlay.active{opacity:1;pointer-events:auto}
+#blackout-logo{width:220px;height:220px;object-fit:contain;opacity:0.22}
+.btn-blackout{background:#b91c1c;color:#fff;border:2px solid #fca5a5;font-weight:900;letter-spacing:1px;transition:all 0.2s ease}
+.btn-blackout.is-on{background:#ffcc00;color:#000;border-color:#fff;animation:boPulse 1s infinite}
+@keyframes boPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+/* PASEK PILNYCH KOMUNIKATÓW NA DOLE EKRANU (CHYRON) */
+#urgent-chyron{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(140px);width:1760px;height:68px;background:rgba(12,18,32,0.96);border:3px solid #ffcc00;border-radius:14px;box-shadow:0 14px 35px rgba(0,0,0,0.85);display:flex;align-items:center;overflow:hidden;z-index:8800;opacity:0;pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.35s ease}
+#urgent-chyron.active{transform:translateX(-50%) translateY(0);opacity:1}
+body.pilot-active #urgent-chyron{display:none !important}
+.chyron-badge{background:linear-gradient(90deg,#b91c1c,#ef4444);color:#fff;font-size:18px;font-weight:900;letter-spacing:1.5px;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:center;border-right:3px solid #ffcc00;white-space:nowrap;flex-shrink:0;text-transform:uppercase}
+.chyron-track{flex:1;overflow:hidden;white-space:nowrap;padding:0 24px;display:flex;align-items:center}
+#chyron-text{font-size:26px;font-weight:800;color:#fff;display:inline-block;white-space:nowrap}
+#chyron-text.scrolling{padding-left:100%;animation:chyronScroll 18s linear infinite}
+@keyframes chyronScroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+#pilot-soundboard-box input[type="file"],#pilot-soundboard-box button{position:relative;z-index:10;pointer-events:auto !important}
+/* WYRAZISTY I CZYSTY MOTYW PILOTA (2 KOLORY: GRANAT + ZŁOTY AKCENT) */
+body.pilot-active,#pilot-panel{
+    background:#0d131f !important;
+    color:#f8fafc !important;
+}
+#pilot-panel h1,#pilot-panel h2{
+    color:#fbbf24 !important;
+    border-bottom:2px solid #1e293b !important;
+    padding-bottom:12px !important;
+}
+
+/* Wyraźne karty sekcji z czytelnym obramowaniem */
+#pilot-panel .p-box,
+#pilot-panel #pilot-autopilot-box,
+#pilot-panel #pilot-audio-box,
+#pilot-panel #pilot-soundboard-box{
+    background:#141d2e !important;
+    border:1px solid #2d3b55 !important;
+    border-radius:12px !important;
+    box-shadow:0 6px 20px rgba(0,0,0,0.4) !important;
+    padding:16px !important;
+}
+
+/* Mocne, czytelne nagłówki sekcji z paskiem oddzielającym */
+#pilot-panel h3{
+    color:#fbbf24 !important;
+    font-size:15px !important;
+    font-weight:900 !important;
+    letter-spacing:0.8px !important;
+    text-transform:uppercase !important;
+    padding-bottom:8px !important;
+    margin-bottom:12px !important;
+    border-bottom:1px solid #26334d !important;
+}
+
+/* Wyraźne pola tekstowe */
+#pilot-panel input[type="text"],
+#pilot-panel input[type="number"],
+#pilot-panel textarea,
+#pilot-panel select{
+    background:#090e17 !important;
+    color:#ffffff !important;
+    border:1px solid #475569 !important;
+    border-radius:8px !important;
+}
+#pilot-panel input:focus,#pilot-panel textarea:focus,#pilot-panel select:focus{
+    border-color:#fbbf24 !important;
+    outline:none !important;
+}
+
+/* Spójne, wyraziste przyciski (bez tęczy) */
+#pilot-panel .btn,
+#pilot-panel .btn-gold,
+#pilot-panel .btn-orange,
+#pilot-panel .btn-blue,
+#pilot-panel #pilot-soundboard-box .btn:not(.btn-red){
+    background:#1e293b !important;
+    color:#f8fafc !important;
+    border:1px solid #475569 !important;
+    border-radius:8px !important;
+    font-weight:800 !important;
+}
+#pilot-panel .btn:hover,
+#pilot-panel .btn-gold:hover,
+#pilot-panel .btn-orange:hover,
+#pilot-panel .btn-blue:hover,
+#pilot-panel #pilot-soundboard-box .btn:not(.btn-red):hover{
+    background:#2a3952 !important;
+    border-color:#fbbf24 !important;
+    color:#fbbf24 !important;
+}
+
+/* Tylko 2 kolory akcji: SOCZYSTY ZIELONY = Start/Pokaż, CZERWONY = Stop/Ukryj */
+#pilot-panel .btn-green{
+    background:#059669 !important;
+    color:#ffffff !important;
+    border:1px solid #34d399 !important;
+}
+#pilot-panel .btn-green:hover{background:#10b981 !important}
+
+#pilot-panel .btn-red{
+    background:#dc2626 !important;
+    color:#ffffff !important;
+    border:1px solid #f87171 !important;
+}
+#pilot-panel .btn-red:hover{background:#ef4444 !important}
+
+/* Pasek statusu audio i podświetlenie listy */
+#pilot-panel #audio-remote-status{
+    background:#090e17 !important;
+    border:1px solid #334155 !important;
+    color:#fbbf24 !important;
+}
+#pilot-panel .item-card{
+    background:#0f172a !important;
+    border:1px solid #2d3b55 !important;
+}
+#pilot-panel .item-card.current-active{
+    border:2px solid #fbbf24 !important;
+    background:rgba(251,191,36,0.14) !important;
+}
+/* UKRYCIE SEKCJI SZKOLNYCH / MÓWCÓW WYŁĄCZNIE W TRYBIE TYTANÓW */
+body.theme-tytani #pilot-autopilot-box,
+body.theme-tytani .hide-on-tytani,
+body.theme-tytani #speaker-card{
+    display:none !important;
+}
 </style>
 </head>
 <body>
@@ -297,9 +421,35 @@ body:not(.theme-sport) #tournament-board{display:none !important;opacity:0 !impo
     <div class="kc-badge" id="kc-counter-badge">PZS 4 WEJHEROWO • 1 / 1</div>
 </div>
 
+<div id="urgent-chyron">
+    <div class="chyron-badge" id="chyron-label">📢 KOMUNIKAT</div>
+    <div class="chyron-track">
+        <div id="chyron-text">Treść komunikatu...</div>
+    </div>
+</div>
+<div id="blackout-overlay">
+    <img id="blackout-logo" src="logo_szkola.png" alt="">
+</div>
 <div id="pilot-panel">
     <div style="text-align:center">
         <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI I SPORTU - PZS 4 AV</h2>
+        <button id="btn-blackout-toggle" class="btn btn-blackout" style="width:100%;font-size:17px;padding:14px;margin-bottom:12px" onclick="toggleBlackout()">🚨 BLACKOUT / WYGASZENIE EKRANU (AWARYJNE)</button>
+            <div class="p-box" style="border-color:#ef4444;background:rgba(239,68,68,0.07);margin-bottom:12px">
+        <h3 style="color:#fca5a5;margin-bottom:8px">📢 SZYBKI PASEK KOMUNIKATU (DÓŁ EKRANU — BEZ PRZERYWANIA)</h3>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+            <select id="in-chyron-tag" style="width:180px;font-weight:800">
+                <option value="📢 KOMUNIKAT">📢 KOMUNIKAT</option>
+                <option value="🚗 PARKING">🚗 PARKING</option>
+                <option value="⚠️ PILNE">⚠️ PILNE</option>
+                <option value="🏆 TURNIEJ">🏆 TURNIEJ</option>
+            </select>
+            <input type="text" id="in-chyron-msg" placeholder="Wpisz treść ogłoszenia na dół ekranu..." style="flex:1">
+        </div>
+        <div style="display:flex;gap:8px">
+            <button class="btn btn-green" style="flex:2" onclick="sendUrgentChyron()">📢 POKAŻ PASEK NA TELEBIMIE</button>
+            <button class="btn btn-red" style="flex:1" onclick="hideUrgentChyron()">✖ UKRYJ PASEK</button>
+        </div>
+    </div>
         <div id="conn-badge">🔴 ŁĄCZENIE Z SERWEREM...</div>
         <div style="margin-bottom:14px">
             <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 ŚWIĄTECZNY</button>
@@ -327,6 +477,43 @@ body:not(.theme-sport) #tournament-board{display:none !important;opacity:0 !impo
             <button class="btn btn-green" style="flex:1" onclick="playLocalAudio()">▶️ START (100%)</button>
             <button class="btn btn-orange" style="flex:1" onclick="fadeOutLocalAudio()">📉 WYCISZ PŁYNNIE (3s)</button>
         </div>
+    </div>
+        <!-- SZYBKI SOUNDBOARD (6 EFEKTÓW 1-KLIKNIĘCIE + SYNCHRO Z TABLETEM) -->
+    <div id="pilot-soundboard-box" class="p-box" style="margin-bottom:14px">
+        <h3>🔊 SZYBKI SOUNDBOARD (EFEKTY 1-KLIKNIĘCIE — KOMP + TABLET)</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px" id="sb-grid">
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn btn-gold" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(0)">🚨 1. SYRENA / KONIEC</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(0, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-0" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn btn-green" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(1)">⚽ 2. GOL / FANFARA</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(1, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-1" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(2)">👏 3. BRAWA / OKLASKI</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(2, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-2" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(3)">❌ 4. PUDŁO / BŁĄD</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(3, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-3" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(4)">🥁 5. WERBEL / NAPIĘCIE</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(4, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-4" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(5)">🔥 6. DŻINGIEL EXTRA</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(5, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-5" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+        </div>
+        <button class="btn btn-red" style="width:100%" onclick="stopAllSoundboard()">⏹️ ZATRZYMAJ WSZYSTKIE EFEKTY SOUNDBOARDU</button>
     </div>
     </div>
 
@@ -1192,6 +1379,8 @@ function startMqttEngine(){
         client.subscribe(TOPIC_PREFIX + "custombadge");
         client.subscribe(TOPIC_PREFIX + "tournament");
         client.subscribe(TOPIC_PREFIX + "kisscam");
+        client.subscribe(TOPIC_PREFIX + "blackout");
+        client.subscribe(TOPIC_PREFIX + "chyron");
         if (isPilotMode) {
             client.subscribe(TOPIC_PREFIX + "tournament_draft");
             client.subscribe(TOPIC_PREFIX + "lineup_draft");
@@ -1226,7 +1415,15 @@ function startMqttEngine(){
                 localStorage.setItem('pzs4_sb_state', JSON.stringify(sbState));
                 renderSbPilotUI();
             }
+                if (topic === TOPIC_PREFIX + "chyron") applyChyronState(d);
+                if (topic === TOPIC_PREFIX + "blackout") applyBlackoutState(!!d.active);
                 if (topic === TOPIC_PREFIX + "pilot_sync" && isPilotMode && d.sender !== MY_SENDER_ID) {
+                if (d.action === 'sb_play' && typeof d.slot === 'number') triggerSoundboard(d.slot, true);
+                if (d.action === 'sb_stop') stopAllSoundboard(true);
+                if (d.action === 'sb_name' && typeof d.slot === 'number') {
+                    const lbl = document.getElementById('sb-name-' + d.slot);
+                    if (lbl) lbl.innerText = d.name || 'Brak pliku';
+                }
                 if (d.action === 'playlist_idx' && typeof d.idx === 'number') {
                     currentPlaylistIdx = d.idx;
                     highlightCurrentPlaylistRow(currentPlaylistIdx);
@@ -2112,6 +2309,192 @@ function handleKissCamMessage(d){
         }
     }
 }
+let isBlackoutActive = false;
+
+function toggleBlackout(){
+    isBlackoutActive = !isBlackoutActive;
+    pub("blackout", { active: isBlackoutActive }, true);
+    applyBlackoutState(isBlackoutActive);
+}
+
+function applyBlackoutState(state){
+    isBlackoutActive = !!state;
+    const ov = document.getElementById('blackout-overlay');
+    const logo = document.getElementById('blackout-logo');
+    const btn = document.getElementById('btn-blackout-toggle');
+
+    if(logo){
+        logo.src = (currentTheme === 'tytani') ? 'logo_tytani.png' : 'logo_szkola.png';
+    }
+    if(ov && !isPilotMode){
+        ov.classList.toggle('active', isBlackoutActive);
+    }
+    if(btn){
+        btn.classList.toggle('is-on', isBlackoutActive);
+        btn.innerText = isBlackoutActive ? '✅ WYŁĄCZ BLACKOUT (PRZYWRÓĆ EKRAN)' : '🚨 BLACKOUT / WYGASZENIE EKRANU (AWARYJNE)';
+    }
+}
+function sendUrgentChyron(){
+    const tag = document.getElementById('in-chyron-tag').value;
+    const msg = document.getElementById('in-chyron-msg').value.trim();
+    if(!msg) return alert("Wpisz najpierw treść komunikatu!");
+    const payload = { active: true, tag: tag, msg: msg };
+    pub("chyron", payload, true);
+    applyChyronState(payload);
+}
+
+function hideUrgentChyron(){
+    const payload = { active: false };
+    pub("chyron", payload, true);
+    applyChyronState(payload);
+}
+
+function applyChyronState(d){
+    const bar = document.getElementById('urgent-chyron');
+    const lbl = document.getElementById('chyron-label');
+    const txt = document.getElementById('chyron-text');
+    if(!bar || !txt) return;
+
+    if(!d || !d.active || !d.msg){
+        bar.classList.remove('active');
+        return;
+    }
+
+    if(lbl) lbl.innerText = d.tag || '📢 KOMUNIKAT';
+    txt.innerText = d.msg;
+
+    // Jeśli tekst jest dłuższy niż 75 znaków, włączamy płynne przewijanie jak w TV!
+    if(d.msg.length > 75){
+        txt.classList.add('scrolling');
+    } else {
+        txt.classList.remove('scrolling');
+    }
+
+    if(!isPilotMode){
+        bar.classList.add('active');
+    }
+}
+/* SZYBKI SOUNDBOARD */
+const sbAudioSlots = [null, null, null, null, null, null];
+const sbFadeTimers = [null, null, null, null, null, null];
+
+function clearSbFade(slotIdx){
+    if(sbFadeTimers[slotIdx]){
+        clearInterval(sbFadeTimers[slotIdx]);
+        sbFadeTimers[slotIdx] = null;
+    }
+}
+
+function loadSoundboardSlot(slotIdx, input){
+    const file = (input && input.files) ? input.files.item(0) : null;
+    if(!file) return;
+
+    clearSbFade(slotIdx);
+    if(sbAudioSlots[slotIdx]){
+        sbAudioSlots[slotIdx].pause();
+        sbAudioSlots[slotIdx].ontimeupdate = null;
+    }
+
+    const audio = new Audio();
+    audio.src = URL.createObjectURL(file);
+    audio.preload = 'auto';
+    audio.load();
+    sbAudioSlots[slotIdx] = audio;
+
+    const lbl = document.getElementById('sb-name-' + slotIdx);
+    if(lbl) lbl.innerText = '✅ ' + file.name;
+    pub("pilot_sync", { action: 'sb_name', slot: slotIdx, name: '✅ ' + file.name }, true);
+}
+
+function triggerSoundboard(slotIdx, isFromRemote){
+    if(!isFromRemote){
+        pub("pilot_sync", { action: 'sb_play', slot: slotIdx });
+    }
+    const audio = sbAudioSlots[slotIdx];
+    if(!audio) return;
+
+    clearSbFade(slotIdx);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 0.0;
+    let isEndingFadeStarted = false;
+
+    // Automatyczny 2-sekundowy Fade-Out na końcówce pliku audio
+    audio.ontimeupdate = () => {
+        if(!isEndingFadeStarted && audio.duration && (audio.duration - audio.currentTime) <= 2.05 && audio.duration > 2.5){
+            isEndingFadeStarted = true;
+            startSbFadeOut(slotIdx, audio, false);
+        }
+    };
+
+    audio.play().then(() => {
+        // Płynny 2-sekundowy Fade-In od 0% do 100% (20 kroków co 100 ms)
+        let vol = 0.0;
+        sbFadeTimers[slotIdx] = setInterval(() => {
+            if(isEndingFadeStarted || audio.paused){
+                clearSbFade(slotIdx);
+                return;
+            }
+            vol = Math.min(1.0, vol + 0.05);
+            audio.volume = vol;
+            if(vol >= 1.0) clearSbFade(slotIdx);
+        }, 100);
+    }).catch(err => console.warn("Błąd odtwarzania slotu " + slotIdx, err));
+}
+
+function startSbFadeOut(slotIdx, audio, shouldPauseAtEnd){
+    clearSbFade(slotIdx);
+    sbFadeTimers[slotIdx] = setInterval(() => {
+        if(!audio || audio.paused){
+            clearSbFade(slotIdx);
+            return;
+        }
+        if(audio.volume > 0.05){
+            audio.volume = Math.max(0, audio.volume - 0.05);
+        } else {
+            audio.volume = 0;
+            clearSbFade(slotIdx);
+            if(shouldPauseAtEnd){
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        }
+    }, 100); // 20 kroków x 100 ms = dokładnie 2 sekundy wyciszenia
+}
+
+function stopAllSoundboard(isFromRemote){
+    if(!isFromRemote){
+        pub("pilot_sync", { action: 'sb_stop' });
+    }
+    sbAudioSlots.forEach((a, idx) => {
+        if(a && !a.paused){
+            startSbFadeOut(idx, a, true);
+        }
+    });
+}
+function updateTytaniPilotVisibility(){
+    const isTytani = document.body.classList.contains('theme-tytani');
+    document.querySelectorAll('#pilot-panel .p-box, #pilot-autopilot-box').forEach(box => {
+        const txt = (box.innerText || '').toLowerCase();
+        if(
+            box.id === 'pilot-autopilot-box' ||
+            txt.includes('dyrekcj') ||
+            txt.includes('mówiąc') ||
+            txt.includes('mówc') ||
+            txt.includes('prelegent') ||
+            txt.includes('zapowiedź')
+        ){
+            box.style.display = isTytani ? 'none' : '';
+        }
+    });
+}
+
+// Automatyczne uruchamianie przy każdej zmianie motywu na stronie
+new MutationObserver(updateTytaniPilotVisibility).observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+});
+updateTytaniPilotVisibility();
 document.head.appendChild(mqttLib);
 </script>
 </body>
