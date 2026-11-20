@@ -39,6 +39,53 @@ input,select{padding:10px;font-size:15px;border-radius:6px;border:1px solid #6e1
 a[href*="pilot=1"], #open-pilot-btn, .open-pilot-btn {
     display: none !important;
 }
+/* BELKA ZMIANY ZAWODNIKA W SCOREBOARDZIE (DLA PRISM LIVE STUDIO) */
+#sb-sub-banner{
+    position:fixed;
+    bottom:38px;
+    left:50%;
+    transform:translateX(-50%) translateY(160px);
+    width:780px;
+    max-width:92vw;
+    background:rgba(10,15,26,0.96);
+    border:2px solid #fbbf24;
+    border-radius:14px;
+    box-shadow:0 14px 35px rgba(0,0,0,0.85);
+    padding:12px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    z-index:9500;
+    opacity:0;
+    pointer-events:none;
+    transition:transform 0.45s cubic-bezier(0.22,1,0.36,1),opacity 0.35s ease;
+}
+#sb-sub-banner.active{
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+}
+.sb-sub-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:1.2px;
+    color:#fbbf24;
+    text-transform:uppercase;
+    border-bottom:1px solid rgba(251,191,36,0.25);
+    padding-bottom:4px;
+}
+.sb-sub-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:19px;
+    font-weight:800;
+    color:#f8fafc;
+}
+.sb-sub-in{color:#34d399;display:flex;align-items:center;gap:8px}
+.sb-sub-out{color:#f87171;display:flex;align-items:center;gap:8px}
 </style>
 </head>
 <body>
@@ -99,6 +146,16 @@ a[href*="pilot=1"], #open-pilot-btn, .open-pilot-btn {
         Schodzi: <input type="number" id="sub-out-num" class="small-input" placeholder="Nr">
         Wchodzi: <input type="number" id="sub-in-num" class="small-input" placeholder="Nr">
         <button class="control-btn btn-success" onclick="sendSub()">POKAŻ ZMIANĘ</button>
+    </div>
+</div>
+<div id="sb-sub-banner">
+    <div class="sb-sub-header">
+        <span>🔄 ZMIANA ZAWODNIKA</span>
+        <span id="sb-sub-team">TYTANI WEJHEROWO</span>
+    </div>
+    <div class="sb-sub-row">
+        <div class="sb-sub-in" id="sb-sub-in-txt">🟢 WCHODZI: #--</div>
+        <div class="sb-sub-out" id="sb-sub-out-txt">🔴 SCHODZI: #--</div>
     </div>
 </div>
 <script>
@@ -288,6 +345,8 @@ function startMqtt(){
     client.on("connect", () => {
         if(st){ st.style.background = '#00a859'; st.innerText = '🟢 POŁĄCZONO (HIVEMQ • MULTI-PILOT)'; }
         client.subscribe(TOPIC_PREFIX + "scoreboard");
+        client.subscribe("pzs4-wejherowo-av-2026/sub");
+        client.subscribe("pzs4-wejherowo-av-2026/sport_sub");
     });
 
     client.on("reconnect", () => {
@@ -303,6 +362,9 @@ function startMqtt(){
                 if(!state.penalties) state.penalties = preservedPens;
                 localStorage.setItem('pzs4_sb_state', JSON.stringify(state));
                 renderUI();
+            if (topic.endsWith("/sub") || topic.endsWith("/sport_sub")) {
+                showScoreboardSubstitution(d);
+    }
             }
         } catch(e) { console.error(e); }
     });
@@ -321,6 +383,38 @@ lib.onerror = () => {
 };
 lib.onload = startMqtt;
 document.head.appendChild(lib);
+let sbSubTimer = null;
+
+function showScoreboardSubstitution(d){
+    const banner = document.getElementById('sb-sub-banner');
+    if(!banner || !d) return;
+
+    // Obsługa ukrycia ręcznego
+    if(d.action === 'hide' || d.active === false){
+        banner.classList.remove('active');
+        return;
+    }
+
+    const teamEl = document.getElementById('sb-sub-team');
+    const inEl = document.getElementById('sb-sub-in-txt');
+    const outEl = document.getElementById('sb-sub-out-txt');
+
+    const teamName = d.team || d.teamName || 'ZMIANA W SKŁADZIE';
+    const playerIn = d.playerIn || d.inName || d.in || '';
+    const playerOut = d.playerOut || d.outName || d.out || '';
+
+    if(!playerIn && !playerOut) return;
+
+    if(teamEl) teamEl.innerText = teamName;
+    if(inEl) inEl.innerText = playerIn ? `🟢 WCHODZI: ${playerIn}` : '';
+    if(outEl) outEl.innerText = playerOut ? `🔴 SCHODZI: ${playerOut}` : '';
+
+    banner.classList.add('active');
+    clearTimeout(sbSubTimer);
+    sbSubTimer = setTimeout(() => {
+        banner.classList.remove('active');
+    }, 6500); // Automatyczne schowanie po 6,5 sekundy
+}
 </script>
 </body>
 </html>
