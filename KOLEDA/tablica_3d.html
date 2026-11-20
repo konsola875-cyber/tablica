@@ -120,7 +120,14 @@ let reader = null;
 let keepReading = false;
 let packetCounter = 0;
 let lastCapturedLog = "";
-let lastSentState = "";
+
+const DIGIT_RING_3D = [0xFE, 0xE6, 0x9E, 0x86, 0x7E, 0x66, 0x1E, 0x06, 0xFE, 0xE6];
+const SINGLE_DIGIT_MAP = { 0xFE: 0, 0xE6: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+
+let trackedHomeScore = 0;
+let trackedAwayScore = 0;
+let lastHomeStepByte = 0xFE;
+let lastAwayStepByte = 0xFE;
 
 function appendLog(txt){
     const logBox = document.getElementById('serial-log');
@@ -160,7 +167,7 @@ async function connectSerial(){
     }
     try {
         port = await navigator.serial.requestPort();
-        const baudRate = parseInt(document.getElementById('baud-select').value, 10) || 9600;
+        const baudRate = parseInt(document.getElementById('baud-select').value, 10) || 38400;
         await port.open({ baudRate: baudRate, dataBits: 8, stopBits: 1, parity: "none" });
 
         document.getElementById('btn-connect').style.display = 'none';
@@ -212,7 +219,7 @@ async function readLoop(){
                 if(done) break;
                 if(value && value.length > 0){
                     for(let i = 0; i < value.length; i++){
-                        byteBuffer.push(value[i]);
+                        byteBuffer.push(value.at(i));
                     }
                     clearTimeout(flushTimer);
                     flushTimer = setTimeout(flushFrame, 25);
@@ -242,34 +249,39 @@ function processIncomingFrame(bytes){
     logBox.scrollTop = logBox.scrollHeight;
     lastCapturedLog = `HEX: ${hexStr}\nTXT: ${asciiStr}`;
 
-    parse3DSportFrame(bytes, asciiStr);
+    parse3DSportFrame(bytes);
 }
 
-const MAP_3DSPORT_DIGIT = {
-    0xF8: '0',
-    0xE6: '1',
-    0x9E: '2',
-    0x86: '3',
-    0x7E: '4',
-    0x66: '5',
-    0x1E: '6',
-    0x06: '7',
-    0xFE: '8'
+const MAP_3D_DIGIT = {
+    0xF8: 0,
+    0xFE: 0,
+    0xE6: 1,
+    0x18: 1,
+    0x9E: 2,
+    0x86: 3,
+    0x7E: 4,
+    0x66: 5,
+    0x1E: 6,
+    0x06: 7
 };
 
-function decode3DByte(b){
-    return MAP_3DSPORT_DIGIT[b] !== undefined ? MAP_3DSPORT_DIGIT[b] : null;
+const MAP_3D_TENS_HOME = { 0x18: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+const MAP_3D_TENS_AWAY = { 0x80: 1, 0x78: 1, 0x18: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+
+function decodeSingleDigit(bMain, bCheck){
+    if(bMain === 0xFE) return (bCheck === 0xFE) ? 8 : 0;
+    if(bMain === 0xE6) return (bCheck === 0xFE) ? 9 : 1;
+    return MAP_3D_DIGIT[bMain] !== undefined ? MAP_3D_DIGIT[bMain] : null;
 }
 
-function parse3DSportFrame(bytes, asciiStr){
-    // 1. Ramka 7-bajtowa (zegar sekundowy lecący co sekundę: 66 98 E6 [SEKUNDY] ...)
-    if(bytes.length === 7 && bytes[0] === 0x66 && bytes[1] === 0x98){
-        const secOnes = decode3DByte(bytes[3]);
-        const secTens = decode3DByte(bytes[2]);
-        if(secOnes !== null){
+function parse3DSportFrame(bytes){
+    // 1. Zegar sekundowy (7 bajtów: 66 98 E6 ...)
+    if(bytes.length === 7 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98){
+        const secVal = decodeSingleDigit(bytes.at(3), bytes.at(4));
+        if(secVal !== null){
             const currentClock = document.getElementById('val-clock').innerText;
-            const minsPart = currentClock.includes(':') ? currentClock.split(':') : '--';
-            const newClock = `${minsPart}:${secTens || '0'}${secOnes}`;
+            const minsPart = currentClock.includes(':') ? currentClock.split(':').at(0) : '--';
+            const newClock = `${minsPart}:0${secVal}`;
             document.getElementById('val-clock').innerText = newClock;
 
             if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
@@ -279,38 +291,76 @@ function parse3DSportFrame(bytes, asciiStr){
                 }));
             }
         }
+        return;
     }
 
-    // 2. Ramka 18-20 bajtowa (pełny stan tablicy przy zmianie wyniku: indeks 9 = wynik gospodarzy)
-    if(bytes.length >= 18 && bytes[0] === 0x66){
-        const homeOnes = decode3DByte(bytes[9]);
-        const awayOnes = decode3DByte(bytes[13]);
+    // 2. Wynik GOSPODARZY (nagłówek 66 18 80)
+    if(bytes.length >= 16 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x80){
+        let score = null;
+        // W wynikach 0..9 bajt 15 to ZAWSZE 0x9E (a bajt 16 to 0xFE):
+        const isOneDigit = (bytes.at(15) === 0x9E && bytes.at(16) === 0xFE);
 
-        if(homeOnes !== null) document.getElementById('val-home').innerText = homeOnes;
-        if(awayOnes !== null) document.getElementById('val-away').innerText = awayOnes;
-
-        if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
-            mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
-                source: '3d-sport',
-                homeScore: homeOnes !== null ? parseInt(homeOnes, 10) : undefined,
-                awayScore: awayOnes !== null ? parseInt(awayOnes, 10) : undefined
-            }));
+        if(isOneDigit){
+            score = decodeSingleDigit(bytes.at(9), bytes.at(10));
+        } else {
+            const tens = MAP_3D_TENS_HOME[bytes.at(14)] ?? 1;
+            const ones = decodeSingleDigit(bytes.at(15), bytes.at(16));
+            if(ones !== null){
+                score = (tens * 10) + ones;
+            }
         }
-    }
-}
 
-function copyLastFrames(){
-    const logBox = document.getElementById('serial-log');
-    const text = logBox ? logBox.innerText : lastCapturedLog;
-    navigator.clipboard.writeText(text).then(() => {
-        alert("Skopiowano odebrane ramki do schowka! Wklej je w rozmowie, a dopasujemy dekoder co do jednego bajtu.");
-    });
+        if(score !== null){
+            document.getElementById('val-home').innerText = score;
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    homeScore: score
+                }));
+            }
+        }
+        return;
+    }
+
+    // 3. Wynik GOŚCI (nagłówek 66 F8 1E)
+    if(bytes.length >= 15 && bytes.at(0) === 0x66 && bytes.at(1) === 0xF8 && bytes.at(2) === 0x1E){
+        let score = null;
+        // W wynikach 0..9 bajt 14 to ZAWSZE 0x9E (a bajt 15 to 0xFE):
+        const isOneDigit = (bytes.at(14) === 0x9E && bytes.at(15) === 0xFE);
+
+        if(isOneDigit){
+            score = decodeSingleDigit(bytes.at(9), bytes.at(10));
+        } else {
+            const tens = MAP_3D_TENS_AWAY[bytes.at(13)] ?? 1;
+            const ones = decodeSingleDigit(bytes.at(14), bytes.at(15));
+            if(ones !== null){
+                score = (tens * 10) + ones;
+            }
+        }
+
+        if(score !== null){
+            document.getElementById('val-away').innerText = score;
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    awayScore: score
+                }));
+            }
+        }
+        return;
+    }
 }
 
 function clearLogs(){
     document.getElementById('serial-log').innerHTML = '';
     packetCounter = 0;
     document.getElementById('val-packets').innerText = '0';
+    trackedHomeScore = 0;
+    trackedAwayScore = 0;
+    lastHomeStepByte = 0xFE;
+    lastAwayStepByte = 0xFE;
+    document.getElementById('val-home').innerText = '0';
+    document.getElementById('val-away').innerText = '0';
 }
 
 const mqttScript = document.createElement('script');
