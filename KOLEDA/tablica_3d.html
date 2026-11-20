@@ -56,10 +56,10 @@ input[type="checkbox"]{width:22px;height:22px;cursor:pointer}
         <h2>1. Połączenie z konwerterem USB–RS485</h2>
         <div class="controls">
             <label for="baud-select" style="font-size:13px;font-weight:700">Prędkość (Baudrate):</label>
-            <select id="baud-select">
-                <option value="9600" selected>9600 bps (Najczęstsza w 3D-Sport)</option>
+                <select id="baud-select">
+                <option value="9600">9600 bps</option>
                 <option value="19200">19200 bps</option>
-                <option value="38400">38400 bps</option>
+                <option value="38400" selected>38400 bps (Domyślna dla 3D-Sport)</option>
                 <option value="57600">57600 bps</option>
                 <option value="115200">115200 bps</option>
                 <option value="4800">4800 bps</option>
@@ -245,20 +245,56 @@ function processIncomingFrame(bytes){
     parse3DSportFrame(bytes, asciiStr);
 }
 
-function parse3DSportFrame(bytes, asciiStr){
-    const timeMatch = asciiStr.match(/(\d{2}):(\d{2})/);
-    if(timeMatch){
-        const clockStr = `${timeMatch[1]}:${timeMatch[2]}`;
-        document.getElementById('val-clock').innerText = clockStr;
+const MAP_3DSPORT_DIGIT = {
+    0xF8: '0',
+    0xE6: '1',
+    0x9E: '2',
+    0x86: '3',
+    0x7E: '4',
+    0x66: '5',
+    0x1E: '6',
+    0x06: '7',
+    0xFE: '8'
+};
 
-        if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
-            if(lastSentState !== clockStr){
-                lastSentState = clockStr;
+function decode3DByte(b){
+    return MAP_3DSPORT_DIGIT[b] !== undefined ? MAP_3DSPORT_DIGIT[b] : null;
+}
+
+function parse3DSportFrame(bytes, asciiStr){
+    // 1. Ramka 7-bajtowa (zegar sekundowy lecący co sekundę: 66 98 E6 [SEKUNDY] ...)
+    if(bytes.length === 7 && bytes[0] === 0x66 && bytes[1] === 0x98){
+        const secOnes = decode3DByte(bytes[3]);
+        const secTens = decode3DByte(bytes[2]);
+        if(secOnes !== null){
+            const currentClock = document.getElementById('val-clock').innerText;
+            const minsPart = currentClock.includes(':') ? currentClock.split(':') : '--';
+            const newClock = `${minsPart}:${secTens || '0'}${secOnes}`;
+            document.getElementById('val-clock').innerText = newClock;
+
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
                 mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
                     source: '3d-sport',
-                    clock: clockStr
+                    clock: newClock
                 }));
             }
+        }
+    }
+
+    // 2. Ramka 18-20 bajtowa (pełny stan tablicy przy zmianie wyniku: indeks 9 = wynik gospodarzy)
+    if(bytes.length >= 18 && bytes[0] === 0x66){
+        const homeOnes = decode3DByte(bytes[9]);
+        const awayOnes = decode3DByte(bytes[13]);
+
+        if(homeOnes !== null) document.getElementById('val-home').innerText = homeOnes;
+        if(awayOnes !== null) document.getElementById('val-away').innerText = awayOnes;
+
+        if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+            mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                source: '3d-sport',
+                homeScore: homeOnes !== null ? parseInt(homeOnes, 10) : undefined,
+                awayScore: awayOnes !== null ? parseInt(awayOnes, 10) : undefined
+            }));
         }
     }
 }
