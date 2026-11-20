@@ -86,6 +86,78 @@ a[href*="pilot=1"], #open-pilot-btn, .open-pilot-btn {
 }
 .sb-sub-in{color:#34d399;display:flex;align-items:center;gap:8px}
 .sb-sub-out{color:#f87171;display:flex;align-items:center;gap:8px}
+/* PASKI KAR 2-MINUTOWYCH ORAZ ZMIAN W SCOREBOARD.HTML */
+#sb-penalties-bar{
+    position:fixed;
+    top:82px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:24px;
+    z-index:9400;
+    pointer-events:none;
+}
+.sb-pen-col{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:140px;
+}
+.sb-pen-badge{
+    background:rgba(185,28,28,0.94);
+    color:#fff;
+    border:1px solid #fca5a5;
+    border-radius:6px;
+    padding:3px 10px;
+    font-size:13px;
+    font-weight:900;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.6);
+}
+#sb-sub-banner{
+    position:fixed;
+    bottom:36px;
+    left:50%;
+    transform:translateX(-50%) translateY(180px);
+    width:760px;
+    max-width:92vw;
+    background:rgba(10,15,26,0.96);
+    border:2px solid #fbbf24;
+    border-radius:14px;
+    box-shadow:0 14px 35px rgba(0,0,0,0.85);
+    padding:12px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    z-index:9500;
+    opacity:0;
+    pointer-events:none;
+    transition:transform 0.45s cubic-bezier(0.22,1,0.36,1),opacity 0.35s ease;
+}
+#sb-sub-banner.active{
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+}
+.sb-sub-header{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:1.2px;
+    color:#fbbf24;
+    text-transform:uppercase;
+    border-bottom:1px solid rgba(251,191,36,0.25);
+    padding-bottom:4px;
+}
+.sb-sub-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:18px;
+    font-weight:800;
+    color:#f8fafc;
+}
+.sb-sub-in{color:#34d399}
+.sb-sub-out{color:#f87171}
 </style>
 </head>
 <body>
@@ -347,6 +419,7 @@ function startMqtt(){
         client.subscribe(TOPIC_PREFIX + "scoreboard");
         client.subscribe("pzs4-wejherowo-av-2026/sub");
         client.subscribe("pzs4-wejherowo-av-2026/sport_sub");
+        client.subscribe("pzs4-wejherowo-av-2026/#");
     });
 
     client.on("reconnect", () => {
@@ -356,6 +429,14 @@ function startMqtt(){
     client.on("message", (topic, message) => {
         try {
             const d = JSON.parse(message.toString());
+            // 1. Obsługa kar 2-minutowych z głównego pilota
+            if (d && (d.penalties || d.homePenalties || d.awayPenalties || topic.includes("penalt") || topic.includes("sport"))) {
+        renderScoreboardPenalties(d);
+    }
+            // 2. Obsługa zmian zawodników z głównego pilota
+            if (d && (d.playerIn || d.inName || d.subIn || topic.includes("sub"))) {
+        showScoreboardSubstitution(d);
+    }
             if(topic === TOPIC_PREFIX + "scoreboard" && d.state && d.sender !== MY_SENDER_ID){
                 const preservedPens = state.penalties || Array.of();
                 state = d.state;
@@ -383,7 +464,7 @@ lib.onerror = () => {
 };
 lib.onload = startMqtt;
 document.head.appendChild(lib);
-let sbSubTimer = null;
+
 
 function showScoreboardSubstitution(d){
     const banner = document.getElementById('sb-sub-banner');
@@ -415,6 +496,62 @@ function showScoreboardSubstitution(d){
         banner.classList.remove('active');
     }, 6500); // Automatyczne schowanie po 6,5 sekundy
 }
+let sbSubTimer = null;
+
+function renderScoreboardPenalties(d){
+    const homeCol = document.getElementById('sb-pen-home');
+    const awayCol = document.getElementById('sb-pen-away');
+    if(!homeCol || !awayCol) return;
+
+    const homeList = d.homePenalties || (d.penalties && d.penalties.home) || [];
+    const awayList = d.awayPenalties || (d.penalties && d.penalties.away) || [];
+
+    if(Array.isArray(homeList)){
+        homeCol.innerHTML = homeList.map(p => `<div class="sb-pen-badge">⏱️ 2 MIN ${p.num ? '#' + p.num : ''} (${p.time || '2:00'})</div>`).join('');
+    }
+    if(Array.isArray(awayList)){
+        awayCol.innerHTML = awayList.map(p => `<div class="sb-pen-badge">⏱️ 2 MIN ${p.num ? '#' + p.num : ''} (${p.time || '2:00'})</div>`).join('');
+    }
+}
+
+function showScoreboardSubstitution(d){
+    const banner = document.getElementById('sb-sub-banner');
+    if(!banner || !d) return;
+
+    if(d.action === 'hide' || d.active === false){
+        banner.classList.remove('active');
+        return;
+    }
+
+    const pIn = d.playerIn || d.inName || d.subIn || '';
+    const pOut = d.playerOut || d.outName || d.subOut || '';
+    if(!pIn && !pOut) return;
+
+    document.getElementById('sb-sub-team').innerText = d.team || d.teamName || 'TYTANI WEJHEROWO';
+    document.getElementById('sb-sub-in-txt').innerText = pIn ? `🟢 WCHODZI: ${pIn}` : '';
+    document.getElementById('sb-sub-out-txt').innerText = pOut ? `🔴 SCHODZI: ${pOut}` : '';
+
+    banner.classList.add('active');
+    clearTimeout(sbSubTimer);
+    sbSubTimer = setTimeout(() => {
+        banner.classList.remove('active');
+    }, 6500);
+}
 </script>
+<div id="sb-penalties-bar">
+    <div class="sb-pen-col" id="sb-pen-home"></div>
+    <div class="sb-pen-col" id="sb-pen-away"></div>
+</div>
+
+<div id="sb-sub-banner">
+    <div class="sb-sub-header">
+        <span>🔄 ZMIANA ZAWODNIKA</span>
+        <span id="sb-sub-team">TYTANI WEJHEROWO</span>
+    </div>
+    <div class="sb-sub-row">
+        <div class="sb-sub-in" id="sb-sub-in-txt">🟢 WCHODZI: --</div>
+        <div class="sb-sub-out" id="sb-sub-out-txt">🔴 SCHODZI: --</div>
+    </div>
+</div>
 </body>
 </html>
