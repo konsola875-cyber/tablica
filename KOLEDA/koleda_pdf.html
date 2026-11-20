@@ -13,6 +13,8 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 #web-frame{width:100vw;height:100vh;border:none;display:none;background:#000;transform:scale(1.14);transition:opacity 0.35s ease;pointer-events:none}
 #stinger-vid{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:50;pointer-events:none;opacity:0}
 #ad-vid,#ad-vid-b{position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;display:none;z-index:5;transition:transform 0.55s cubic-bezier(0.22,1,0.36,1)}
+#pdf-blackout{position:fixed;inset:0;z-index:99999;background:#000;opacity:0;pointer-events:none;transition:opacity 0.25s ease}
+#pdf-blackout.active{opacity:1}
 </style>
 </head>
 <body>
@@ -28,6 +30,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 </div>
 </div>
 
+<div id="pdf-blackout"></div>
 <script>
 const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
 let cachedSlides = new Array();
@@ -500,19 +503,8 @@ function finishLineupSequence(){
         });
         if(adB) adB.style.display = 'none';
 
-        if(adActiveMemory && savedAdUrl && adA){
-            adA.loop = savedAdLoop;
-            adA.muted = savedAdMuted;
-            adA.src = savedAdUrl;
-            adA.style.display = 'block';
-            adA.onloadedmetadata = () => {
-                if(savedAdTime > 0 && savedAdTime < adA.duration){
-                    adA.currentTime = savedAdTime;
-                }
-                adA.play().catch(()=>{});
-            };
-            const scr = document.getElementById('slide-screen');
-            if(scr){ scr.style.transition = 'none'; scr.classList.add('visible'); }
+        if(adActiveMemory && savedAdUrl){
+            showAdVideo(savedAdUrl, savedAdLoop, savedAdMuted, savedAdTime);
         } else {
             const scr = document.getElementById('slide-screen');
             if(scr){ scr.style.transition = 'none'; scr.classList.remove('visible'); }
@@ -550,6 +542,7 @@ mqttLib.onload = () => {
         client.subscribe(TOPIC_PREFIX + "slide_item/#");
         client.subscribe(TOPIC_PREFIX + "theme");
         client.subscribe(TOPIC_PREFIX + "tournament");
+        client.subscribe(TOPIC_PREFIX + "blackout");
     });
 
     client.on("message", (topic, message) => {
@@ -558,6 +551,10 @@ mqttLib.onload = () => {
             if (topic.startsWith(TOPIC_PREFIX + "slide_item/")) {
                 if (d.img) cachedSlides[d.idx] = d.img;
                 return;
+            }
+                        if (topic === TOPIC_PREFIX + "blackout") {
+                const pb = document.getElementById('pdf-blackout');
+                if(pb) pb.classList.toggle('active', !!d.active);
             }
             if (d.action === 'showSlideIdx'){
                 if (cachedSlides[d.idx]) showSlide(cachedSlides[d.idx]);
