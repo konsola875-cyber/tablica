@@ -2476,6 +2476,11 @@ function updateTytaniPilotVisibility(){
     const isTytani = document.body.classList.contains('theme-tytani');
     document.querySelectorAll('#pilot-panel .p-box, #pilot-autopilot-box').forEach(box => {
         const txt = (box.innerText || '').toLowerCase();
+        // Zostawiamy sekcję slajdów / obrazów (MVP meczu) widoczną!
+        if(txt.includes('slajd') || txt.includes('obraz') || txt.includes('prezentacj') && txt.includes('plik')){
+            box.style.display = '';
+            return;
+        }
         if(
             box.id === 'pilot-autopilot-box' ||
             txt.includes('dyrekcj') ||
