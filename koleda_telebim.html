@@ -1,0 +1,2514 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>PZS 4 AV - Uroczystości Telebim</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:#050b14;overflow:hidden;color:#fff;width:100vw;height:100vh}
+.bg-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+
+#song-card{position:fixed;inset:0;z-index:40;background:radial-gradient(circle at center,#a81313 0%,#5c0505 85%,#380202 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;clip-path:circle(0% at 50% 50%);opacity:0;pointer-events:none;transition:clip-path 2.5s cubic-bezier(0.25,1,0.5,1),opacity 1.4s ease-in-out}
+#song-card.active{clip-path:circle(85% at 50% 50%);opacity:1}
+
+#wreath-frame{position:absolute;inset:0;width:100vw;height:100vh;background-image:url('ramka_koleda.png.png');background-size:100vw 100vh;background-position:center;background-repeat:no-repeat;transform:scale(1.12);transition:transform 2.8s cubic-bezier(0.22,1,0.36,1);z-index:2;pointer-events:none}
+#song-card.active #wreath-frame{transform:scale(1)}
+
+.song-badge{position:absolute;top:210px;left:50%;transform:translateX(-50%) translateY(-22px);z-index:6;font-family:'Rye',serif;font-size:44px;letter-spacing:5px;text-transform:uppercase;padding:8px 36px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 5px 0px #3d0202) drop-shadow(0 8px 16px rgba(0,0,0,0.9));opacity:0;transition:all 1.4s cubic-bezier(0.22,1,0.36,1) 0.85s;white-space:nowrap}
+#song-card.active .song-badge{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.card-inner-glow{position:relative;z-index:5;text-align:center;max-width:74%;margin-top:115px;transform:translateY(18px) scale(0.94);opacity:0;transition:all 1.5s cubic-bezier(0.22,1,0.36,1) 1.25s}
+#song-card.active .card-inner-glow{transform:scale(1);opacity:1}
+
+#card-title{font-family:'Rye',serif;font-size:185px;line-height:1.05;margin-bottom:24px;background:repeating-linear-gradient(90deg,#fff3d6 0px,#fff3d6 22px,#ffd29d 22px,#ffd29d 30px);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 10px 0px #3d0202) drop-shadow(0 16px 28px rgba(0,0,0,0.95))}
+#card-artist{font-family:'Rye',serif;font-size:88px;letter-spacing:3px;background:linear-gradient(180deg,#ffe8b3 0%,#f4b942 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 7px 0px #3d0202) drop-shadow(0 12px 22px rgba(0,0,0,0.9))}
+
+/* PEŁNOEKRANOWA PLANSZA KOMUNIKATÓW NA TELEBIM (100% KRYCIA) */
+#telebim-msg-bar{position:fixed;inset:0;z-index:48;background:radial-gradient(circle at center,#a81313 0%,#410303 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px;text-align:center;opacity:0;transform:scale(0.92);pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.4s ease}
+#telebim-msg-bar::after{content:'';position:absolute;inset:32px;border:6px solid #ffcc00;border-radius:28px;box-shadow:0 0 40px rgba(255,204,0,0.4);pointer-events:none}
+#telebim-msg-bar.active{transform:scale(1);opacity:1}
+.msg-top-badge{font-family:'Montserrat',sans-serif;font-size:34px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#ffcc00;margin-bottom:30px;padding:10px 32px;border-top:3px solid #ffcc00;border-bottom:3px solid #ffcc00;text-shadow:0 4px 12px rgba(0,0,0,0.9)}
+#telebim-msg-text{font-family:'Montserrat',sans-serif;font-size:115px;font-weight:900;line-height:1.15;color:#fff3d6;text-transform:uppercase;text-shadow:0 10px 0px #3d0202,0 18px 35px rgba(0,0,0,0.95);max-width:88vw;word-wrap:break-word}
+
+body.theme-gala #telebim-msg-bar{background:radial-gradient(circle at center,#1d3557 0%,#070f1c 100%)}
+body.theme-gala #telebim-msg-bar::after{border-color:#d4af37;box-shadow:0 0 40px rgba(212,175,55,0.4)}
+body.theme-gala .msg-top-badge{color:#d4af37;border-color:#d4af37}
+body.theme-gala #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #050a14,0 18px 35px rgba(0,0,0,0.95)}
+
+body.theme-school #telebim-msg-bar{background:radial-gradient(circle at center,#1e293b 0%,#020617 100%)}
+body.theme-school #telebim-msg-bar::after{border-color:#38bdf8;box-shadow:0 0 40px rgba(56,189,248,0.4)}
+body.theme-school .msg-top-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617,0 18px 35px rgba(0,0,0,0.95)}
+
+/* MOTYW UNIWERSALNY / SZKOLNY */
+body.theme-school #song-card{background:radial-gradient(circle at center,#1e293b 0%,#0f172a 85%,#020617 100%)}
+body.theme-school #wreath-frame{display:none}
+body.theme-school #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #38bdf8;border-radius:28px;box-shadow:inset 0 0 35px rgba(56,189,248,0.2);pointer-events:none}
+body.theme-school .song-badge,body.theme-school #card-title,body.theme-school #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-school .song-badge{border-color:#38bdf8;background:linear-gradient(180deg,#e0f2fe 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-artist{background:linear-gradient(180deg,#bae6fd 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school .bg-vid{opacity:0 !important}
+body.theme-school #telebim-msg-bar{background:radial-gradient(circle at center,rgba(30,41,59,0.97) 0%,rgba(2,6,23,0.99) 100%)}
+body.theme-school #telebim-msg-bar::after{border-color:#38bdf8;box-shadow:0 0 40px rgba(56,189,248,0.4)}
+body.theme-school .msg-top-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-school #timer-label-txt{background:rgba(15,23,42,0.92);border-color:#38bdf8;color:#38bdf8}
+body.theme-school #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0f172a,0 20px 45px rgba(0,0,0,0.95)}
+
+#pilot-panel{display:none;position:fixed;inset:0;background:#121722;z-index:5000;padding:20px;overflow-y:auto}
+.p-box{background:#1b2232;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #2d3850}
+.p-box h3{color:#ffcc00;margin-bottom:12px;font-size:18px}
+input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #44526e;background:#0d111a;color:#fff;font-size:16px;margin-bottom:10px}
+.btn{padding:12px 16px;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;margin:3px}
+.btn-gold{background:#ffcc00;color:#111}.btn-green{background:#00a859}.btn-red{background:#d62828}.btn-blue{background:#0066ff}.btn-orange{background:#f77f00}.btn-pink{background:#d90429}.btn-purple{background:#7209b7}
+.song-item{display:flex;justify-content:space-between;align-items:center;background:#131824;padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:4px solid #ffcc00}
+#conn-badge{display:inline-block;padding:5px 12px;border-radius:5px;font-size:13px;font-weight:700;background:#d62828;margin-bottom:12px}
+#slides-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px;max-height:360px;overflow-y:auto;padding:4px}
+.slide-thumb{position:relative;border:3px solid #2d3850;border-radius:8px;overflow:hidden;cursor:pointer;background:#090d14;transition:transform 0.15s,border-color 0.15s}
+.slide-thumb:hover{transform:scale(1.03)}
+.slide-thumb.active-slide{border-color:#00a859;box-shadow:0 0 15px rgba(0,168,89,0.6)}
+.slide-thumb img{width:100%;aspect-ratio:16/9;object-fit:contain;display:block}
+.slide-num{position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.8);color:#ffcc00;font-size:12px;font-weight:800;padding:2px 7px;border-radius:4px}
+.slide-del{position:absolute;top:4px;right:4px;background:#d62828;color:#fff;border:none;border-radius:4px;width:24px;height:24px;font-size:13px;font-weight:800;cursor:pointer;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.8)}
+#slide-counter{display:inline-block;font-size:16px;font-weight:800;color:#ffcc00;margin:0 10px;vertical-align:middle}
+/* ZEGAR ODLICZAJĄCY CZAS NA TELEBIMIE */
+#telebim-timer-box{position:fixed;inset:0;z-index:42;background:radial-gradient(circle at center,rgba(5,11,20,0.45) 0%,rgba(5,11,20,0.82) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transform:scale(0.9);pointer-events:none;transition:transform 0.6s cubic-bezier(0.22,1,0.36,1),opacity 0.5s ease}
+#telebim-timer-box.active{opacity:1;transform:scale(1)}
+#timer-label-txt{font-family:'Montserrat',sans-serif;font-size:44px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ffcc00;margin-bottom:18px;padding:10px 36px;background:rgba(107,5,5,0.88);border:3px solid #ffcc00;border-radius:50px;box-shadow:0 12px 30px rgba(0,0,0,0.85)}
+#timer-digits{font-family:'Montserrat',sans-serif;font-size:230px;font-weight:900;line-height:1;color:#fff3d6;text-shadow:0 12px 0px #3d0202,0 20px 45px rgba(0,0,0,0.95);font-variant-numeric:tabular-nums}
+body.theme-gala #timer-label-txt{background:rgba(15,28,48,0.92);border-color:#d4af37;color:#d4af37}
+body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0b1526,0 20px 45px rgba(0,0,0,0.95)}
+/* MOTYW SPORTOWY / SCOREBOARD */
+body.theme-sport{background:#040d0a}
+body.theme-sport .bg-vid{opacity:0 !important}
+body.theme-sport #wreath-frame{display:none}
+body.theme-sport #song-card{background:radial-gradient(circle at center,#0b291e 0%,#05140f 85%,#020806 100%)}
+body.theme-sport #song-card::after{content:'';position:absolute;inset:45px;border:5px solid #00e676;border-radius:28px;box-shadow:inset 0 0 40px rgba(0,230,118,0.22);pointer-events:none}
+body.theme-sport .song-badge,body.theme-sport #card-title,body.theme-sport #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-sport .song-badge{border-color:#00e676;background:linear-gradient(180deg,#b9f6ca 0%,#00e676 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-title{background:linear-gradient(180deg,#ffffff 0%,#e0f2f1 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-artist{background:linear-gradient(180deg,#69f0ae 0%,#00c853 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #telebim-msg-bar{background:radial-gradient(circle at center,#0b291e 0%,#030b08 100%)}
+body.theme-sport #telebim-msg-bar::after{border-color:#00e676;box-shadow:0 0 40px rgba(0,230,118,0.45)}
+body.theme-sport .msg-top-badge{color:#00e676;border-color:#00e676}
+body.theme-sport #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020806,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-sport #telebim-timer-box{background:radial-gradient(circle at center,rgba(11,41,30,0.97) 0%,rgba(3,11,8,0.99) 100%)}
+body.theme-sport #timer-label-txt{background:rgba(4,18,13,0.92);border-color:#00e676;color:#00e676}
+body.theme-sport #timer-digits{color:#ffffff;text-shadow:0 12px 0px #020806,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-sport #pilot-panel{background:#07130f}
+body.theme-sport .p-box{background:#0e211b;border-color:#1c4538}
+body.theme-sport .p-box h3{color:#00e676}
+body.theme-sport input,body.theme-sport textarea{background:#06100d;border-color:#1e4d3e}
+.btn-sport{background:#00e676;color:#04120d}
+#sport-pilot-section{display:none}
+body.theme-sport #sport-pilot-section{display:block}
+body.theme-sport #songs-pilot-section{display:none}
+.sb-mini-preview{display:flex;align-items:center;justify-content:center;background:#06120e;border:2px solid #00e676;border-radius:10px;padding:12px;margin-bottom:14px;gap:14px;flex-wrap:wrap}
+.sb-mini-team{font-size:18px;font-weight:900;text-transform:uppercase;color:#fff}
+.sb-mini-score{font-size:28px;font-weight:900;background:#00e676;color:#04120d;padding:4px 14px;border-radius:6px}
+.sb-mini-time{font-size:24px;font-weight:900;color:#ffcc00;font-variant-numeric:tabular-nums;padding:0 10px}
+.sb-mini-period{font-size:13px;background:#1c4538;color:#69f0ae;padding:4px 10px;border-radius:20px;font-weight:800}
+.sb-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.sb-team-card{background:#091713;border:1px solid #1c4538;border-radius:8px;padding:12px;text-align:center}
+.sb-team-card h4{color:#69f0ae;margin-bottom:8px;font-size:16px;text-transform:uppercase}
+/* MOTYW PATRIOTYCZNY (GALA) */
+body.theme-gala #telebim-msg-bar{background:radial-gradient(circle at center,#1d3557 0%,#070f1c 100%)}
+body.theme-gala #telebim-msg-bar::after{border-color:#d4af37;box-shadow:0 0 40px rgba(212,175,55,0.4)}
+body.theme-gala .msg-top-badge{color:#d4af37;border-color:#d4af37}
+body.theme-gala #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #050a14,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-gala #song-card{background:radial-gradient(circle at center,#1d3557 0%,#0b1526 85%,#050a14 100%)}
+body.theme-gala #wreath-frame{display:none}
+body.theme-gala #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #d4af37;box-shadow:inset 0 0 0 12px #0b1526,inset 0 0 0 15px rgba(220,20,60,0.7);pointer-events:none}
+body.theme-gala .song-badge,body.theme-gala #card-title,body.theme-gala #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-gala .song-badge{border-color:#d4af37;background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #card-artist{background:linear-gradient(180deg,#fceabb 0%,#d4af37 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-gala #telebim-timer-box{background:radial-gradient(circle at center,rgba(29,53,87,0.97) 0%,rgba(5,10,20,0.99) 100%)}
+body.theme-gala #timer-label-txt{background:rgba(11,21,38,0.92);border-color:#d4af37;color:#d4af37}
+body.theme-gala #timer-digits{color:#ffffff;text-shadow:0 12px 0px #050a14,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-gala .bg-vid{opacity:0 !important}
+
+/* MOTYW SZKOLNY / DEBATY */
+body.theme-school #song-card{background:radial-gradient(circle at center,#1e293b 0%,#0f172a 85%,#020617 100%)}
+body.theme-school #wreath-frame{display:none}
+body.theme-school #song-card::after{content:'';position:absolute;inset:45px;border:4px solid #38bdf8;border-radius:28px;box-shadow:inset 0 0 35px rgba(56,189,248,0.2);pointer-events:none}
+body.theme-school .song-badge,body.theme-school #card-title,body.theme-school #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9))}
+body.theme-school .song-badge{border-color:#38bdf8;background:linear-gradient(180deg,#e0f2fe 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school #card-artist{background:linear-gradient(180deg,#bae6fd 0%,#38bdf8 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-school .bg-vid{opacity:0 !important}
+body.theme-school #telebim-msg-bar{background:radial-gradient(circle at center,rgba(30,41,59,0.97) 0%,rgba(2,6,23,0.99) 100%)}
+body.theme-school #telebim-msg-bar::after{border-color:#38bdf8;box-shadow:0 0 40px rgba(56,189,248,0.4)}
+body.theme-school .msg-top-badge{color:#38bdf8;border-color:#38bdf8}
+body.theme-school #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #020617,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-school #telebim-timer-box{background:radial-gradient(circle at center,rgba(30,41,59,0.97) 0%,rgba(2,6,23,0.99) 100%)}
+body.theme-school #timer-label-txt{background:rgba(15,23,42,0.92);border-color:#38bdf8;color:#38bdf8}
+body.theme-school #timer-digits{color:#ffffff;text-shadow:0 12px 0px #0f172a,0 20px 45px rgba(0,0,0,0.95)}
+
+/* MOTYW SPORTOWY / SCOREBOARD (BARWY SAMOCHODÓWKI: GRANAT + ŻÓŁTY) */
+body.theme-sport{background:#0b1324}
+body.theme-sport .bg-vid{opacity:0 !important}
+body.theme-sport #wreath-frame{display:none}
+body.theme-sport #song-card{background:radial-gradient(circle at center,#182c4e 0%,#0c172b 85%,#060c17 100%)}
+body.theme-sport #song-card::after{content:'';position:absolute;inset:45px;border:5px solid #ffcc00;border-radius:28px;box-shadow:inset 0 0 40px rgba(255,204,0,0.22);pointer-events:none}
+body.theme-sport .song-badge,body.theme-sport #card-title,body.theme-sport #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-sport .song-badge{border-color:#ffcc00;background:linear-gradient(180deg,#fff3b0 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-title{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #card-artist{background:linear-gradient(180deg,#ffe066 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-sport #telebim-msg-bar{background:radial-gradient(circle at center,#182c4e 0%,#060c17 100%)}
+body.theme-sport #telebim-msg-bar::after{border-color:#ffcc00;box-shadow:0 0 40px rgba(255,204,0,0.45)}
+body.theme-sport .msg-top-badge{color:#ffcc00;border-color:#ffcc00}
+body.theme-sport #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #060c17,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-sport #telebim-timer-box{background:radial-gradient(circle at center,rgba(24,44,78,0.97) 0%,rgba(6,12,23,0.99) 100%)}
+body.theme-sport #timer-label-txt{background:rgba(11,22,43,0.92);border-color:#ffcc00;color:#ffcc00}
+body.theme-sport #timer-digits{color:#ffffff;text-shadow:0 12px 0px #060c17,0 20px 45px rgba(0,0,0,0.95)}
+/* MOTYW TYTANI WEJHEROWO (CZERWONY + CZARNY + ZŁOTY) */
+body.theme-tytani{background:#09090b}
+body.theme-tytani .bg-vid{opacity:0 !important}
+body.theme-tytani #wreath-frame{display:none}
+body.theme-tytani #song-card{background:radial-gradient(circle at center,#8b0000 0%,#2b0303 80%,#09090b 100%)}
+body.theme-tytani #song-card::after{content:'';position:absolute;inset:45px;border:5px solid #ffcc00;border-radius:28px;box-shadow:inset 0 0 45px rgba(217,4,41,0.45);pointer-events:none}
+body.theme-tytani .song-badge,body.theme-tytani #card-title,body.theme-tytani #card-artist{font-family:'Montserrat',sans-serif;font-weight:900;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.95))}
+body.theme-tytani .song-badge{border-color:#ffcc00;background:linear-gradient(180deg,#fff3b0 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #card-title{background:linear-gradient(180deg,#ffffff 0%,#f1f5f9 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #card-artist{background:linear-gradient(180deg,#ffe066 0%,#ffcc00 100%);-webkit-background-clip:text;background-clip:text}
+body.theme-tytani #telebim-msg-bar{background:radial-gradient(circle at center,#8b0000 0%,#09090b 100%)}
+body.theme-tytani #telebim-msg-bar::after{border-color:#ffcc00;box-shadow:0 0 40px rgba(255,204,0,0.45)}
+body.theme-tytani .msg-top-badge{color:#ffcc00;border-color:#ffcc00}
+body.theme-tytani #telebim-msg-text{color:#ffffff;text-shadow:0 10px 0px #1a0202,0 18px 35px rgba(0,0,0,0.95)}
+body.theme-tytani #telebim-timer-box{background:radial-gradient(circle at center,rgba(139,0,0,0.97) 0%,rgba(9,9,11,0.99) 100%)}
+body.theme-tytani #timer-label-txt{background:rgba(15,5,5,0.92);border-color:#ffcc00;color:#ffcc00}
+body.theme-tytani #timer-digits{color:#ffffff;text-shadow:0 12px 0px #1a0202,0 20px 45px rgba(0,0,0,0.95)}
+body.theme-tytani #pilot-panel{background:#0e0b0c}
+body.theme-tytani .p-box{background:#1b1214;border-color:#59141d}
+body.theme-tytani .p-box h3{color:#ffcc00}
+body.theme-tytani input,body.theme-tytani textarea{background:#0b0809;border-color:#6e1823}
+.btn-tytani{background:linear-gradient(135deg,#d90429 0%,#8b0000 100%);color:#ffcc00;border:2px solid #ffcc00}
+body.theme-tytani #sport-pilot-section{display:block}
+body.theme-tytani #songs-pilot-section{display:none}
+#tytani-video-section{display:none}
+body.theme-tytani #tytani-video-section{display:block}
+/* PLANSZA TURNIEJOWA (KOLEJNOŚĆ MECZÓW + KLASYFIKACJA KOŃCOWA 1:1 JAK Z PPT) */
+#tournament-board::before{content:'';position:absolute;inset:0;background:url('tlo_turniej.jpg') center/cover no-repeat;transform:scale(1.06);z-index:-1}
+#tournament-board.active{opacity:1}
+.tb-header{font-family:'Roboto Slab',serif;font-size:68px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:8px;line-height:1.1}
+.tb-subheader{font-family:'Roboto Slab',serif;font-size:54px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:24px}
+.tb-list{display:flex;flex-direction:column;gap:22px;width:100%;max-width:1550px;margin-top:36px}
+.tb-match-row{font-family:'Roboto Slab',serif;font-size:48px;font-weight:900;color:#ffe600;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
+.tb-match-num{margin-right:16px}
+.tb-match-score{color:#5bc0eb;margin-left:16px}
+.tb-rank-row{font-family:'Roboto Slab',serif;font-size:48px;font-weight:900;text-transform:uppercase;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
+.tb-rank-1{color:#ffe600}
+.tb-rank-2{color:#a8b2bd}
+.tb-rank-3{color:#d9822b}
+.tb-rank-other{color:#ffffff}
+body.theme-tytani #tb-pilot-box{display:none !important}
+#tournament-board{inset:-6px !important;border:none !important;outline:none !important}
+#tournament-board::before{inset:-30px !important;transform:scale(1.08) !important}
+#tournament-board{align-items:center !important;text-align:center !important}
+.tb-list{align-items:center !important;width:100% !important;margin-left:auto !important;margin-right:auto !important}
+.tb-header,.tb-subheader,.tb-match-row,.tb-rank-row{text-align:center !important;width:100% !important}
+#tournament-board{padding-top:25px !important}
+.tb-header{line-height:1.35 !important;padding-top:12px !important}
+#tytani-lineup-section{display:none}
+body.theme-tytani #tytani-lineup-section{display:block}
+/* KISS CAM (TYLKO TRYB SPORTOWY) */
+#kisscam-pilot-box{display:none}
+body.theme-sport #kisscam-pilot-box{display:block}
+
+#kisscam-overlay{position:fixed;inset:0;z-index:47;background:radial-gradient(circle at center,#4a0424 0%,#14010a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.6s ease;overflow:hidden}
+#kisscam-overlay.active{opacity:1}
+.kc-title{font-family:'Montserrat',sans-serif;font-size:62px;font-weight:900;color:#ff4d94;text-transform:uppercase;letter-spacing:4px;text-shadow:0 0 25px rgba(255,77,148,0.8),0 6px 14px rgba(0,0,0,0.9);margin-bottom:22px;z-index:3;animation:kcPulse 1.4s infinite ease-in-out}
+.kc-frame{position:relative;width:1160px;height:660px;border:8px solid #ff4d94;border-radius:36px;box-shadow:0 0 50px rgba(255,77,148,0.65),0 20px 60px rgba(0,0,0,0.9);overflow:hidden;background:#0a0206;z-index:3}
+.kc-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:scale(0.94);transition:opacity 0.85s ease,transform 1.1s ease}
+.kc-photo.show{opacity:1;transform:scale(1)}
+.kc-badge{margin-top:20px;background:linear-gradient(90deg,#ff1e7a,#ff758f);color:#fff;font-size:24px;font-weight:900;padding:8px 28px;border-radius:50px;letter-spacing:2px;box-shadow:0 6px 20px rgba(255,30,122,0.5);z-index:3}
+.kc-heart-particle{position:absolute;bottom:-60px;font-size:38px;opacity:0.75;pointer-events:none;z-index:1;animation:kcFloatUp linear forwards}
+@keyframes kcPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes kcFloatUp{0%{transform:translateY(0) rotate(0deg);opacity:0}15%{opacity:0.85}85%{opacity:0.85}100%{transform:translateY(-115vh) rotate(25deg);opacity:0}}
+
+/* PODŚWIETLENIE AKTUALNEGO ARTYSTY NA LIŚCIE */
+.item-card.current-active{border:2px solid #ffcc00 !important;background:rgba(255,204,0,0.12) !important}
+body:not(.theme-sport) #tournament-board{display:none !important;opacity:0 !important;pointer-events:none !important}
+#pilot-autopilot-box,#pilot-audio-box{margin-top:12px;margin-bottom:12px}
+#kisscam-overlay{padding:18px 20px !important;justify-content:space-between !important}
+.kc-title{font-size:48px !important;margin-bottom:6px !important;line-height:1.1 !important}
+.kc-frame{width:1540px !important;height:835px !important;border-radius:28px !important}
+.kc-badge{margin-top:8px !important;font-size:20px !important;padding:6px 24px !important}
+/* PRZYCISK PANIKI BLACKOUT */
+#blackout-overlay{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s ease}
+#blackout-overlay.active{opacity:1;pointer-events:auto}
+#blackout-logo{width:220px;height:220px;object-fit:contain;opacity:0.22}
+.btn-blackout{background:#b91c1c;color:#fff;border:2px solid #fca5a5;font-weight:900;letter-spacing:1px;transition:all 0.2s ease}
+.btn-blackout.is-on{background:#ffcc00;color:#000;border-color:#fff;animation:boPulse 1s infinite}
+@keyframes boPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+/* PASEK PILNYCH KOMUNIKATÓW NA DOLE EKRANU (CHYRON) */
+#urgent-chyron{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(140px);width:1760px;height:68px;background:rgba(12,18,32,0.96);border:3px solid #ffcc00;border-radius:14px;box-shadow:0 14px 35px rgba(0,0,0,0.85);display:flex;align-items:center;overflow:hidden;z-index:8800;opacity:0;pointer-events:none;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.35s ease}
+#urgent-chyron.active{transform:translateX(-50%) translateY(0);opacity:1}
+body.pilot-active #urgent-chyron{display:none !important}
+.chyron-badge{background:linear-gradient(90deg,#b91c1c,#ef4444);color:#fff;font-size:18px;font-weight:900;letter-spacing:1.5px;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:center;border-right:3px solid #ffcc00;white-space:nowrap;flex-shrink:0;text-transform:uppercase}
+.chyron-track{flex:1;overflow:hidden;white-space:nowrap;padding:0 24px;display:flex;align-items:center}
+#chyron-text{font-size:26px;font-weight:800;color:#fff;display:inline-block;white-space:nowrap}
+#chyron-text.scrolling{padding-left:100%;animation:chyronScroll 18s linear infinite}
+@keyframes chyronScroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+#pilot-soundboard-box input[type="file"],#pilot-soundboard-box button{position:relative;z-index:10;pointer-events:auto !important}
+/* WYRAZISTY I CZYSTY MOTYW PILOTA (2 KOLORY: GRANAT + ZŁOTY AKCENT) */
+body.pilot-active,#pilot-panel{
+    background:#0d131f !important;
+    color:#f8fafc !important;
+}
+#pilot-panel h1,#pilot-panel h2{
+    color:#fbbf24 !important;
+    border-bottom:2px solid #1e293b !important;
+    padding-bottom:12px !important;
+}
+
+/* Wyraźne karty sekcji z czytelnym obramowaniem */
+#pilot-panel .p-box,
+#pilot-panel #pilot-autopilot-box,
+#pilot-panel #pilot-audio-box,
+#pilot-panel #pilot-soundboard-box{
+    background:#141d2e !important;
+    border:1px solid #2d3b55 !important;
+    border-radius:12px !important;
+    box-shadow:0 6px 20px rgba(0,0,0,0.4) !important;
+    padding:16px !important;
+}
+
+/* Mocne, czytelne nagłówki sekcji z paskiem oddzielającym */
+#pilot-panel h3{
+    color:#fbbf24 !important;
+    font-size:15px !important;
+    font-weight:900 !important;
+    letter-spacing:0.8px !important;
+    text-transform:uppercase !important;
+    padding-bottom:8px !important;
+    margin-bottom:12px !important;
+    border-bottom:1px solid #26334d !important;
+}
+
+/* Wyraźne pola tekstowe */
+#pilot-panel input[type="text"],
+#pilot-panel input[type="number"],
+#pilot-panel textarea,
+#pilot-panel select{
+    background:#090e17 !important;
+    color:#ffffff !important;
+    border:1px solid #475569 !important;
+    border-radius:8px !important;
+}
+#pilot-panel input:focus,#pilot-panel textarea:focus,#pilot-panel select:focus{
+    border-color:#fbbf24 !important;
+    outline:none !important;
+}
+
+/* Spójne, wyraziste przyciski (bez tęczy) */
+#pilot-panel .btn,
+#pilot-panel .btn-gold,
+#pilot-panel .btn-orange,
+#pilot-panel .btn-blue,
+#pilot-panel #pilot-soundboard-box .btn:not(.btn-red){
+    background:#1e293b !important;
+    color:#f8fafc !important;
+    border:1px solid #475569 !important;
+    border-radius:8px !important;
+    font-weight:800 !important;
+}
+#pilot-panel .btn:hover,
+#pilot-panel .btn-gold:hover,
+#pilot-panel .btn-orange:hover,
+#pilot-panel .btn-blue:hover,
+#pilot-panel #pilot-soundboard-box .btn:not(.btn-red):hover{
+    background:#2a3952 !important;
+    border-color:#fbbf24 !important;
+    color:#fbbf24 !important;
+}
+
+/* Tylko 2 kolory akcji: SOCZYSTY ZIELONY = Start/Pokaż, CZERWONY = Stop/Ukryj */
+#pilot-panel .btn-green{
+    background:#059669 !important;
+    color:#ffffff !important;
+    border:1px solid #34d399 !important;
+}
+#pilot-panel .btn-green:hover{background:#10b981 !important}
+
+#pilot-panel .btn-red{
+    background:#dc2626 !important;
+    color:#ffffff !important;
+    border:1px solid #f87171 !important;
+}
+#pilot-panel .btn-red:hover{background:#ef4444 !important}
+
+/* Pasek statusu audio i podświetlenie listy */
+#pilot-panel #audio-remote-status{
+    background:#090e17 !important;
+    border:1px solid #334155 !important;
+    color:#fbbf24 !important;
+}
+#pilot-panel .item-card{
+    background:#0f172a !important;
+    border:1px solid #2d3b55 !important;
+}
+#pilot-panel .item-card.current-active{
+    border:2px solid #fbbf24 !important;
+    background:rgba(251,191,36,0.14) !important;
+}
+/* UKRYCIE SEKCJI SZKOLNYCH / MÓWCÓW WYŁĄCZNIE W TRYBIE TYTANÓW */
+body.theme-tytani #pilot-autopilot-box,
+body.theme-tytani .hide-on-tytani,
+body.theme-tytani #speaker-card{
+    display:none !important;
+}
+</style>
+</head>
+<body>
+<video id="vid-a" class="bg-vid" src="tlo_koleda.mp4.mp4" preload="auto" muted playsinline style="opacity:1"></video>
+<video id="vid-b" class="bg-vid" src="tlo_koleda.mp4.mp4" preload="auto" muted playsinline style="opacity:0"></video>
+<img id="base-main-slide" src="" alt="" style="position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#050b14;z-index:2;display:none">
+
+<div id="song-card">
+    <div id="wreath-frame"></div>
+    <div class="song-badge">Koncert kolęd</div>
+    <div class="card-inner-glow">
+        <div id="card-title">Cicha noc</div>
+        <div id="card-artist">Samochodówka Band</div>
+        <div id="card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:44px;color:#e2e8f0;margin-top:16px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
+    </div>
+</div>
+
+<div id="telebim-msg-bar">
+    <div class="msg-top-badge">📢 KOMUNIKAT ORGANIZACYJNY</div>
+    <div id="telebim-msg-text">CISZA NA SALI</div>
+</div>
+<div id="telebim-timer-box">
+    <div id="timer-label-txt">DO ROZPOCZĘCIA UROCZYSTOŚCI</div>
+    <div id="timer-digits">05:00</div>
+</div>
+       <body>
+<video id="vid-a" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:1"></video>
+<video id="vid-b" class="bg-vid" src="tlo_koleda.mp4.mp4" muted playsinline style="opacity:0"></video>
+<img id="base-main-slide" src="" alt="" style="position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#050b14;z-index:2;display:none">
+
+<div id="song-card">
+    <div id="wreath-frame"></div>
+    <div class="song-badge">Koncert kolęd</div>
+    <div class="card-inner-glow">
+        <div id="card-title">Cicha noc</div>
+        <div id="card-artist">Samochodówka Band</div>
+        <div id="card-class" style="font-family:'Montserrat',sans-serif;font-style:italic;font-size:44px;color:#e2e8f0;margin-top:16px;letter-spacing:2px;text-shadow:0 4px 12px rgba(0,0,0,0.9)"></div>
+    </div>
+</div>
+
+<div id="telebim-msg-bar">
+    <div class="msg-top-badge">📢 KOMUNIKAT ORGANIZACYJNY</div>
+    <div id="telebim-msg-text">CISZA NA SALI</div>
+</div>
+<div id="telebim-timer-box">
+    <div id="timer-label-txt">DO ROZPOCZĘCIA UROCZYSTOŚCI</div>
+    <div id="timer-digits">05:00</div>
+</div>
+<div id="tournament-board">
+    <div class="tb-header" id="tb-disp-title">KOLEJNOŚĆ MECZÓW</div>
+    <div class="tb-subheader" id="tb-disp-sub">GRUPA C</div>
+    <div class="tb-list" id="tb-disp-rows"></div>
+</div>
+<div id="kisscam-overlay">
+    <div class="kc-title">💘 KISS CAM 💘</div>
+    <div class="kc-frame" id="kc-photo-stage"></div>
+    <div class="kc-badge" id="kc-counter-badge">PZS 4 WEJHEROWO • 1 / 1</div>
+</div>
+
+<div id="urgent-chyron">
+    <div class="chyron-badge" id="chyron-label">📢 KOMUNIKAT</div>
+    <div class="chyron-track">
+        <div id="chyron-text">Treść komunikatu...</div>
+    </div>
+</div>
+<div id="blackout-overlay">
+    <img id="blackout-logo" src="logo_szkola.png" alt="">
+</div>
+<div id="pilot-panel">
+    <div style="text-align:center">
+        <h2 style="color:#ffcc00;margin-bottom:6px">🎛️ PILOT UROCZYSTOŚCI I SPORTU - PZS 4 AV</h2>
+        <button id="btn-blackout-toggle" class="btn btn-blackout" style="width:100%;font-size:17px;padding:14px;margin-bottom:12px" onclick="toggleBlackout()">🚨 BLACKOUT / WYGASZENIE EKRANU (AWARYJNE)</button>
+            <div class="p-box" style="border-color:#ef4444;background:rgba(239,68,68,0.07);margin-bottom:12px">
+        <h3 style="color:#fca5a5;margin-bottom:8px">📢 SZYBKI PASEK KOMUNIKATU (DÓŁ EKRANU — BEZ PRZERYWANIA)</h3>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+            <select id="in-chyron-tag" style="width:180px;font-weight:800">
+                <option value="📢 KOMUNIKAT">📢 KOMUNIKAT</option>
+                <option value="🚗 PARKING">🚗 PARKING</option>
+                <option value="⚠️ PILNE">⚠️ PILNE</option>
+                <option value="🏆 TURNIEJ">🏆 TURNIEJ</option>
+            </select>
+            <input type="text" id="in-chyron-msg" placeholder="Wpisz treść ogłoszenia na dół ekranu..." style="flex:1">
+        </div>
+        <div style="display:flex;gap:8px">
+            <button class="btn btn-green" style="flex:2" onclick="sendUrgentChyron()">📢 POKAŻ PASEK NA TELEBIMIE</button>
+            <button class="btn btn-red" style="flex:1" onclick="hideUrgentChyron()">✖ UKRYJ PASEK</button>
+        </div>
+    </div>
+        <div id="conn-badge">🔴 ŁĄCZENIE Z SERWEREM...</div>
+        <div style="margin-bottom:14px">
+            <button class="btn btn-red" onclick="switchTheme('xmas')">🎄 ŚWIĄTECZNY</button>
+            <button class="btn btn-blue" onclick="switchTheme('school')">🎓 SZKOLNY / DEBATY</button>
+            <button class="btn btn-gold" onclick="switchTheme('gala')">🇵🇱 PATRIOTYCZNY</button>
+            <button class="btn btn-sport" onclick="switchTheme('sport')">⚽ SPORTOWY / SCOREBOARD</button>
+            <button class="btn btn-tytani" onclick="switchTheme('tytani')">🛡️ TYTANI</button>
+        </div>
+        <div style="max-width:540px;margin:0 auto 10px auto;display:flex;gap:6px;align-items:center">
+            <input type="text" id="in-custom-badge" oninput="syncCustomBadge()" style="margin-bottom:0;text-align:center;font-weight:700" placeholder="Własny nagłówek karty (np. Debaty, Turniej Piłki Nożnej)...">
+            <button class="btn btn-orange" style="margin:0;white-space:nowrap" onclick="clearCustomBadge()">↺ Domyślny</button>
+        </div>
+            <div id="pilot-autopilot-box" class="p-box" style="border-color:#ffcc00;background:rgba(255,204,0,0.06)">
+        <h3 style="color:#ffcc00;margin-bottom:8px">⏭️ AUTOPILOT PLAYLISTY / MÓWCÓW</h3>
+        <button class="btn btn-gold" style="width:100%;font-size:16px;padding:13px" onclick="playNextFromPlaylist()">⏭️ POKAŻ KOLEJNY Z LISTY</button>
+    </div>
+
+        <div id="pilot-audio-box" class="p-box" style="border-color:#00b4d8;background:rgba(0,180,216,0.06)">
+        <h3 style="color:#00b4d8;margin-bottom:8px">🎵 PLAYLISTA AUDIO MP3 / WAV (WIELE UTWORÓW)</h3>
+        <input type="file" id="in-local-audio" accept="audio/*" multiple onchange="loadLocalAudioFiles(this)" style="margin-bottom:8px">
+        <div id="audio-playlist-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <audio id="pilot-audio-player" controls style="width:100%;margin:4px 0 8px 0;height:38px"></audio>
+        <div id="audio-remote-status" style="background:#0b132b;border:1px solid #00b4d8;border-radius:6px;padding:7px 12px;margin-bottom:8px;font-size:14px;font-weight:800;color:#00e5ff;text-align:center">Brak załadowanych utworów MP3 na komputerze</div>
+        <div style="display:flex;gap:8px">
+            <button class="btn btn-green" style="flex:1" onclick="playLocalAudio()">▶️ START (100%)</button>
+            <button class="btn btn-orange" style="flex:1" onclick="fadeOutLocalAudio()">📉 WYCISZ PŁYNNIE (3s)</button>
+        </div>
+    </div>
+        <!-- SZYBKI SOUNDBOARD (6 EFEKTÓW 1-KLIKNIĘCIE + SYNCHRO Z TABLETEM) -->
+    <div id="pilot-soundboard-box" class="p-box" style="margin-bottom:14px">
+        <h3>🔊 SZYBKI SOUNDBOARD (EFEKTY 1-KLIKNIĘCIE — KOMP + TABLET)</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px" id="sb-grid">
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn btn-gold" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(0)">🚨 1. SYRENA / KONIEC</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(0, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-0" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn btn-green" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(1)">⚽ 2. GOL / FANFARA</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(1, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-1" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(2)">👏 3. BRAWA / OKLASKI</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(2, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-2" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(3)">❌ 4. PUDŁO / BŁĄD</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(3, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-3" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(4)">🥁 5. WERBEL / NAPIĘCIE</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(4, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-4" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+            <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px">
+                <button class="btn" style="width:100%;font-size:15px;padding:12px;margin-bottom:6px" onclick="triggerSoundboard(5)">🔥 6. DŻINGIEL EXTRA</button>
+                <input type="file" accept="audio/*" onchange="loadSoundboardSlot(5, this)" style="font-size:11px;width:100%">
+                <div id="sb-name-5" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brak pliku</div>
+            </div>
+        </div>
+        <button class="btn btn-red" style="width:100%" onclick="stopAllSoundboard()">⏹️ ZATRZYMAJ WSZYSTKIE EFEKTY SOUNDBOARDU</button>
+    </div>
+    </div>
+
+    <div id="sport-pilot-section" class="p-box" style="border-color:#00e676">
+        <h3>⚽ PANEL TABLICY WYNIKÓW (SCOREBOARD NA NAGRANIU)</h3>
+        <div class="sb-mini-preview">
+            <span class="sb-mini-team" id="pv-home-name">GOSPODARZE</span>
+            <span class="sb-mini-score" id="pv-home-score">0</span>
+            <span class="sb-mini-time" id="pv-timer">00:00</span>
+            <span class="sb-mini-score" id="pv-away-score">0</span>
+            <span class="sb-mini-team" id="pv-away-name">GOŚCIE</span>
+            <span class="sb-mini-period">POŁOWA: <span id="pv-period">1</span></span>
+        </div>
+
+        <div class="sb-grid-2">
+            <div>
+                <input type="text" id="sb-home-name" placeholder="Nazwa Gospodarzy" oninput="updateSbSettings()">
+                <input type="text" id="sb-home-logo" placeholder="Logo Gospodarzy (URL)" oninput="updateSbSettings()">
+            </div>
+            <div>
+                <input type="text" id="sb-away-name" placeholder="Nazwa Gości" oninput="updateSbSettings()">
+                <input type="text" id="sb-away-logo" placeholder="Logo Gości (URL)" oninput="updateSbSettings()">
+            </div>
+        </div>
+        <div style="text-align:center;margin-bottom:14px">
+            <button class="btn btn-orange" onclick="swapSbSides()">⇄ ZAMIEŃ DRUŻYNY STRONAMI</button>
+        </div>
+
+        <div class="sb-grid-2">
+            <div class="sb-team-card">
+                <h4 id="sb-home-title">GOSPODARZE</h4>
+                <button class="btn btn-sport" onclick="changeSbScore('home', 1)">+1 PUNKT</button>
+                <button class="btn btn-red" onclick="changeSbScore('home', -1)">-1</button>
+            </div>
+            <div class="sb-team-card">
+                <h4 id="sb-away-title">GOŚCIE</h4>
+                <button class="btn btn-sport" onclick="changeSbScore('away', 1)">+1 PUNKT</button>
+                <button class="btn btn-red" onclick="changeSbScore('away', -1)">-1</button>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding-top:10px;border-top:1px solid #1c4538">
+            <div style="margin-bottom:10px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap">
+                <span>Auto-stop (min):</span>
+                <input type="number" id="sb-target-time" value="12" min="1" max="90" style="width:75px;margin-bottom:0;text-align:center" onchange="updateSbSettings()">
+                <span>| Połowa:</span>
+                <button class="btn btn-blue" style="padding:6px 12px" onclick="changeSbPeriod(-1)">-</button>
+                <strong id="sb-period-val" style="font-size:20px;color:#00e676">1</strong>
+                <button class="btn btn-blue" style="padding:6px 12px" onclick="changeSbPeriod(1)">+</button>
+            </div>
+            <button class="btn btn-green" onclick="toggleSbTimer()">▶️ START / ⏸️ PAUZA</button>
+            <button class="btn btn-orange" onclick="resetSbTimerOnly()">↺ RESET CZASU</button>
+            <button class="btn btn-red" onclick="resetSbAll()">🗑️ RESET MECZU</button>
+        </div>
+                <div id="tb-pilot-box" style="margin-top:18px;padding-top:16px;border-top:2px solid #ffcc00">
+            <h3 style="color:#ffcc00;margin-bottom:10px">📋 ROZPISKA MECZÓW / KLASYFIKACJA NA TELEBIM</h3>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+                <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('matches')">📋 KOLEJNOŚĆ MECZÓW</button>
+                <button class="btn btn-blue" style="flex:1" onclick="switchTbTab('standings')">🏆 KLASYFIKACJA KOŃCOWA</button>
+            </div>
+                <div id="kisscam-pilot-box" style="margin-top:18px;padding-top:16px;border-top:2px solid #ff4d94">
+        <h3 style="color:#ff4d94;margin-bottom:8px">💘 KISS CAM (PRZERWA W MECZU SZKOLNYM)</h3>
+        <p style="font-size:13px;color:#ccc;margin-bottom:8px">Wybierz zdjęcia z dysku (możesz zaznaczyć kilka naraz) — każde wyświetli się po 5 sekund z serduszkami, a potem ekran wróci do poprzedniego widoku:</p>
+        <input type="file" id="in-kisscam-files" accept="image/*" multiple style="margin-bottom:8px">
+        <div style="display:flex;gap:8px">
+            <button class="btn" style="background:#ff1e7a;color:#fff;flex:1" onclick="startKissCamShow()">💘 START KISS CAM (5s / ZDJĘCIE)</button>
+            <button class="btn btn-red" onclick="stopKissCamShow()">✖ PRZERWIJ</button>
+        </div>
+          </div>
+
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                    <span style="font-size:13px;font-weight:700;color:#ccc">Kolor meczów:</span>
+                    <button type="button" class="btn" style="background:#ffe600;color:#111;padding:6px 12px" onclick="setTbTextColor('#ffe600')">Żółty</button>
+                    <button type="button" class="btn" style="background:#ffffff;color:#111;padding:6px 12px" onclick="setTbTextColor('#ffffff')">Biały</button>
+                    <button type="button" class="btn" style="background:#5bc0eb;color:#111;padding:6px 12px" onclick="setTbTextColor('#5bc0eb')">Niebieski</button>
+                    <button type="button" class="btn" style="background:#ff4d6d;color:#fff;padding:6px 12px" onclick="setTbTextColor('#ff4d6d')">Czerwony</button>
+                    <button type="button" class="btn" style="background:#00e676;color:#111;padding:6px 12px" onclick="setTbTextColor('#00e676')">Zielony</button>
+                    <input type="color" id="tb-text-color" value="#ffe600" onchange="setTbTextColor(this.value)" style="width:44px;height:34px;padding:2px;margin:0;cursor:pointer" title="Dowolny kolor">
+                </div>
+    
+            <div id="tb-tab-matches">
+                <input type="text" id="tb-group-name" value="GRUPA C" oninput="syncTbInputs()" placeholder="Podtytuł (np. GRUPA C, PÓŁFINAŁY, TURNIEJ DZIEWCZĄT)...">
+                <textarea id="tb-matches-raw" rows="6" oninput="syncTbInputs()" placeholder="Wpisuj mecze linia po linii (wzór: PZS 2 Wejherowo - II LO Rumia | 5:1):&#10;PZS 2 Wejherowo - II LO Rumia | 5:1&#10;ZKiW Kniewo - PZS 2 Rumia | 0:7&#10;PZS 2 Wejherowo - ZKiW Kniewo |"></textarea>
+                <small style="color:#ccc;display:block;margin-bottom:8px">Wskazówka: Po znaku <b>|</b> wpisz wynik (np. <b>| 5:1</b>). Jeśli mecz jeszcze się nie odbył, zostaw puste po nazwie drużyn.</small>
+                <button class="btn btn-green" onclick="publishTournamentBoard('matches')">📺 POKAŻ / AKTUALIZUJ MECZE NA TELEBIMIE</button>
+            </div>
+
+            <div id="tb-tab-standings" style="display:none">
+                <input type="text" id="tb-rank-1" oninput="syncTbInputs()" placeholder="I MIEJSCE (np. PZS 4 WEJHEROWO)">
+                <input type="text" id="tb-rank-2" oninput="syncTbInputs()" placeholder="II MIEJSCE (np. ZKIW GNIEWINO)">
+                <input type="text" id="tb-rank-3" oninput="syncTbInputs()" placeholder="III MIEJSCE (np. PZS REDA)">
+                <input type="text" id="tb-rank-4" oninput="syncTbInputs()" placeholder="IV MIEJSCE (np. PZS 2 WEJHEROWO)">
+                <input type="text" id="tb-rank-5" oninput="syncTbInputs()" placeholder="V MIEJSCE (np. PZS 3 WEJHEROWO)">
+                <input type="text" id="tb-rank-6" oninput="syncTbInputs()" placeholder="VI MIEJSCE (np. PZS 2 RUMIA)">
+                <button class="btn btn-gold" onclick="publishTournamentBoard('standings')">🏆 POKAŻ KLASYFIKACJĘ KOŃCOWĄ</button>
+            </div>
+
+            <div style="margin-top:8px">
+                <button class="btn btn-red" onclick="hideTournamentBoard()">✖ UKRYJ PLANSZĘ Z TELEBIMU</button>
+            </div>
+        </div>
+    </div>
+        <div id="tytani-video-section" class="p-box" style="border-color:#ffcc00">
+        <h3>🎬 REKLAMY WIDEO TYTANI (MP4 / MOV — DO 2 GB)</h3>
+        <p style="font-size:13px;color:#ccc;margin-bottom:10px">
+            Wrzuć plik <b>.mp4</b> lub <b>.mov</b> (np. 534 MB) do folderu z plikami lub wpisz jego nazwę / link poniżej, aby odtworzyć bez opóźnień:
+        </p>
+        <input type="text" id="in-ad-video-path" value="reklamy_tytani.mp4" placeholder="Nazwa pliku w folderze (np. reklamy_tytani.mp4 lub reklamy.mov) lub URL...">
+        <div style="margin-bottom:10px">
+            <input type="file" id="ad-file-picker" accept="video/mp4,video/quicktime,video/*" style="display:none" onchange="pickLocalAdFile(this)">
+            <button class="btn btn-blue" onclick="document.getElementById('ad-file-picker').click()">📂 WYBIERZ PLIK Z KOMPUTERA (MP4/MOV)</button>
+            <span id="ad-file-info" style="font-size:13px;color:#ffcc00;margin-left:8px"></span>
+        </div>
+            <div id="tytani-lineup-section" class="p-box" style="border-color:#d90429">
+        <h3>🔥 PREZENTACJA ZAWODNIKÓW (INTRO + SKŁAD -> POWRÓT DO REKLAM)</h3>
+        <p style="font-size:13px;color:#ccc;margin-bottom:8px">
+            Wpisz nazwy plików wideo z folderu <b>KOLEDA</b> (linia po linii — najpierw intro 20s, potem zawodnicy 5s). Po ostatnim filmie włączy się stinger i wrócą reklamy:
+        </p>
+        <textarea id="in-tytani-lineup" rows="6" oninput="saveTytaniLineup()" placeholder="intro_tytani.mp4&#10;zawodnik1.mp4&#10;zawodnik2.mp4&#10;zawodnik3.mp4"></textarea>
+        <div style="margin-top:8px">
+            <button class="btn btn-tytani" onclick="startTytaniLineup()">🔥 START PREZENTACJI SKŁADU</button>
+            <button class="btn btn-red" onclick="stopTytaniLineup()">⏹️ PRZERWIJ I WRÓĆ DO REKLAM</button>
+        </div>
+    </div>
+        <div style="margin-bottom:10px">
+            <button class="btn btn-tytani" onclick="startAdVideoNow()">▶️ ODTWÓRZ REKLAMY NA TELEBIMIE</button>
+            <button class="btn btn-orange" onclick="pauseAdVideoNow()">⏸️ PAUZA</button>
+            <button class="btn btn-red" onclick="pub('pdf', { action: 'stopAdPermanent' })">✖ ZAMKNIJ REKLAMY (STINGER)</button>
+        </div>
+        <div>
+            <button id="btn-ad-loop" class="btn btn-green" onclick="toggleAdLoopState()">🔁 PĘTLA: WŁĄCZONA</button>
+            <button id="btn-ad-mute" class="btn btn-orange" onclick="toggleAdMuteState()">🔊 DŹWIĘK: WŁĄCZONY</button>
+        </div>
+    </div>
+
+    <div class="p-box" style="border-color:#f77f00">
+        <h3>📢 SZYBKI KOMUNIKAT NA TELEBIM</h3>
+        <input type="text" id="in-telebim-msg" placeholder="Wpisz własny komunikat (np. Prosimy klasę 3a o podejście pod scenę)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="sendTelebimMsg('Prosimy o zachowanie ciszy na sali')">🤫 Cisza na sali</button>
+            <button class="btn btn-blue" onclick="sendTelebimMsg('Zapraszamy kolejną klasę pod scenę')">🚶 Kolejna klasa</button>
+            <button class="btn btn-blue" onclick="sendTelebimMsg('Przerwa techniczna — za chwilę wracamy')">⏳ Przerwa</button>
+            <button class="btn btn-blue" onclick="sendTelebimMsg('⚠️ STREFA TECHNICZNA (STANOWISKO OBSŁUGI TELEBIMU I NAGŁOŚNIENIA NAD TRYBUNAMI) – WSTĘP SUROWO WZBRONIONY DLA OSÓB POSTRONNYCH. PRZEBYWAĆ MOGĄ WYŁĄCZNIE UPOWAŻNIENI OPERATORZY.')">🚫 STREFA TECHNICZNA</button>
+        </div>
+        <button class="btn btn-gold" onclick="triggerTelebimMsgManual()">📢 POKAŻ KOMUNIKAT</button>
+        <button class="btn btn-red" onclick="hideTelebimMsgNow()">✖ UKRYJ KOMUNIKAT</button>
+    </div>
+        <div class="p-box" style="border-color:#00a859">
+        <h3>⏱️ ZEGAR ODLICZAJĄCY (START / PRZERWA)</h3>
+        <input type="text" id="in-timer-label" value="DO ROZPOCZĘCIA UROCZYSTOŚCI" placeholder="Napis nad zegarem (np. KONIEC PRZERWY ZA)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="document.getElementById('in-timer-label').value='DO ROZPOCZĘCIA UROCZYSTOŚCI'">🎬 Do rozpoczęcia</button>
+            <button class="btn btn-blue" onclick="document.getElementById('in-timer-label').value='KONIEC PRZERWY ZA'">☕ Koniec przerwy</button>
+        </div>
+        <div style="margin-bottom:10px">
+            <button class="btn btn-green" onclick="startCountdown(1)">⏱️ 1 MIN</button>
+            <button class="btn btn-green" onclick="startCountdown(3)">⏱️ 3 MIN</button>
+            <button class="btn btn-green" onclick="startCountdown(5)">⏱️ 5 MIN</button>
+            <button class="btn btn-green" onclick="startCountdown(10)">⏱️ 10 MIN</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="in-timer-mins" min="1" max="60" value="2" style="width:110px;margin-bottom:0" placeholder="Minuty">
+            <button class="btn btn-gold" onclick="startCountdownCustom()">▶️ START WŁASNY</button>
+            <button class="btn btn-red" onclick="stopCountdownNow()">✖ ZATRZYMAJ / UKRYJ</button>
+        </div>
+    </div>
+
+    <div class="p-box" style="border-color:#0066ff">
+        <h3>📊 PREZENTACJA DYREKCJI (PDF LUB ZDJĘCIA JPG/PNG)</h3>
+        <input type="file" id="slides-file-input" accept="application/pdf,image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleSlidesUpload(this)">
+        <button class="btn btn-blue" onclick="document.getElementById('slides-file-input').click()">📁 WGRAJ PDF LUB ZDJĘCIA</button>
+        <span id="slides-status" style="font-size:13px;color:#aaa;margin-left:8px">Brak slajdów</span>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2d3850">
+            <button class="btn btn-gold" onclick="stepSlide(-1)">⬅️ POPRZEDNI</button>
+            <span id="slide-counter">Slajd: 0 / 0</span>
+            <button class="btn btn-gold" onclick="stepSlide(1)">NASTĘPNY ➡️</button>
+            <button class="btn btn-red" onclick="hideSlidesOnScreen()">✖ UKRYJ SLAJD (STINGER)</button>
+            <button class="btn btn-orange" onclick="clearAllSlides()">🗑️ WYCZYŚĆ WSZYSTKIE</button><br>
+            <button class="btn btn-green" onclick="sendSlideToCam()">📺 POKAŻ SLAJD NA NAGRANIU</button>
+            <button class="btn btn-red" onclick="hideSlideFromCam()">✖ SCHOWAJ SLAJD Z NAGRANIA</button><br>
+            <button class="btn btn-gold" onclick="setAsMainSlide()">⭐ USTAW JAKO TŁO GŁÓWNE</button>
+            <button class="btn btn-orange" onclick="clearMainSlide()">🗑️ USUŃ TŁO GŁÓWNE</button>
+            <button class="btn btn-red" style="width:100%;margin-top:8px;padding:15px;font-size:16px;border:2px solid #ffcc00" onclick="panicMainSlide()">🛡️ AWARYJNY: POKAŻ SLAJD GŁÓWNY (BAZOWY)</button>
+        </div>
+        <div id="slides-grid"></div>
+    </div>
+
+    <div class="p-box" style="border-color:#7209b7">
+        <h3>🎬 SZYBKI LINK Z SIECI / YOUTUBE KARAOKE</h3>
+        <input type="text" id="in-web-url" oninput="syncWebUrlInput()" placeholder="Wklej link z YouTube (karaoke / tekst) lub adres zdjęcia...">
+        <button class="btn btn-purple" onclick="sendWebUrlToScreen()">🌐 ZAŁADUJ NA TELEBIMIE</button>
+        <button class="btn btn-green" onclick="ytCommand('playVideo')">▶️ ODTWÓRZ</button>
+        <button class="btn btn-orange" onclick="ytCommand('pauseVideo')">⏸️ PAUZA</button>
+        <button class="btn btn-red" onclick="hideWebUrlNow()">✖ ZAMKNIJ LINK (STINGER)</button>
+    </div>
+
+    <div class="p-box" style="border-color:#c1121f">
+        <h3>🎤 OSOBA MÓWIĄCA (PASEK NA NAGRANIE Z KAMER)</h3>
+        <input type="text" id="in-sp-name" placeholder="Imię i nazwisko (np. Cezary Lewandowski)...">
+        <input type="text" id="in-sp-role" placeholder="Funkcja / Rola (np. Dyrektor PZS nr 4)...">
+        <button class="btn btn-green" onclick="triggerSpeakerManual()">🎤 POKAŻ PASEK MÓWCY</button>
+        <button class="btn btn-red" onclick="hideSpeakerNow()">✖ UKRYJ PASEK</button>
+        <hr style="border-color:#2d3850;margin:12px 0">
+        <textarea id="speakers-raw" rows="3" placeholder="Lista mówców (Wzór: Jan Kowalski - Dyrektor PZS nr 4)"></textarea>
+        <button class="btn btn-blue" onclick="buildSpeakersList()">🔄 ZAŁADUJ LISTĘ MÓWCÓW</button>
+        <div id="speakers-buttons" style="margin-top:10px"></div>
+    </div>
+
+    <div id="songs-pilot-section" class="p-box" style="border-color:#ffcc00">
+        <h3>🎵 ZAPOWIEDZI PIOSENEK / PIEŚNI</h3>
+        <input type="text" id="in-title" placeholder="Wpisz tytuł utworu lub pieśni...">
+        <input type="text" id="in-artist" placeholder="Wykonawcy | Klasa (np. Jan Kowalski | 4m LO)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Samochodówka Band'">🎸 Samochodówka Band</button>
+            <button class="btn btn-blue" onclick="document.getElementById('in-artist').value='Wspólne śpiewanie'">🎤 Wspólne śpiewanie</button>
+        </div>
+        <button class="btn btn-gold" onclick="triggerSongManual(false)">🎵 POKAŻ PIOSENKĘ (10s)</button>
+        <button class="btn btn-green" onclick="triggerSongManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
+        <button class="btn btn-orange" onclick="unpinAndFade()">⏱️ ZDEJMIJ PINEZKĘ (ZOSTAW 10s)</button>
+        <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
+        <hr style="border-color:#2d3850;margin:12px 0">
+        <textarea id="playlist-raw" rows="4" placeholder="Lista utworów (Wzór: Brygada - Michał Nowociński, Sandra Miotk | 4m LO)"></textarea>
+        <button class="btn btn-blue" onclick="buildPlaylist()">🔄 ZAŁADUJ LISTĘ UTWORÓW</button>
+        <button class="btn btn-gold" style="width:100%;font-size:17px;padding:14px;margin-bottom:12px" onclick="playNextFromPlaylist()">⏭️ POKAŻ KOLEJNY Z LISTY (AUTOPILOT)</button>
+        <div id="playlist-buttons" style="margin-top:12px"></div>
+    </div>
+
+    <div class="p-box" style="border-color:#d90429">
+        <h3>📣 CHEERLEADERKI / WYSTĘPY TANECZNE</h3>
+            <input type="text" id="in-cheer-badge" value="Pokaz tańca" placeholder="Nagłówek karty (np. Pokaz tańca, Występ taneczny)...">
+        <div style="margin-bottom:10px">
+            <button class="btn btn-pink" onclick="document.getElementById('in-cheer-badge').value='Cheerleaderki PZS 4'">📣 Cheerleaderki PZS 4</button>
+            <button class="btn btn-pink" onclick="document.getElementById('in-cheer-badge').value='Występ taneczny'">💃 Występ taneczny</button>
+        </div>
+        <input type="text" id="in-cheer-title" placeholder="Nazwa układu tanecznego (np. Świąteczny Mix)...">
+        <input type="text" id="in-cheer-artist" placeholder="Zespół / Tancerki | Klasa (np. Zespół Taneczny | 2a LO)...">
+        <button class="btn btn-pink" onclick="triggerCheerManual(false)">📣 POKAŻ WYSTĘP (10s)</button>
+        <button class="btn btn-green" onclick="triggerCheerManual(true)">📌 PRZYPNIJ NA STAŁE</button><br>
+        <button class="btn btn-orange" onclick="unpinAndFade()">⏱️ ZDEJMIJ PINEZKĘ (ZOSTAW 10s)</button>
+        <button class="btn btn-red" onclick="hideCardNow()">✖ UKRYJ TERAZ</button>
+        <hr style="border-color:#2d3850;margin:12px 0">
+        <textarea id="cheer-raw" rows="3" placeholder="Lista układów tanecznych (Wzór: Świąteczny Mix - Dziewczyny z 2a | 2a LO)"></textarea>
+        <button class="btn btn-pink" onclick="buildCheerList()">🔄 ZAŁADUJ LISTĘ CHEERLEADEREK</button>
+        <div id="cheer-buttons" style="margin-top:12px"></div>
+    </div>
+</div>
+    </div>
+<script>
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+const isPilotMode = new URLSearchParams(window.location.search).get('pilot') === '1';
+const MY_SENDER_ID = "dev_" + Math.random().toString(36).slice(2, 9);
+
+let client = null;
+let hideTimeout = null, savedMainSlide = "", currentTheme = "xmas";
+let slidesArray = new Array(), currentSlideIdx = -1;
+let countdownInterval = null;
+let customBadgeText = "";
+
+function pub(subtopic, payload, retainFlag=false){
+    if(subtopic === 'pdf' && payload && payload.action !== 'pauseAd' && payload.action !== 'stopAdPermanent'){
+        const tb = document.getElementById('tournament-board');
+        if(tb && tb.classList.contains('active')) hideTournamentBoard();
+    }
+    if(client && client.connected){
+        payload.sender = MY_SENDER_ID;
+        client.publish(TOPIC_PREFIX + subtopic, JSON.stringify(payload), { qos: 1, retain: retainFlag });
+    }
+}
+
+function getDefaultBadge(){
+    if(customBadgeText && customBadgeText.trim() !== '') return customBadgeText.trim();
+    if(currentTheme === 'gala') return 'UROCZYSTOŚĆ PATRIOTYCZNA';
+    if(currentTheme === 'school') return 'PZS NR 4 W WEJHEROWIE';
+    if(currentTheme === 'sport') return 'ZAWODY SPORTOWE PZS 4';
+    if(currentTheme === 'tytani') return 'KS TYTANI WEJHEROWO';
+    return 'Koncert kolęd';
+}
+
+function syncCustomBadge(){
+    customBadgeText = document.getElementById('in-custom-badge').value;
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+    pub("custombadge", { text: customBadgeText }, true);
+}
+
+function clearCustomBadge(){
+    customBadgeText = "";
+    document.getElementById('in-custom-badge').value = "";
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+    pub("custombadge", { text: "" }, true);
+}
+
+function setupSeamlessLoop(){
+    const vA=document.getElementById('vid-a'), vB=document.getElementById('vid-b');
+    let active=vA, next=vB, fading=false;
+    active.style.zIndex=2; next.style.zIndex=1;
+    active.style.transition='none'; next.style.transition='none';
+    active.play().catch(()=>{});
+    setInterval(()=>{
+        if(!active.duration || fading) return;
+        if(active.duration - active.currentTime <= 1.4){
+            fading=true;
+            next.currentTime=0;
+            next.style.opacity=1;
+            next.play().catch(()=>{});
+            setTimeout(()=>{
+                active.style.transition='opacity 1.1s linear';
+                active.style.opacity=0;
+                setTimeout(()=>{
+                    active.pause();
+                    active.style.transition='none';
+                    active.style.zIndex=1;
+                    next.style.zIndex=2;
+                    const tmp=active; active=next; next=tmp;
+                    fading=false;
+                },1150);
+            },150);
+        }
+    },100);
+}
+
+function applyThemeLocal(theme){
+    currentTheme = theme;
+        if(theme !== 'sport'){
+        const tb = document.getElementById('tournament-board');
+        if(tb) tb.classList.remove('active');
+    }
+    document.body.classList.remove('theme-gala', 'theme-school', 'theme-sport', 'theme-tytani');
+    const baseImg = document.getElementById('base-main-slide');
+    if(theme === 'gala' || theme === 'school' || theme === 'sport'){
+        document.body.classList.add('theme-' + theme);
+        if(baseImg && savedMainSlide){
+            baseImg.src = savedMainSlide;
+            baseImg.style.display = 'block';
+        }
+    } else if(theme === 'tytani'){
+        document.body.classList.add('theme-tytani');
+        if(baseImg) baseImg.style.display = 'none';
+    } else {
+        if(baseImg) baseImg.style.display = 'none';
+        const vA = document.getElementById('vid-a');
+        const vB = document.getElementById('vid-b');
+        if(vA && vB){
+            vA.style.transition = 'none';
+            vB.style.transition = 'none';
+            vA.style.opacity = 1;
+            vB.style.opacity = 0;
+            vA.style.zIndex = 2;
+            vB.style.zIndex = 1;
+            if(vA.paused) vA.play().catch(()=>{});
+        }
+    }
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+}
+
+function switchTheme(theme){
+    applyThemeLocal(theme);
+    pub("theme", { theme: theme }, true);
+    pub("telebim", { action: 'setTheme', theme: theme });
+    hideSlidesOnScreen();
+}
+
+function applyMainSlideLocal(dataUrl){
+    const baseImg=document.getElementById('base-main-slide');
+    if(!baseImg) return;
+    if(dataUrl && (currentTheme === 'gala' || currentTheme === 'school')){
+        baseImg.src=dataUrl;
+        baseImg.style.display='block';
+    } else {
+        baseImg.src='';
+        baseImg.style.display='none';
+    }
+}
+
+function displayCard(title,artist,cls,pin,badge){
+    const card=document.getElementById('song-card');
+    const titleEl=document.getElementById('card-title');
+    const artistEl=document.getElementById('card-artist');
+    const classEl=document.getElementById('card-class');
+
+    document.querySelector('.song-badge').innerText = badge || getDefaultBadge();
+
+    titleEl.innerText=title;
+    if(title.length <= 12) titleEl.style.fontSize = '185px';
+    else if(title.length <= 20) titleEl.style.fontSize = '135px';
+    else if(title.length <= 28) titleEl.style.fontSize = '108px';
+    else titleEl.style.fontSize = '85px';
+
+    artistEl.innerText=artist;
+    if(artist.length <= 22) artistEl.style.fontSize = '84px';
+    else if(artist.length <= 35) artistEl.style.fontSize = '62px';
+    else artistEl.style.fontSize = '46px';
+
+    classEl.innerText=cls||'';
+    classEl.style.display=cls?'block':'none';
+
+    card.classList.add('active');
+    clearTimeout(hideTimeout);
+       if(!pin) hideTimeout=setTimeout(()=>{
+        card.classList.remove('active');
+        if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+    },10000);
+}
+
+function compressSlideCanvas(sourceCanvasOrImg){
+    const c = document.createElement('canvas');
+    const maxW = 1280;
+    const w = sourceCanvasOrImg.width || sourceCanvasOrImg.naturalWidth || 1280;
+    const h = sourceCanvasOrImg.height || sourceCanvasOrImg.naturalHeight || 720;
+    const scale = w > maxW ? (maxW / w) : 1;
+    c.width = Math.round(w * scale);
+    c.height = Math.round(h * scale);
+    c.getContext('2d').drawImage(sourceCanvasOrImg, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.68);
+}
+
+async function handleSlidesUpload(inp){
+    const files=Array.from(inp.files||[]);
+    if(!files.length) return;
+    const st=document.getElementById('slides-status');
+    st.innerText="⏳ Optymalizacja i wysyłanie slajdów...";
+    slidesArray=new Array();
+    currentSlideIdx=-1;
+
+    try {
+        const firstFile = files.at(0);
+        const isPdf = firstFile && (firstFile.type==='application/pdf' || firstFile.name.toLowerCase().endsWith('.pdf'));
+
+        if(isPdf){
+            if(!window.pdfjsLib){
+                st.innerText="⏳ Ładowanie lokalnego silnika PDF...";
+                await new Promise((res,rej)=>{
+                    const s=document.createElement('script');
+                    s.src="pdf.min.js";
+                    s.onload=res; s.onerror=()=>rej(new Error("Brak pliku pdf.min.js w folderze!"));
+                    document.head.appendChild(s);
+                });
+            }
+            pdfjsLib.GlobalWorkerOptions.workerSrc="pdf.worker.min.js";
+            const buf=await firstFile.arrayBuffer();
+            const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+            for(let i=1;i<=pdf.numPages;i++){
+                st.innerText=`⏳ Renderowanie strony ${i} z ${pdf.numPages}...`;
+                const page=await pdf.getPage(i);
+                const vp=page.getViewport({scale:1.2});
+                const c=document.createElement('canvas');
+                c.width=vp.width; c.height=vp.height;
+                await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+                slidesArray.push(compressSlideCanvas(c));
+            }
+        } else {
+            files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+            for(let f of files){
+                const imgObj = await new Promise(res=>{
+                    const r=new FileReader();
+                    r.onload=e=>{
+                        const im = new Image();
+                        im.onload=()=>res(im);
+                        im.src=e.target.result;
+                    };
+                    r.readAsDataURL(f);
+                });
+                slidesArray.push(compressSlideCanvas(imgObj));
+            }
+        }
+        st.innerText=`✅ Załadowano slajdów: ${slidesArray.length}`;
+        renderSlidesGrid();
+        pub("slides_meta", { count: slidesArray.length, activeIdx: -1 }, true);
+        slidesArray.forEach((imgData, i) => {
+            setTimeout(() => pub("slide_item/" + i, { idx: i, img: imgData }, true), i * 120);
+        });
+    } catch(err) {
+        st.innerText="❌ Błąd: " + err.message;
+        console.error(err);
+    }
+}
+function renderSlidesGrid(){
+    const grid=document.getElementById('slides-grid');
+    grid.innerHTML='';
+    document.getElementById('slides-status').innerText=slidesArray.length?`✅ Gotowe slajdy: ${slidesArray.length}`:'Brak slajdów';
+    slidesArray.forEach((src,idx)=>{
+        if(!src) return;
+        const div=document.createElement('div');
+        div.className='slide-thumb'+(idx===currentSlideIdx?' active-slide':'');
+        div.id='thumb-'+idx;
+        div.onclick=()=>selectSlide(idx);
+        div.innerHTML=`<img src="${src}" alt="Slajd ${idx+1}"><span class="slide-num">${idx+1}</span><button class="slide-del" onclick="event.stopPropagation();deleteSingleSlide(${idx})">✖</button>`;
+        grid.appendChild(div);
+    });
+    updateSlideSelectionUI();
+}
+
+function deleteSingleSlide(idx){
+    const wasActive = (idx === currentSlideIdx);
+    slidesArray.splice(idx, 1);
+    if(wasActive){
+        currentSlideIdx = -1;
+        pub("pdf", { action: 'hideSlide' });
+    } else if(idx < currentSlideIdx){
+        currentSlideIdx--;
+    }
+    renderSlidesGrid();
+    pub("slides_meta", { count: slidesArray.length, activeIdx: currentSlideIdx }, true);
+    slidesArray.forEach((imgData, i) => {
+        setTimeout(() => pub("slide_item/" + i, { idx: i, img: imgData }, true), i * 120);
+    });
+}
+
+function clearAllSlides(){
+    if(!slidesArray.length) return;
+    if(!confirm("Usunąć wszystkie załadowane slajdy?")) return;
+    const oldCount = slidesArray.length;
+    slidesArray = new Array();
+    currentSlideIdx = -1;
+    document.getElementById('slides-file-input').value = '';
+    renderSlidesGrid();
+    pub("pdf", { action: 'hideSlide' });
+    pub("slides_meta", { count: 0, activeIdx: -1 }, true);
+    for(let i=0; i<oldCount; i++) pub("slide_item/" + i, { idx: i, img: '' }, true);
+}
+
+function updateSlideSelectionUI(){
+    document.querySelectorAll('.slide-thumb').forEach((el,idx)=>{
+        if(idx===currentSlideIdx) el.classList.add('active-slide');
+        else el.classList.remove('active-slide');
+    });
+    const total=slidesArray.length;
+    const cur=currentSlideIdx>=0?(currentSlideIdx+1):0;
+    document.getElementById('slide-counter').innerText=`Slajd: ${cur} / ${total}`;
+}
+
+function selectSlide(idx){
+    if(idx<0 || idx>=slidesArray.length) return;
+    currentSlideIdx=idx;
+    updateSlideSelectionUI();
+    pub("pdf", { action: 'showSlideIdx', idx: idx });
+    pub("activeslide", { activeIdx: idx }, true);
+}
+
+function stepSlide(dir){
+    if(!slidesArray.length) return;
+    let nextIdx=currentSlideIdx+dir;
+    if(nextIdx<0) nextIdx=0;
+    if(nextIdx>=slidesArray.length) nextIdx=slidesArray.length-1;
+    selectSlide(nextIdx);
+}
+
+function hideSlidesOnScreen(){
+    currentSlideIdx=-1;
+    updateSlideSelectionUI();
+    pub("pdf", { action: 'hideSlide' });
+    pub("activeslide", { activeIdx: -1 }, true);
+}
+
+function setAsMainSlide(){
+    if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw kliknij miniaturkę slajdu, który ma być głównym tłem!");
+    const imgData=slidesArray[currentSlideIdx];
+    savedMainSlide=imgData;
+    applyMainSlideLocal(imgData);
+    pub("mainslide", { img: imgData }, true);
+    alert("✅ Ustawiono jako Slajd Główny!");
+}
+
+function clearMainSlide(){
+    savedMainSlide='';
+    applyMainSlideLocal('');
+    pub("mainslide", { img: '' }, true);
+}
+
+function panicMainSlide(){
+    hideCardNow();
+    hideSlidesOnScreen();
+    if(savedMainSlide) applyMainSlideLocal(savedMainSlide);
+}
+
+function sendSlideToCam(){
+    if(currentSlideIdx<0 || !slidesArray.length) return alert("Najpierw wybierz slajd z listy powyżej!");
+    pub("belki", { action: 'showCamSlide', img: slidesArray[currentSlideIdx] });
+}
+
+function hideSlideFromCam(){
+    pub("belki", { action: 'hideCamSlide' });
+}
+
+function syncWebUrlInput(){
+    const u=document.getElementById('in-web-url').value;
+    pub("weburl", { url: u }, true);
+}
+
+function sendWebUrlToScreen(){
+    const u=document.getElementById('in-web-url').value.trim();
+    if(!u) return alert("Wklej najpierw link!");
+    pub("pdf", { action: 'showUrl', url: u });
+}
+
+function ytCommand(cmd){
+    pub("pdf", { action: cmd });
+}
+
+function sendSpeaker(name,role){
+    pub("belki", { action: 'showSpeaker', name: name, role: role });
+}
+
+function triggerSpeakerManual(){
+    const n=document.getElementById('in-sp-name').value.trim();
+    const r=document.getElementById('in-sp-role').value.trim()||"PZS nr 4 w Wejherowie";
+    if(!n) return alert("Wpisz imię i nazwisko osoby mówiącej!");
+    sendSpeaker(n,r);
+}
+
+function hideSpeakerNow(){
+    pub("belki", { action: 'hideSpeaker' });
+}
+function buildSpeakersList(){
+    const raw=document.getElementById('speakers-raw').value.trim();
+    renderSpeakersButtons(raw);
+    pub("speakers", { raw: raw }, true);
+}
+
+function renderSpeakersButtons(raw){
+    const box=document.getElementById('speakers-buttons');
+    box.innerHTML='';
+    if(!raw)return;
+    raw.split('\n').forEach(line=>{
+        const parts=line.split(/\||-/);
+        const n=(parts.at(0)||'').trim();
+        const r=(parts.at(1)||'PZS nr 4 w Wejherowie').trim();
+        if(n){
+            const row=document.createElement('div');row.className='song-item';
+            row.style.borderLeftColor='#c1121f';
+            row.innerHTML=`<div><strong style="color:#fff">${n}</strong><br><small style="color:#ffcc00">${r}</small></div>
+            <div><button class="btn btn-green" onclick="sendSpeaker('${n.replace(/'/g,"\\'")}','${r.replace(/'/g,"\\'")}')">🎤 POKAŻ</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+function sendSong(title,artist,cls,pin,badge){
+    hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
+    const finalBadge = (badge && badge.trim() !== '') ? badge.trim() : customBadgeText;
+    const payload = {action:'show', title:title, artist:artist, cls:cls, pin:pin, badge:finalBadge};
+    pub("telebim", payload);
+    pub("belki", payload);
+}
+
+function triggerManual(pin){
+    const t=document.getElementById('in-title').value.trim();
+    const rawA=document.getElementById('in-artist').value.trim()||"Samochodówka Band";
+    const b=document.getElementById('in-badge').value.trim();
+    const parts=rawA.split('|');
+    const a=(parts.at(0)||'').trim();
+    const cls=(parts.at(1)||'').trim();
+    if(!t)return alert("Wpisz tytuł utworu lub występu!");
+    sendSong(t,a,cls,pin,b);
+    document.getElementById('in-title').value='';
+}
+
+function unpinAndFade(){
+    pub("telebim", { action: 'unpin' });
+}
+
+function hideCardNow(){
+    pub("telebim", { action: 'hide' });
+    pub("belki", { action: 'hide' });
+    if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+}
+
+function buildPlaylist(){
+    const raw=document.getElementById('playlist-raw').value.trim();
+    renderPlaylistButtons(raw);
+    pub("list", { raw: raw }, true);
+}
+
+function renderPlaylistButtons(raw){
+    const box=document.getElementById('playlist-buttons');
+    box.innerHTML='';
+    if(!raw)return;
+    raw.split('\n').forEach(line=>{
+        let cleanLine = line.trim();
+        let badge = '';
+        const badgeMatch = cleanLine.match(/\[(.*?)\]/);
+        if(badgeMatch){
+            badge = badgeMatch[1].trim();
+            cleanLine = cleanLine.replace(/\[.*?\]/, '').trim();
+        }
+        const pipeParts=cleanLine.split('|');
+        const leftSide=(pipeParts.at(0)||'').trim();
+        const cls=(pipeParts.at(1)||'').trim();
+        const dashIdx=leftSide.indexOf('-');
+        let t=leftSide, a='Samochodówka Band';
+        if(dashIdx>-1){
+            t=leftSide.slice(0,dashIdx).trim();
+            a=leftSide.slice(dashIdx+1).trim()||'Samochodówka Band';
+        }
+        if(t){
+            const row=document.createElement('div');row.className='song-item';
+            row.innerHTML=`<div>${badge?`<span style="background:#f77f00;color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;font-weight:800;display:inline-block;margin-bottom:4px">${badge}</span><br>`:''}<strong style="color:#ffcc00">${t}</strong><br><small style="color:#ddd">${a}</small>${cls?`<br><small style="color:#aaa;font-style:italic">${cls}</small>`:''}</div>
+            <div><button class="btn btn-gold" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false,'${badge.replace(/'/g,"\\'")}')">▶️ 10s</button>
+            <button class="btn btn-green" onclick="sendSong('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true,'${badge.replace(/'/g,"\\'")}')">📌</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+function sendTelebimMsg(text){
+    hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
+    pub("msg", { action: 'show', text: text });
+}
+
+function triggerTelebimMsgManual(){
+    const t = document.getElementById('in-telebim-msg').value.trim();
+    if(!t) return alert("Wpisz treść komunikatu!");
+    sendTelebimMsg(t);
+}
+
+function hideTelebimMsgNow(){
+    if(currentTheme === 'tytani'){
+        pub("pdf", { action: 'resumeAd' });
+        setTimeout(() => pub("msg", { action: 'hide' }), 1350);
+    } else {
+        pub("msg", { action: 'hide' });
+    }
+}
+
+function hideWebUrlNow(){
+    pub("pdf", { action: 'hideSlide' });
+}
+
+function startCountdown(mins){
+    hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
+    const label = document.getElementById('in-timer-label').value.trim() || "DO ROZPOCZĘCIA UROCZYSTOŚCI";
+    const durationSec = Math.round(mins * 60);
+    pub("timer", { action: 'start', durationSec: durationSec, label: label });
+}
+
+function startCountdownCustom(){
+    const m = parseInt(document.getElementById('in-timer-mins').value, 10);
+    if(!m || m < 1) return alert("Wpisz poprawną liczbę minut!");
+    startCountdown(m);
+}
+
+function stopCountdownNow(){
+    if(currentTheme === 'tytani'){
+        pub("pdf", { action: 'resumeAd' });
+        setTimeout(() => pub("timer", { action: 'stop' }, true), 1350);
+    } else {
+        pub("timer", { action: 'stop' }, true);
+    }
+}
+
+function runLocalCountdown(endTime, label){
+    clearInterval(countdownInterval);
+    const box = document.getElementById('telebim-timer-box');
+    const lbl = document.getElementById('timer-label-txt');
+    const dig = document.getElementById('timer-digits');
+    if(!box || !lbl || !dig) return;
+
+    lbl.innerText = label || "DO ROZPOCZĘCIA UROCZYSTOŚCI";
+    box.classList.add('active');
+
+    const updateTick = () => {
+        const diff = endTime - Date.now();
+        if(diff <= 0){
+            clearInterval(countdownInterval);
+            dig.innerText = "ZACZYNAMY!";
+            dig.style.fontSize = "135px";
+                        setTimeout(() => {
+                stopLocalCountdown();
+                if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+            }, 3000);
+            return;
+        }
+        dig.style.fontSize = "230px";
+        const totalSec = Math.ceil(diff / 1000);
+        const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        dig.innerText = `${mm}:${ss}`;
+    };
+
+    updateTick();
+    countdownInterval = setInterval(updateTick, 250);
+}
+
+function stopLocalCountdown(){
+    clearInterval(countdownInterval);
+    const box = document.getElementById('telebim-timer-box');
+    if(box) box.classList.remove('active');
+}
+
+function triggerCheerManual(pin){
+    const t = document.getElementById('in-cheer-title').value.trim();
+    const rawA = document.getElementById('in-cheer-artist').value.trim() || "Cheerleaderki PZS 4";
+    const b = document.getElementById('in-cheer-badge').value.trim() || "Cheerleaderki PZS 4";
+    const parts = rawA.split('|');
+    const a = (parts.at(0) || '').trim();
+    const cls = (parts.at(1) || '').trim();
+    if(!t) return alert("Wpisz nazwę układu tanecznego!");
+    sendSong(t, a, cls, pin, b);
+    document.getElementById('in-cheer-title').value = '';
+}
+
+function buildCheerList(){
+    const raw = document.getElementById('cheer-raw').value.trim();
+    renderCheerButtons(raw);
+    pub("cheerlist", { raw: raw }, true);
+}
+
+function renderCheerButtons(raw){
+    const box = document.getElementById('cheer-buttons');
+    if(!box) return;
+    box.innerHTML = '';
+    if(!raw) return;
+    raw.split('\n').forEach(line => {
+        const pipeParts = line.split('|');
+        const leftSide = (pipeParts.at(0) || '').trim();
+        const cls = (pipeParts.at(1) || '').trim();
+        const dashIdx = leftSide.indexOf('-');
+        let t = leftSide, a = 'Cheerleaderki PZS 4';
+        if(dashIdx > -1){
+            t = leftSide.slice(0, dashIdx).trim();
+            a = leftSide.slice(dashIdx + 1).trim() || 'Cheerleaderki PZS 4';
+        }
+        if(t){
+            const row = document.createElement('div');
+            row.className = 'song-item';
+            row.style.borderLeftColor = '#d90429';
+            row.innerHTML = `<div><strong style="color:#ff4d6d">${t}</strong><br><small style="color:#ddd">${a}</small>${cls ? `<br><small style="color:#aaa;font-style:italic">${cls}</small>` : ''}</div>
+            <div><button class="btn btn-pink" onclick="sendCheerItem('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',false)">▶️ 10s</button>
+            <button class="btn btn-green" onclick="sendCheerItem('${t.replace(/'/g,"\\'")}','${a.replace(/'/g,"\\'")}','${cls.replace(/'/g,"\\'")}',true)">📌</button></div>`;
+            box.appendChild(row);
+        }
+    });
+}
+
+function sendCheerItem(t, a, cls, pin){
+    const badgeEl = document.getElementById('in-cheer-badge');
+    const currentBadge = (badgeEl && badgeEl.value.trim()) ? badgeEl.value.trim() : "Pokaz tańca";
+    sendSong(t, a, cls, pin, currentBadge);
+}
+
+function startMqttEngine(){
+    const b = document.getElementById('conn-badge');
+    if (typeof mqtt === 'undefined') {
+        if (b) { b.style.background = '#d62828'; b.innerText = '❌ BŁĄD: BRAK PLIKU mqtt.min.js'; }
+        return;
+    }
+
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    client = mqtt.connect(brokerUrl, {
+        reconnectPeriod: 2000,
+        keepalive: 30,
+        connectTimeout: 5000
+    });
+
+    client.on("connect", () => {
+        if (b) { b.style.background = '#00a859'; b.innerText = '🟢 POŁĄCZONO (HIVEMQ 443 • PANCERNY)'; }
+        client.subscribe(TOPIC_PREFIX + "telebim");
+        client.subscribe(TOPIC_PREFIX + "theme");
+        client.subscribe(TOPIC_PREFIX + "mainslide");
+        client.subscribe(TOPIC_PREFIX + "msg");
+        client.subscribe(TOPIC_PREFIX + "timer");
+        client.subscribe(TOPIC_PREFIX + "custombadge");
+        client.subscribe(TOPIC_PREFIX + "tournament");
+        client.subscribe(TOPIC_PREFIX + "kisscam");
+        client.subscribe(TOPIC_PREFIX + "blackout");
+        client.subscribe(TOPIC_PREFIX + "chyron");
+        if (isPilotMode) {
+            client.subscribe(TOPIC_PREFIX + "tournament_draft");
+            client.subscribe(TOPIC_PREFIX + "lineup_draft");
+            client.subscribe(TOPIC_PREFIX + "list");
+            client.subscribe(TOPIC_PREFIX + "cheerlist");
+            client.subscribe(TOPIC_PREFIX + "speakers");
+            client.subscribe(TOPIC_PREFIX + "slides_meta");
+            client.subscribe(TOPIC_PREFIX + "slide_item/#");
+            client.subscribe(TOPIC_PREFIX + "activeslide");
+            client.subscribe(TOPIC_PREFIX + "weburl");
+            client.subscribe(TOPIC_PREFIX + "scoreboard");
+            client.subscribe(TOPIC_PREFIX + "pilot_sync");
+        }
+    });
+
+    client.on("reconnect", () => {
+        if (b) { b.style.background = '#f77f00'; b.innerText = '🟠 WZNAWIANIE POŁĄCZENIA...'; }
+    });
+
+    client.on("error", (err) => {
+        if (b) { b.style.background = '#d62828'; b.innerText = '❌ BŁĄD SIECI: ' + err.message; }
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const d = JSON.parse(message.toString());
+            if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
+            if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
+            if (topic === TOPIC_PREFIX + "tournament") applyTournamentBoard(d);
+            if (topic === TOPIC_PREFIX + "scoreboard" && d.state && d.sender !== MY_SENDER_ID) {
+                sbState = d.state;
+                localStorage.setItem('pzs4_sb_state', JSON.stringify(sbState));
+                renderSbPilotUI();
+            }
+                if (topic === TOPIC_PREFIX + "chyron") applyChyronState(d);
+                if (topic === TOPIC_PREFIX + "blackout") applyBlackoutState(!!d.active);
+                if (topic === TOPIC_PREFIX + "pilot_sync" && isPilotMode && d.sender !== MY_SENDER_ID) {
+                if (d.action === 'sb_play' && typeof d.slot === 'number') triggerSoundboard(d.slot, true);
+                if (d.action === 'sb_stop') stopAllSoundboard(true);
+                if (d.action === 'sb_name' && typeof d.slot === 'number') {
+                    const lbl = document.getElementById('sb-name-' + d.slot);
+                    if (lbl) lbl.innerText = d.name || 'Brak pliku';
+                }
+                if (d.action === 'playlist_idx' && typeof d.idx === 'number') {
+                    currentPlaylistIdx = d.idx;
+                    highlightCurrentPlaylistRow(currentPlaylistIdx);
+                }
+                if (d.action === 'audio_play') playLocalAudio(true);
+                if (d.action === 'audio_fade') fadeOutLocalAudio(true);
+                if (d.action === 'audio_select' && typeof d.trackIdx === 'number') {
+                    selectAudioTrack(d.trackIdx, !!d.autoPlay, true);
+                }
+                if (d.action === 'audio_list' && Array.isArray(d.names)) {
+                    remoteAudioNames = d.names;
+                    activeAudioTrackIdx = (typeof d.activeIdx === 'number') ? d.activeIdx : 0;
+                    renderAudioPlaylistUI();
+                }
+                if (d.action === 'audio_status') {
+                    const st = document.getElementById('audio-remote-status');
+                    if (st) st.innerText = d.text || '';
+                }
+                if (d.action === 'kc_remote_start') startKissCamShow(true);
+                if (d.action === 'kc_remote_stop') stopKissCamShow(false, true);
+            }
+            if (topic === TOPIC_PREFIX + "kisscam") handleKissCamMessage(d);
+            if (topic === TOPIC_PREFIX + "timer") {
+    if (d.action === 'start' && d.durationSec) {
+        const localEndTime = Date.now() + (d.durationSec * 1000);
+        runLocalCountdown(localEndTime, d.label);
+    } else {
+        stopLocalCountdown();
+    }
+}
+            if (topic === TOPIC_PREFIX + "msg") {
+                const bar = document.getElementById('telebim-msg-bar');
+                const txt = document.getElementById('telebim-msg-text');
+                if (topic === TOPIC_PREFIX + "custombadge") {
+    customBadgeText = d.text || "";
+    const inp = document.getElementById('in-custom-badge');
+    if (inp && d.sender !== MY_SENDER_ID) inp.value = customBadgeText;
+    document.querySelector('.song-badge').innerText = getDefaultBadge();
+}
+                if (bar && txt) {
+                    if (d.action === 'show' && d.text) {
+                        const cleanTxt = d.text.trim();
+                        txt.innerText = cleanTxt;
+                        if (cleanTxt.length <= 18) txt.style.fontSize = '140px';
+                        else if (cleanTxt.length <= 35) txt.style.fontSize = '105px';
+                        else txt.style.fontSize = '78px';
+                        bar.classList.add('active');
+                    } else {
+                        bar.classList.remove('active');
+                    }
+                }
+            }
+                 if (topic === TOPIC_PREFIX + "telebim") {
+                if (d.action === 'setTheme') applyThemeLocal(d.theme);
+                if (d.action === 'show') displayCard(d.title, d.artist, d.cls, d.pin, d.badge);
+                if (d.action === 'unpin') {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = setTimeout(() => {
+                        document.getElementById('song-card').classList.remove('active');
+                        if(currentTheme === 'tytani') pub("pdf", { action: 'resumeAd' });
+                    }, 10000);
+                }
+                if (d.action === 'hide') {
+                    clearTimeout(hideTimeout);
+                    document.getElementById('song-card').classList.remove('active');
+                }
+            }
+
+            if (isPilotMode && d.sender !== MY_SENDER_ID) {
+                if (topic === TOPIC_PREFIX + "list") { document.getElementById('playlist-raw').value = d.raw || ""; renderPlaylistButtons(d.raw || ""); }
+                if (topic === TOPIC_PREFIX + "cheerlist") { document.getElementById('cheer-raw').value = d.raw || ""; renderCheerButtons(d.raw || ""); }
+                if (topic === TOPIC_PREFIX + "speakers") { document.getElementById('speakers-raw').value = d.raw || ""; renderSpeakersButtons(d.raw || ""); }
+                if (topic === TOPIC_PREFIX + "slides_meta") {
+                    if (d.count === 0) { slidesArray = []; currentSlideIdx = -1; renderSlidesGrid(); }
+                    else { slidesArray.length = d.count; currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
+                }
+                if (topic.startsWith(TOPIC_PREFIX + "slide_item/") && d.img) {
+                    slidesArray[d.idx] = d.img;
+                    renderSlidesGrid();
+                }
+                if (topic === TOPIC_PREFIX + "activeslide") { currentSlideIdx = d.activeIdx ?? -1; updateSlideSelectionUI(); }
+                if (topic === TOPIC_PREFIX + "weburl") { document.getElementById('in-web-url').value = d.url || ""; }
+                if (topic === TOPIC_PREFIX + "tournament") applyTournamentBoard(d);
+                if (topic === TOPIC_PREFIX + "tournament_draft" && isPilotMode && d.sender !== MY_SENDER_ID) {
+                fillTbPilotInputs(d);
+            }
+            }
+                        if (topic === TOPIC_PREFIX + "lineup_draft" && isPilotMode && d.sender !== MY_SENDER_ID && typeof d.raw === 'string') {
+                const inp = document.getElementById('in-tytani-lineup');
+                if(inp && document.activeElement !== inp){
+                    inp.value = d.raw;
+                    localStorage.setItem('pzs4_tytani_lineup', d.raw);
+                }
+            }
+        } catch (e) { console.error(e); }
+    });
+}
+
+if(isPilotMode){
+    document.querySelectorAll('.bg-vid').forEach(v=>v.style.display='none');
+    document.getElementById('pilot-panel').style.display='block';
+}else{
+    setupSeamlessLoop();
+}
+
+const mqttLib = document.createElement('script');
+mqttLib.src = "mqtt.min.js";
+mqttLib.onload = () => startMqttEngine();
+mqttLib.onerror = () => {
+    const b = document.getElementById('conn-badge');
+    if (b) { b.style.background = '#d62828'; b.innerText = '❌ WRZUĆ PLIK mqtt.min.js DO FOLDERU!'; }
+};
+let sbState = JSON.parse(localStorage.getItem('pzs4_sb_state')) || {
+    homeName: "GOSPODARZE", awayName: "GOŚCIE",
+    homeLogo: "", awayLogo: "",
+    homeScore: 0, awayScore: 0,
+    time: 0, targetTime: 12, period: 1
+};
+let sbTimer = null, sbRunning = false;
+
+function sendSbState(){
+    localStorage.setItem('pzs4_sb_state', JSON.stringify(sbState));
+    renderSbPilotUI();
+    pub("scoreboard", { state: sbState }, true);
+}
+
+function renderSbPilotUI(){
+    const el = (id) => document.getElementById(id);
+    if(!el('pv-home-name')) return;
+    el('pv-home-name').innerText = sbState.homeName;
+    el('pv-away-name').innerText = sbState.awayName;
+    el('pv-home-score').innerText = sbState.homeScore;
+    el('pv-away-score').innerText = sbState.awayScore;
+    el('pv-period').innerText = sbState.period || 1;
+    el('sb-home-title').innerText = sbState.homeName;
+    el('sb-away-title').innerText = sbState.awayName;
+    el('sb-period-val').innerText = sbState.period || 1;
+
+    const m = Math.floor(sbState.time / 60).toString().padStart(2, '0');
+    const s = (sbState.time % 60).toString().padStart(2, '0');
+    el('pv-timer').innerText = `${m}:${s}`;
+
+    if(document.activeElement && document.activeElement.tagName !== 'INPUT'){
+        el('sb-home-name').value = sbState.homeName;
+        el('sb-away-name').value = sbState.awayName;
+        el('sb-home-logo').value = sbState.homeLogo;
+        el('sb-away-logo').value = sbState.awayLogo;
+        el('sb-target-time').value = sbState.targetTime || 12;
+    }
+}
+
+function updateSbSettings(){
+    sbState.homeName = document.getElementById('sb-home-name').value || "GOSPODARZE";
+    sbState.awayName = document.getElementById('sb-away-name').value || "GOŚCIE";
+    sbState.homeLogo = document.getElementById('sb-home-logo').value || "";
+    sbState.awayLogo = document.getElementById('sb-away-logo').value || "";
+    sbState.targetTime = parseInt(document.getElementById('sb-target-time').value, 10) || 12;
+    sendSbState();
+}
+
+function changeSbScore(side, val){
+    if(side === 'home') sbState.homeScore = Math.max(0, sbState.homeScore + val);
+    if(side === 'away') sbState.awayScore = Math.max(0, sbState.awayScore + val);
+    sendSbState();
+}
+
+function changeSbPeriod(val){
+    sbState.period = Math.max(1, (sbState.period || 1) + val);
+    sendSbState();
+}
+
+function swapSbSides(){
+    [sbState.homeName, sbState.awayName] = [sbState.awayName, sbState.homeName];
+    [sbState.homeLogo, sbState.awayLogo] = [sbState.awayLogo, sbState.homeLogo];
+    [sbState.homeScore, sbState.awayScore] = [sbState.awayScore, sbState.homeScore];
+    sendSbState();
+}
+
+function toggleSbTimer(){
+    sbRunning = !sbRunning;
+    if(sbRunning){
+        sbTimer = setInterval(() => {
+            sbState.time++;
+            const limit = (parseInt(document.getElementById('sb-target-time').value, 10) || 12) * 60;
+            if(sbState.time >= limit){
+                clearInterval(sbTimer);
+                sbRunning = false;
+                sbState.time = limit;
+                sendSbState();
+                setTimeout(() => {
+                    sbState.time = 0;
+                    sbState.period = (sbState.period || 1) + 1;
+                    swapSbSides();
+                }, 3000);
+            } else {
+                sendSbState();
+            }
+        }, 1000);
+    } else {
+        clearInterval(sbTimer);
+    }
+}
+
+function resetSbTimerOnly(){
+    if(confirm("Zresetować CZAS meczu do 00:00?")){
+        clearInterval(sbTimer);
+        sbRunning = false;
+        sbState.time = 0;
+        sendSbState();
+    }
+}
+
+function resetSbAll(){
+    if(confirm("Zresetować CAŁY MECZ (wynik i czas)?")){
+        clearInterval(sbTimer);
+        sbRunning = false;
+        sbState = { homeName: "GOSPODARZE", awayName: "GOŚCIE", homeLogo: "", awayLogo: "", homeScore: 0, awayScore: 0, time: 0, targetTime: 12, period: 1 };
+        sendSbState();
+    }
+}
+let adLoopEnabled = true;
+let adMutedEnabled = false;
+
+function pickLocalAdFile(inp){
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    document.getElementById('ad-file-info').innerText = `Wybrano: ${file.name} (${sizeMB} MB)`;
+    document.getElementById('in-ad-video-path').value = file.name;
+}
+
+function startAdVideoNow(){
+    const path = document.getElementById('in-ad-video-path').value.trim();
+    if(!path) return alert("Wpisz nazwę pliku wideo (.mp4 / .mov) lub wybierz go z listy!");
+        pub("pdf", {
+        action: 'showAdVideo',
+        url: path,
+        loop: adLoopEnabled,
+        muted: adMutedEnabled,
+        startTime: 0
+    });
+}
+
+function pauseAdVideoNow(){
+    pub("pdf", { action: 'adPause' });
+}
+
+function toggleAdLoopState(){
+    adLoopEnabled = !adLoopEnabled;
+    const btn = document.getElementById('btn-ad-loop');
+    btn.innerText = adLoopEnabled ? "🔁 PĘTLA: WŁĄCZONA" : "➡️ PĘTLA: WYŁĄCZONA";
+    btn.className = adLoopEnabled ? "btn btn-green" : "btn btn-orange";
+    pub("pdf", { action: 'adLoop', loop: adLoopEnabled });
+}
+
+function toggleAdMuteState(){
+    adMutedEnabled = !adMutedEnabled;
+    const btn = document.getElementById('btn-ad-mute');
+    btn.innerText = adMutedEnabled ? "🔇 DŹWIĘK: WYCISZONY" : "🔊 DŹWIĘK: WŁĄCZONY";
+    btn.className = adMutedEnabled ? "btn btn-red" : "btn btn-orange";
+    pub("pdf", { action: 'adMute', muted: adMutedEnabled });
+}
+
+function switchTbTab(tab){
+    document.getElementById('tb-tab-matches').style.display = (tab === 'matches') ? 'block' : 'none';
+    document.getElementById('tb-tab-standings').style.display = (tab === 'standings') ? 'block' : 'none';
+}
+
+let selectedTbColor = '#ffe600';
+
+function setTbTextColor(hex){
+    selectedTbColor = hex;
+    const inp = document.getElementById('tb-text-color');
+    if(inp) inp.value = hex;
+    syncTbInputs();
+    publishTournamentBoard('matches');
+}
+
+function getTbDraftObject(){
+    return {
+        sub: document.getElementById('tb-group-name').value,
+        raw: document.getElementById('tb-matches-raw').value,
+        color: selectedTbColor,
+        ranks: Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value)
+    };
+}
+
+function syncTbInputs(){
+    pub("tournament_draft", getTbDraftObject(), true);
+}
+
+function fillTbPilotInputs(d){
+    if(!d) return;
+    if(typeof d.sub === 'string') document.getElementById('tb-group-name').value = d.sub;
+    if(typeof d.raw === 'string') document.getElementById('tb-matches-raw').value = d.raw;
+    if(typeof d.color === 'string' && d.color){
+        selectedTbColor = d.color;
+        const inp = document.getElementById('tb-text-color');
+        if(inp) inp.value = d.color;
+    }
+    if(Array.isArray(d.ranks)){
+        Array.of(1, 2, 3, 4, 5, 6).forEach((num, idx) => {
+            const inp = document.getElementById('tb-rank-' + num);
+            if(inp && typeof d.ranks.at(idx) === 'string') inp.value = d.ranks.at(idx);
+        });
+    }
+}
+
+function publishTournamentBoard(mode){
+    hideSlidesOnScreen();
+    syncTbInputs();
+    const sendBoard = () => {
+        if(mode === 'matches'){
+            const sub = document.getElementById('tb-group-name').value.trim();
+            const raw = document.getElementById('tb-matches-raw').value.trim();
+            pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
+        } else {
+            const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
+            pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
+        }
+    };
+    setTimeout(sendBoard, 1000);
+}
+
+function hideTournamentBoard(){
+    pub("tournament", { action: 'hide' }, true);
+    const board = document.getElementById('tournament-board');
+    if(board) board.classList.remove('active');
+}
+
+function applyTournamentBoard(d){
+    const board = document.getElementById('tournament-board');
+    const titleEl = document.getElementById('tb-disp-title');
+    const subEl = document.getElementById('tb-disp-sub');
+    const rowsEl = document.getElementById('tb-disp-rows');
+    if(!board || !rowsEl) return;
+
+    if(d.action === 'hide'){
+        board.classList.remove('active');
+        return;
+    }
+
+    rowsEl.innerHTML = '';
+    if(d.mode === 'matches'){
+        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+        const baseColor = d.color || '#ffe600';
+
+        const colorMap = {
+            'bialy': '#ffffff', 'biały': '#ffffff',
+            'zolty': '#ffe600', 'żółty': '#ffe600', 'zloty': '#ffd700', 'złoty': '#ffd700',
+            'czerwony': '#ff4d6d',
+            'zielony': '#00e676',
+            'niebieski': '#5bc0eb',
+            'rozowy': '#ff66c4', 'różowy': '#ff66c4',
+            'pomaranczowy': '#ff9f1c', 'pomarańczowy': '#ff9f1c',
+            'fioletowy': '#b5179e',
+            'szary': '#adb5bd'
+        };
+
+        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
+        lines.forEach((line, idx) => {
+            let cleanLine = line;
+            let rowColor = baseColor;
+            const tagMatch = cleanLine.match(/\[([^\]]+)\]/);
+            if(tagMatch){
+                const key = tagMatch.at(1).trim().toLowerCase();
+                if(colorMap[key]) rowColor = colorMap[key];
+                else if(key.startsWith('#')) rowColor = key;
+                cleanLine = cleanLine.replace(/\[[^\]]+\]/, '');
+            }
+
+            const parts = cleanLine.split('|');
+            const teams = (parts.at(0) || '').trim();
+            const score = (parts.at(1) || '').trim();
+            const div = document.createElement('div');
+            div.className = 'tb-match-row';
+            div.style.color = rowColor;
+            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
+            rowsEl.appendChild(div);
+        });
+    } else if(d.mode === 'standings'){
+        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
+        subEl.style.display = 'none';
+        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
+        (d.ranks || Array.of()).forEach((team, idx) => {
+            if(!team) return;
+            const div = document.createElement('div');
+            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
+            div.className = `tb-rank-row ${cls}`;
+            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
+            rowsEl.appendChild(div);
+        });
+    }
+    board.classList.add('active');
+
+
+    rowsEl.innerHTML = '';
+    if(d.mode === 'matches'){
+        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+
+        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
+        lines.forEach((line, idx) => {
+            const parts = line.split('|');
+            const teams = (parts.at(0) || '').trim();
+            const score = (parts.at(1) || '').trim();
+            const div = document.createElement('div');
+            div.className = 'tb-match-row';
+            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
+            rowsEl.appendChild(div);
+        });
+    } else if(d.mode === 'standings'){
+        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
+        subEl.style.display = 'none';
+        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
+        (d.ranks || Array.of()).forEach((team, idx) => {
+            if(!team) return;
+            const div = document.createElement('div');
+            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
+            div.className = `tb-rank-row ${cls}`;
+            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
+            rowsEl.appendChild(div);
+        });
+    }
+    board.classList.add('active');
+}
+
+if(isPilotMode) renderSbPilotUI();
+selectedTbColor = '#ffe600';
+
+function setTbTextColor(hex){
+    selectedTbColor = hex;
+    const inp = document.getElementById('tb-text-color');
+    if(inp) inp.value = hex;
+    syncTbInputs();
+    publishTournamentBoard('matches');
+}
+
+function getTbDraftObject(){
+    return {
+        sub: document.getElementById('tb-group-name').value,
+        raw: document.getElementById('tb-matches-raw').value,
+        color: selectedTbColor,
+        ranks: Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value)
+    };
+}
+
+function fillTbPilotInputs(d){
+    if(!d) return;
+    if(typeof d.sub === 'string') document.getElementById('tb-group-name').value = d.sub;
+    if(typeof d.raw === 'string') document.getElementById('tb-matches-raw').value = d.raw;
+    if(typeof d.color === 'string' && d.color){
+        selectedTbColor = d.color;
+        const inp = document.getElementById('tb-text-color');
+        if(inp) inp.value = d.color;
+    }
+    if(Array.isArray(d.ranks)){
+        Array.of(1, 2, 3, 4, 5, 6).forEach((num, idx) => {
+            const inp = document.getElementById('tb-rank-' + num);
+            if(inp && typeof d.ranks.at(idx) === 'string') inp.value = d.ranks.at(idx);
+        });
+    }
+}
+
+function publishTournamentBoard(mode){
+    hideSlidesOnScreen();
+    syncTbInputs();
+    if(mode === 'matches'){
+        const sub = document.getElementById('tb-group-name').value.trim();
+        const raw = document.getElementById('tb-matches-raw').value.trim();
+        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
+    } else {
+        const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
+        pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
+    }
+}
+
+function applyTournamentBoard(d){
+    const board = document.getElementById('tournament-board');
+    const titleEl = document.getElementById('tb-disp-title');
+    const subEl = document.getElementById('tb-disp-sub');
+    const rowsEl = document.getElementById('tb-disp-rows');
+    if(!board || !rowsEl) return;
+
+    if(d.action === 'hide'){
+        board.classList.remove('active');
+        return;
+    }
+
+    rowsEl.innerHTML = '';
+    if(d.mode === 'matches'){
+        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+        const baseColor = d.color || '#ffe600';
+
+        const colorMap = {
+            'bialy': '#ffffff', 'biały': '#ffffff',
+            'zolty': '#ffe600', 'żółty': '#ffe600', 'zloty': '#ffd700', 'złoty': '#ffd700',
+            'czerwony': '#ff4d6d',
+            'zielony': '#00e676',
+            'niebieski': '#5bc0eb',
+            'rozowy': '#ff66c4', 'różowy': '#ff66c4',
+            'pomaranczowy': '#ff9f1c', 'pomarańczowy': '#ff9f1c',
+            'fioletowy': '#b5179e',
+            'szary': '#adb5bd'
+        };
+
+        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
+        lines.forEach((line, idx) => {
+            let cleanLine = line;
+            let rowColor = baseColor;
+            const tagMatch = cleanLine.match(/\[([^\]]+)\]/);
+            if(tagMatch){
+                const key = tagMatch.at(1).trim().toLowerCase();
+                if(colorMap[key]) rowColor = colorMap[key];
+                else if(key.startsWith('#')) rowColor = key;
+                cleanLine = cleanLine.replace(/\[[^\]]+\]/, '');
+            }
+
+            const parts = cleanLine.split('|');
+            const teams = (parts.at(0) || '').trim();
+            const score = (parts.at(1) || '').trim();
+            const div = document.createElement('div');
+            div.className = 'tb-match-row';
+            div.style.setProperty('color', rowColor, 'important');
+            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
+            rowsEl.appendChild(div);
+        });
+    } else if(d.mode === 'standings'){
+        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
+        subEl.style.display = 'none';
+        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
+        (d.ranks || Array.of()).forEach((team, idx) => {
+            if(!team) return;
+            const div = document.createElement('div');
+            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
+            div.className = `tb-rank-row ${cls}`;
+            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
+            rowsEl.appendChild(div);
+        });
+    }
+    board.classList.add('active');
+}
+const savedLineupTxt = localStorage.getItem('pzs4_tytani_lineup');
+if(savedLineupTxt && document.getElementById('in-tytani-lineup')){
+    document.getElementById('in-tytani-lineup').value = savedLineupTxt;
+}
+
+function saveTytaniLineup(){
+    const val = document.getElementById('in-tytani-lineup').value;
+    localStorage.setItem('pzs4_tytani_lineup', val);
+    pub("lineup_draft", { raw: val }, true);
+}
+
+let pipSyncTimers = [];
+
+function clearPipSyncTimers(){
+    pipSyncTimers.forEach(t => clearTimeout(t));
+    pipSyncTimers = [];
+    pub("lineup_pip", { action: 'hide' });
+}
+
+function startTytaniLineup(){
+    const raw = document.getElementById('in-tytani-lineup').value.trim();
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
+    if(lines.length === 0) return alert("Wpisz przynajmniej jeden plik wideo!");
+    saveTytaniLineup();
+    clearPipSyncTimers();
+
+    const videoFiles = [];
+    const schedule = [];
+
+    lines.forEach(line => {
+        const parts = line.split('|');
+        const file = (parts[0] || '').trim();
+        const sec = parseFloat((parts[1] || '5').trim()) || 5;
+        const imgUrl = (parts[2] || '').trim();
+        if(file){
+            videoFiles.push(file);
+            schedule.push({ sec: sec, img: imgUrl });
+        }
+    });
+
+    // 1. Wysyłamy czystą listę plików wideo do koleda_pdf.html (niczego nie zmieniamy w telebimie!)
+    pub("pdf", { action: 'startLineup', list: videoFiles });
+
+    // Wstępne pobranie wszystkich screenów u Śmigla w czasie trwania Intro
+    const allImgs = schedule.map(s => s.img).filter(u => u !== '');
+    if(allImgs.length > 0) pub("lineup_pip", { action: 'preload', images: allImgs });
+
+    // 2. Harmonogram wysyłania zdjęć do okienka PiP u EL Śmigla
+    let elapsedMs = 0;
+    const totalSlides = schedule.filter(s => s.img !== '').length;
+    let visibleIdx = 0;
+
+    schedule.forEach(step => {
+        const currentDelay = elapsedMs;
+        if(step.img){
+            const slideNum = visibleIdx;
+            const t = setTimeout(() => {
+                pub("lineup_pip", {
+                    action: 'step',
+                    index: slideNum,
+                    total: totalSlides || 1,
+                    item: { img: step.img, title: '' }
+                });
+            }, currentDelay);
+            pipSyncTimers.push(t);
+            visibleIdx++;
+        } else {
+            const t = setTimeout(() => {
+                pub("lineup_pip", { action: 'hide' });
+            }, currentDelay);
+            pipSyncTimers.push(t);
+        }
+        elapsedMs += Math.round(step.sec * 1000);
+    });
+
+    // Automatyczne schowanie okienka PiP po zakończeniu ostatniego zawodnika
+    const endTimer = setTimeout(() => {
+        pub("lineup_pip", { action: 'hide' });
+    }, elapsedMs);
+    pipSyncTimers.push(endTimer);
+}
+
+function stopTytaniLineup(){
+    clearPipSyncTimers();
+    pub("pdf", { action: 'stopLineup' });
+}
+
+/* 1. AUTOPILOT Z SYNCHRONIZACJĄ TABLET <-> KOMPUTER */
+let currentPlaylistIdx = -1;
+
+function highlightCurrentPlaylistRow(idx){
+    const songBtns = Array.from(document.querySelectorAll('#pilot-panel button[onclick^="sendSong("]'));
+    songBtns.forEach((b, i) => {
+        const row = b.closest('div');
+        if(row) row.classList.toggle('current-active', i === idx);
+    });
+    if(songBtns[idx]){
+        songBtns[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function playNextFromPlaylist(){
+    const songBtns = Array.from(document.querySelectorAll('#pilot-panel button[onclick^="sendSong("]'));
+    if(songBtns.length === 0) return alert("Brak utworów lub mówców na liście w pilocie!");
+
+    currentPlaylistIdx = (currentPlaylistIdx + 1) % songBtns.length;
+    highlightCurrentPlaylistRow(currentPlaylistIdx);
+    pub("pilot_sync", { action: 'playlist_idx', idx: currentPlaylistIdx }, true);
+
+    songBtns[currentPlaylistIdx].click();
+}
+
+/* 2. WIELOŚCIEŻKOWA PLAYLISTA AUDIO MP3 / WAV + SYNCHRO Z TABLETEM */
+let audioFadeInterval = null;
+let audioCurrentFileName = "";
+let localAudioTracks = [];   // przechowuje obiekty File na komputerze
+let remoteAudioNames = [];   // przechowuje nazwy utworów na tablecie
+let activeAudioTrackIdx = -1;
+
+function formatSec(sec){
+    if(!sec || isNaN(sec)) return "00:00";
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function broadcastAudioStatus(stateIcon){
+    const player = document.getElementById('pilot-audio-player');
+    const st = document.getElementById('audio-remote-status');
+    if(!player || !audioCurrentFileName) return;
+    const txt = `${stateIcon} ${audioCurrentFileName} • ${formatSec(player.currentTime)} / ${formatSec(player.duration)}`;
+    if(st) st.innerText = txt;
+    pub("pilot_sync", { action: 'audio_status', text: txt });
+}
+
+function renderAudioPlaylistUI(){
+    const box = document.getElementById('audio-playlist-list');
+    if(!box) return;
+    box.innerHTML = '';
+    const names = localAudioTracks.length > 0 ? localAudioTracks.map(f => f.name) : remoteAudioNames;
+
+    names.forEach((name, idx) => {
+        const isCurrent = (idx === activeAudioTrackIdx);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn';
+        btn.style.cssText = `text-align:left;padding:9px 12px;font-size:14px;display:flex;justify-content:space-between;align-items:center;border:2px solid ${isCurrent ? '#ffcc00' : '#1d3557'};background:${isCurrent ? 'rgba(255,204,0,0.18)' : '#0f1c2e'};color:${isCurrent ? '#ffcc00' : '#fff'}`;
+        btn.innerHTML = `<span>${isCurrent ? '🔊' : '🎵'} <b>${idx + 1}.</b> ${name}</span><span style="font-size:12px;opacity:0.85">${isCurrent ? 'WYBRANY' : 'KLIKNIJ'}</span>`;
+        btn.onclick = () => selectAudioTrack(idx, true, false);
+        box.appendChild(btn);
+    });
+}
+
+function loadLocalAudioFiles(input){
+    if(!input || !input.files || input.files.length === 0) return;
+    localAudioTracks = Array.from(input.files);
+    remoteAudioNames = localAudioTracks.map(f => f.name);
+    activeAudioTrackIdx = 0;
+
+    pub("pilot_sync", { action: 'audio_list', names: remoteAudioNames, activeIdx: 0 }, true);
+    renderAudioPlaylistUI();
+    selectAudioTrack(0, false, true);
+}
+
+function selectAudioTrack(idx, autoPlay, isFromRemote){
+    if(idx < 0) return;
+    activeAudioTrackIdx = idx;
+    renderAudioPlaylistUI();
+
+    // Wysyłamy sygnał do drugiego urządzenia TYLKO wtedy, gdy to MY kliknęliśmy na tym ekranie!
+    if(!isFromRemote){
+        pub("pilot_sync", { action: 'audio_select', trackIdx: idx, autoPlay: !!autoPlay });
+    }
+
+    const file = localAudioTracks.at(idx);
+    const player = document.getElementById('pilot-audio-player');
+    if(!file || !player) return;
+
+    clearInterval(audioFadeInterval);
+    audioCurrentFileName = file.name;
+    player.volume = 1.0;
+    player.src = URL.createObjectURL(file);
+    player.load();
+    broadcastAudioStatus("⏸️ Gotowy:");
+
+    player.onloadedmetadata = () => broadcastAudioStatus("⏸️ Gotowy:");
+    player.ontimeupdate = () => {
+        if(!player.paused) broadcastAudioStatus("▶️ Gra:");
+    };
+    player.onended = () => broadcastAudioStatus("⏹️ Zakończono:");
+
+    if(autoPlay){
+        player.play().then(() => broadcastAudioStatus("▶️ Gra:")).catch(()=>{});
+    }
+}
+
+function playLocalAudio(fromRemote){
+    if(!fromRemote) pub("pilot_sync", { action: 'audio_play' });
+    const player = document.getElementById('pilot-audio-player');
+    if(!player || !player.src) return;
+    clearInterval(audioFadeInterval);
+    player.volume = 1.0;
+    player.play().then(() => broadcastAudioStatus("▶️ Gra:")).catch(()=>{});
+}
+
+function fadeOutLocalAudio(fromRemote){
+    if(!fromRemote) pub("pilot_sync", { action: 'audio_fade' });
+    const player = document.getElementById('pilot-audio-player');
+    if(!player || player.paused) return;
+    clearInterval(audioFadeInterval);
+    const step = 0.05;
+    audioFadeInterval = setInterval(() => {
+        if(player.volume > step){
+            player.volume = Math.max(0, player.volume - step);
+        } else {
+            player.volume = 0;
+            player.pause();
+            clearInterval(audioFadeInterval);
+            player.volume = 1.0;
+            broadcastAudioStatus("⏹️ Wyciszono:");
+        }
+    }, 150);
+}
+
+/* 3. KISS CAM (WYBÓR ZDJĘĆ Z DYSKU -> POKAZ PO 5s -> POWRÓT) */
+let kissCamTimers = [];
+let kissCamHeartLoop = null;
+
+function compressImageForMqtt(file){
+    return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxW = 1280;
+                const scale = Math.min(1, maxW / img.width);
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.82));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function startKissCamShow(fromRemote){
+    const inp = document.getElementById('in-kisscam-files');
+    if(!inp || !inp.files || inp.files.length === 0){
+        if(!fromRemote){
+            pub("pilot_sync", { action: 'kc_remote_start' });
+        }
+        return;
+    }
+    stopKissCamShow(true, true);
+
+    const files = Array.from(inp.files);
+    const compressedPhotos = [];
+    for(const f of files){
+        compressedPhotos.push(await compressImageForMqtt(f));
+    }
+
+    compressedPhotos.forEach((dataUrl, idx) => {
+        const t = setTimeout(() => {
+            pub("kisscam", { action: 'show', img: dataUrl, index: idx, total: compressedPhotos.length });
+        }, idx * 5000);
+        kissCamTimers.push(t);
+    });
+
+    const endT = setTimeout(() => {
+        pub("kisscam", { action: 'hide' });
+    }, compressedPhotos.length * 5000);
+    kissCamTimers.push(endT);
+}
+
+function stopKissCamShow(silent, fromRemote){
+    kissCamTimers.forEach(t => clearTimeout(t));
+    kissCamTimers = [];
+    if(!silent){
+        pub("kisscam", { action: 'hide' });
+        if(!fromRemote) pub("pilot_sync", { action: 'kc_remote_stop' });
+    }
+}
+
+function spawnKissCamHeart(){
+    const overlay = document.getElementById('kisscam-overlay');
+    if(!overlay || !overlay.classList.contains('active')) return;
+    const h = document.createElement('div');
+    h.className = 'kc-heart-particle';
+    const icons = ['💖', '💘', '❤️', '💕'];
+    h.innerText = icons[Math.floor(Math.random() * icons.length)];
+    h.style.left = (5 + Math.random() * 90) + 'vw';
+    const dur = 3.5 + Math.random() * 2.5;
+    h.style.animationDuration = dur + 's';
+    overlay.appendChild(h);
+    setTimeout(() => h.remove(), dur * 1000);
+}
+
+function handleKissCamMessage(d){
+    const overlay = document.getElementById('kisscam-overlay');
+    const stage = document.getElementById('kc-photo-stage');
+    const badge = document.getElementById('kc-counter-badge');
+    if(!overlay || !stage) return;
+
+    if(d.action === 'hide'){
+        overlay.classList.remove('active');
+        clearInterval(kissCamHeartLoop);
+        kissCamHeartLoop = null;
+        setTimeout(() => { stage.innerHTML = ''; }, 650);
+        return;
+    }
+
+    if(d.action === 'show' && d.img){
+        badge.innerText = `PZS 4 WEJHEROWO • ${(d.index || 0) + 1} / ${d.total || 1}`;
+        const prevImg = stage.querySelector('.kc-photo.show');
+        const newImg = document.createElement('img');
+        newImg.className = 'kc-photo';
+        newImg.src = d.img;
+        stage.appendChild(newImg);
+
+        requestAnimationFrame(() => {
+            newImg.classList.add('show');
+            if(prevImg){
+                prevImg.classList.remove('show');
+                setTimeout(() => prevImg.remove(), 900);
+            }
+        });
+
+        if(!overlay.classList.contains('active')){
+            overlay.classList.add('active');
+            clearInterval(kissCamHeartLoop);
+            kissCamHeartLoop = setInterval(spawnKissCamHeart, 450);
+            spawnKissCamHeart();
+        }
+    }
+}
+let isBlackoutActive = false;
+
+function toggleBlackout(){
+    isBlackoutActive = !isBlackoutActive;
+    pub("blackout", { active: isBlackoutActive }, true);
+    applyBlackoutState(isBlackoutActive);
+}
+
+function applyBlackoutState(state){
+    isBlackoutActive = !!state;
+    const ov = document.getElementById('blackout-overlay');
+    const logo = document.getElementById('blackout-logo');
+    const btn = document.getElementById('btn-blackout-toggle');
+
+    if(logo){
+        logo.src = (currentTheme === 'tytani') ? 'logo_tytani.png' : 'logo_szkola.png';
+    }
+    if(ov && !isPilotMode){
+        ov.classList.toggle('active', isBlackoutActive);
+    }
+    if(btn){
+        btn.classList.toggle('is-on', isBlackoutActive);
+        btn.innerText = isBlackoutActive ? '✅ WYŁĄCZ BLACKOUT (PRZYWRÓĆ EKRAN)' : '🚨 BLACKOUT / WYGASZENIE EKRANU (AWARYJNE)';
+    }
+}
+function sendUrgentChyron(){
+    const tag = document.getElementById('in-chyron-tag').value;
+    const msg = document.getElementById('in-chyron-msg').value.trim();
+    if(!msg) return alert("Wpisz najpierw treść komunikatu!");
+    const payload = { active: true, tag: tag, msg: msg };
+    pub("chyron", payload, true);
+    applyChyronState(payload);
+}
+
+function hideUrgentChyron(){
+    const payload = { active: false };
+    pub("chyron", payload, true);
+    applyChyronState(payload);
+}
+
+function applyChyronState(d){
+    const bar = document.getElementById('urgent-chyron');
+    const lbl = document.getElementById('chyron-label');
+    const txt = document.getElementById('chyron-text');
+    if(!bar || !txt) return;
+
+    if(!d || !d.active || !d.msg){
+        bar.classList.remove('active');
+        return;
+    }
+
+    if(lbl) lbl.innerText = d.tag || '📢 KOMUNIKAT';
+    txt.innerText = d.msg;
+
+    // Jeśli tekst jest dłuższy niż 75 znaków, włączamy płynne przewijanie jak w TV!
+    if(d.msg.length > 75){
+        txt.classList.add('scrolling');
+    } else {
+        txt.classList.remove('scrolling');
+    }
+
+    if(!isPilotMode){
+        bar.classList.add('active');
+    }
+}
+/* SZYBKI SOUNDBOARD */
+const sbAudioSlots = [null, null, null, null, null, null];
+const sbFadeTimers = [null, null, null, null, null, null];
+
+function clearSbFade(slotIdx){
+    if(sbFadeTimers[slotIdx]){
+        clearInterval(sbFadeTimers[slotIdx]);
+        sbFadeTimers[slotIdx] = null;
+    }
+}
+
+function loadSoundboardSlot(slotIdx, input){
+    const file = (input && input.files) ? input.files.item(0) : null;
+    if(!file) return;
+
+    clearSbFade(slotIdx);
+    if(sbAudioSlots[slotIdx]){
+        sbAudioSlots[slotIdx].pause();
+        sbAudioSlots[slotIdx].ontimeupdate = null;
+    }
+
+    const audio = new Audio();
+    audio.src = URL.createObjectURL(file);
+    audio.preload = 'auto';
+    audio.load();
+    sbAudioSlots[slotIdx] = audio;
+
+    const lbl = document.getElementById('sb-name-' + slotIdx);
+    if(lbl) lbl.innerText = '✅ ' + file.name;
+    pub("pilot_sync", { action: 'sb_name', slot: slotIdx, name: '✅ ' + file.name }, true);
+}
+
+function triggerSoundboard(slotIdx, isFromRemote){
+    if(!isFromRemote){
+        pub("pilot_sync", { action: 'sb_play', slot: slotIdx });
+    }
+    const audio = sbAudioSlots[slotIdx];
+    if(!audio) return;
+
+    clearSbFade(slotIdx);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 0.0;
+    let isEndingFadeStarted = false;
+
+    // Automatyczny 2-sekundowy Fade-Out na końcówce pliku audio
+    audio.ontimeupdate = () => {
+        if(!isEndingFadeStarted && audio.duration && (audio.duration - audio.currentTime) <= 2.05 && audio.duration > 2.5){
+            isEndingFadeStarted = true;
+            startSbFadeOut(slotIdx, audio, false);
+        }
+    };
+
+    audio.play().then(() => {
+        // Płynny 2-sekundowy Fade-In od 0% do 100% (20 kroków co 100 ms)
+        let vol = 0.0;
+        sbFadeTimers[slotIdx] = setInterval(() => {
+            if(isEndingFadeStarted || audio.paused){
+                clearSbFade(slotIdx);
+                return;
+            }
+            vol = Math.min(1.0, vol + 0.05);
+            audio.volume = vol;
+            if(vol >= 1.0) clearSbFade(slotIdx);
+        }, 100);
+    }).catch(err => console.warn("Błąd odtwarzania slotu " + slotIdx, err));
+}
+
+function startSbFadeOut(slotIdx, audio, shouldPauseAtEnd){
+    clearSbFade(slotIdx);
+    sbFadeTimers[slotIdx] = setInterval(() => {
+        if(!audio || audio.paused){
+            clearSbFade(slotIdx);
+            return;
+        }
+        if(audio.volume > 0.05){
+            audio.volume = Math.max(0, audio.volume - 0.05);
+        } else {
+            audio.volume = 0;
+            clearSbFade(slotIdx);
+            if(shouldPauseAtEnd){
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        }
+    }, 100); // 20 kroków x 100 ms = dokładnie 2 sekundy wyciszenia
+}
+
+function stopAllSoundboard(isFromRemote){
+    if(!isFromRemote){
+        pub("pilot_sync", { action: 'sb_stop' });
+    }
+    sbAudioSlots.forEach((a, idx) => {
+        if(a && !a.paused){
+            startSbFadeOut(idx, a, true);
+        }
+    });
+}
+function updateTytaniPilotVisibility(){
+    const isTytani = document.body.classList.contains('theme-tytani');
+    document.querySelectorAll('#pilot-panel .p-box, #pilot-autopilot-box').forEach(box => {
+        const txt = (box.innerText || '').toLowerCase();
+        if(
+            box.id === 'pilot-autopilot-box' ||
+            txt.includes('dyrekcj') ||
+            txt.includes('mówiąc') ||
+            txt.includes('mówc') ||
+            txt.includes('prelegent') ||
+            txt.includes('zapowiedź')
+        ){
+            box.style.display = isTytani ? 'none' : '';
+        }
+    });
+}
+
+// Automatyczne uruchamianie przy każdej zmianie motywu na stronie
+new MutationObserver(updateTytaniPilotVisibility).observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+});
+updateTytaniPilotVisibility();
+document.head.appendChild(mqttLib);
+function sendPresetTechZone(){
+    const msg = "⚠️ STREFA TECHNICZNA (STANOWISKO OBSŁUGI TELEBIMU I NAGŁOŚNIENIA NAD TRYBUNAMI) – WSTĘP SUROWO WZBRONIONY DLA OSÓB POSTRONNYCH!!!!";
+    // Znajdź pole tekstowe od paska pilnego / komunikatu i kliknij jego przycisk wysyłania:
+    const inputs = document.querySelectorAll('#pilot-panel input[type="text"]');
+    inputs.forEach(inp => {
+        if(inp.placeholder && (inp.placeholder.toLowerCase().includes('pasek') || inp.placeholder.toLowerCase().includes('komunikat') || inp.placeholder.toLowerCase().includes('tekst'))){
+            inp.value = msg;
+            const nextBtn = inp.parentElement.querySelector('button');
+            if(nextBtn) nextBtn.click();
+        }
+    });
+}
+</script>
+</body>
+</html>
