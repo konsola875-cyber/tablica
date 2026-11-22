@@ -382,10 +382,24 @@ let lineupQueue = [];
 let lineupIndex = 0;
 let isLineupPlaying = false;
 let activeLineupVid = 'a';
+let lineupRunId = 0;
+let lineupImgTimer = null;
 
+function stopLineupSequence(){
+    lineupRunId++;
+    isLineupPlaying = false;
+    clearTimeout(lineupImgTimer);
+    const oldImg = document.getElementById('lineup-static-img');
+    if(oldImg) oldImg.style.display = 'none';
+    const vA = document.getElementById('lineup-vid-a');
+    const vB = document.getElementById('lineup-vid-b');
+    if(vA){ vA.pause(); vA.style.display = 'none'; }
+    if(vB){ vB.pause(); vB.style.display = 'none'; }
+}
 
 function startLineupSequence(list){
     if(!Array.isArray(list) || list.length === 0) return;
+    stopLineupSequence();
     pauseAdAndSaveTime();
     const adA = document.getElementById('ad-vid');
     const adB = document.getElementById('ad-vid-b');
@@ -397,93 +411,84 @@ function startLineupSequence(list){
     isLineupPlaying = true;
     activeLineupVid = 'a';
     playNextLineupItem(true);
-}
 
+}
 function playNextLineupItem(isFirst){
+    const currentRun = lineupRunId;
     if(!isLineupPlaying || lineupIndex >= lineupQueue.length){
         finishLineupSequence();
         return;
     }
 
-    const scr = document.getElementById('slide-screen');
+    const srcUrl = lineupQueue[lineupIndex];
     const currEl = document.getElementById(activeLineupVid === 'a' ? 'ad-vid' : 'ad-vid-b');
     const prevEl = document.getElementById(activeLineupVid === 'a' ? 'ad-vid-b' : 'ad-vid');
-    const srcUrl = lineupQueue[lineupIndex];
 
+    // Wyczyść stare handlery, żeby nic z poprzedniego testu nie przeskakiwało!
+    [currEl, prevEl].forEach(v => {
+        if(v){ v.onended = null; v.onerror = null; v.ontimeupdate = null; }
+    });
+
+    // 1. Obsługa statycznego zdjęcia (.png / .jpg / .webp) na 5 sekund
+    if(/\.(png|jpg|jpeg|webp)$/i.test(srcUrl)){
+        if(currEl){ currEl.pause(); currEl.style.display = 'none'; }
+        if(prevEl){ prevEl.pause(); prevEl.style.display = 'none'; }
+        let imgEl = document.getElementById('lineup-static-img');
+        if(!imgEl){
+            imgEl = document.createElement('img');
+            imgEl.id = 'lineup-static-img';
+            imgEl.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:20;';
+            document.body.appendChild(imgEl);
+        }
+        imgEl.src = srcUrl;
+        imgEl.style.display = 'block';
+        clearTimeout(lineupImgTimer);
+        lineupImgTimer = setTimeout(() => {
+            if(currentRun !== lineupRunId || !isLineupPlaying) return;
+            imgEl.style.display = 'none';
+            lineupIndex++;
+            playNextLineupItem(false);
+        }, 5000);
+        return;
+    }
+
+    // 2. Obsługa pliku wideo (.mp4 / .webm)
+    const oldImg = document.getElementById('lineup-static-img');
+    if(oldImg) oldImg.style.display = 'none';
+
+    if(!currEl){
+        lineupIndex++;
+        playNextLineupItem(false);
+        return;
+    }
+
+    currEl.src = srcUrl;
     currEl.loop = false;
     currEl.muted = false;
-    currEl.onended = null;
-    currEl.onerror = null;
-    currEl.src = srcUrl;
     currEl.style.display = 'block';
-    currEl.style.zIndex = 6;
-    if(prevEl) prevEl.style.zIndex = 5;
+    currEl.style.opacity = '1';
+    currEl.style.transform = 'translateX(0%)';
+    if(prevEl){ prevEl.pause(); prevEl.style.display = 'none'; }
 
-    if(isFirst){
-        currEl.style.transition = 'none';
-        currEl.style.transform = 'translateX(0%)';
-        scr.style.transition = 'opacity 0.4s ease';
-        scr.classList.add('visible');
-    } else {
-        currEl.style.transition = 'none';
-        currEl.style.transform = 'translateX(100%)';
-        void currEl.offsetWidth;
-
-        currEl.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
-        currEl.style.transform = 'translateX(0%)';
-
-        if(prevEl){
-            prevEl.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
-            prevEl.style.transform = 'translateX(-100%)';
-            setTimeout(() => {
-                if(prevEl.style.transform === 'translateX(-100%)'){
-                    prevEl.pause();
-                    prevEl.style.display = 'none';
-                }
-            }, 580);
-        }
-    }
-
-        const isLastItem = (lineupIndex === lineupQueue.length - 1);
-    let earlyStingerTriggered = false;
-
-    if(isLastItem){
-        currEl.ontimeupdate = () => {
-            if(!isLineupPlaying || earlyStingerTriggered) return;
-            if(currEl.duration && (currEl.duration - currEl.currentTime) <= 0.95){
-                earlyStingerTriggered = true;
-                currEl.ontimeupdate = null;
-                finishLineupSequence();
-            }
-        };
-    } else {
-        currEl.ontimeupdate = null;
-    }
-
-    currEl.onended = () => {
-        if(!isLineupPlaying) return;
-        currEl.ontimeupdate = null;
-        if(isLastItem){
-            if(!earlyStingerTriggered) finishLineupSequence();
-            return;
-        }
-        lineupIndex++;
+    const advanceNext = () => {
+        if(currentRun !== lineupRunId || !isLineupPlaying) return;
+        currEl.onended = null;
+        currEl.onerror = null;
         activeLineupVid = (activeLineupVid === 'a') ? 'b' : 'a';
+        lineupIndex++;
         playNextLineupItem(false);
     };
 
-    currEl.onerror = () => {
-        console.warn("Pominięto brakujący plik wideo:", srcUrl);
-        if(!isLineupPlaying) return;
-        currEl.ontimeupdate = null;
-        lineupIndex++;
-        playNextLineupItem(isFirst);
-    };
-
-    currEl.play().catch(e => console.warn("Błąd odtwarzania prezentacji:", e));
+    currEl.onended = advanceNext;
+    currEl.onerror = advanceNext;
+    currEl.play().catch(advanceNext);
 }
 
 function finishLineupSequence(){
+    lineupRunId++;
+    clearTimeout(lineupImgTimer);
+    const oldImg = document.getElementById('lineup-static-img');
+    if(oldImg) oldImg.style.display = 'none';
     isLineupPlaying = false;
     lineupQueue = [];
     const adA = document.getElementById('ad-vid');
