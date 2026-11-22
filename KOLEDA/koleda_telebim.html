@@ -656,6 +656,7 @@ body.theme-tytani #speaker-card{
             <button class="btn btn-blue" onclick="sendTelebimMsg('Prosimy o zachowanie ciszy na sali')">🤫 Cisza na sali</button>
             <button class="btn btn-blue" onclick="sendTelebimMsg('Zapraszamy kolejną klasę pod scenę')">🚶 Kolejna klasa</button>
             <button class="btn btn-blue" onclick="sendTelebimMsg('Przerwa techniczna — za chwilę wracamy')">⏳ Przerwa</button>
+            <button class="p-btn p-btn-red" onclick="sendPresetTechZone()">🚫 STREFA TECHNICZNA</button>
         </div>
         <button class="btn btn-gold" onclick="triggerTelebimMsgManual()">📢 POKAŻ KOMUNIKAT</button>
         <button class="btn btn-red" onclick="hideTelebimMsgNow()">✖ UKRYJ KOMUNIKAT</button>
@@ -2476,11 +2477,6 @@ function updateTytaniPilotVisibility(){
     const isTytani = document.body.classList.contains('theme-tytani');
     document.querySelectorAll('#pilot-panel .p-box, #pilot-autopilot-box').forEach(box => {
         const txt = (box.innerText || '').toLowerCase();
-        // Zostawiamy sekcję slajdów / obrazów (MVP meczu) widoczną!
-        if(txt.includes('slajd') || txt.includes('obraz') || txt.includes('prezentacj') && txt.includes('plik')){
-            box.style.display = '';
-            return;
-        }
         if(
             box.id === 'pilot-autopilot-box' ||
             txt.includes('dyrekcj') ||
@@ -2501,6 +2497,25 @@ new MutationObserver(updateTytaniPilotVisibility).observe(document.body, {
 });
 updateTytaniPilotVisibility();
 document.head.appendChild(mqttLib);
+function sendPresetTechZone(){
+    const msg = "⚠️ STREFA TECHNICZNA (STANOWISKO OBSŁUGI TELEBIMU I NAGŁOŚNIENIA NAD TRYBUNAMI) – WSTĘP SUROWO WZBRONIONY DLA OSÓB POSTRONNYCH. PRZEBYWAĆ MOGĄ WYŁĄCZNIE UPOWAŻNIENI OPERATORZY.";
+    // Szukamy pola tekstowego komunikatu / paska w pilocie i je wypełniamy
+    const inp = document.getElementById('ticker-input') || document.getElementById('urgent-input') || document.getElementById('custom-msg-input') || document.querySelector('#pilot-panel input[type="text"]');
+    if(inp){
+        inp.value = msg;
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    // Jeśli masz funkcję wysyłającą pasek lub ekranowy komunikat, odpalamy ją automatycznie:
+    if(typeof sendTicker === 'function') sendTicker(msg);
+    else if(typeof sendUrgent === 'function') sendUrgent(msg);
+    else if(typeof setScreenMode === 'function' && typeof sendMsg === 'function'){
+        sendMsg(msg);
+    } else if(typeof client !== 'undefined' && client && client.connected){
+        const prefix = (typeof TOPIC_PREFIX !== 'undefined') ? TOPIC_PREFIX : 'pzs4-wejherowo-av-2026/';
+        client.publish(prefix + 'ticker', JSON.stringify({ text: msg, active: true, color: 'red' }));
+        client.publish(prefix + 'telebim', JSON.stringify({ mode: 'msg', title: 'STREFA TECHNICZNA – WSTĘP WZBRONIONY', subtitle: msg }));
+    }
+}
 </script>
 </body>
 </html>
