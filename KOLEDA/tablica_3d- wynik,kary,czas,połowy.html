@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Czytnik Tablicy 3D-Sport -> System AV (Web Serial + MQTT)</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:#0b1320;color:#fff;padding:24px;line-height:1.5}
+.container{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.header{background:linear-gradient(90deg,#112240,#1d3557);border:2px solid #ffcc00;border-radius:14px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:900;color:#ffcc00;text-transform:uppercase}
+.status-pill{padding:6px 14px;border-radius:50px;font-size:13px;font-weight:800;background:#2b090c;border:1px solid #ff4d6d;color:#ff4d6d}
+.status-pill.ok{background:#072b18;border-color:#00e676;color:#00e676}
+
+.card{background:#111c30;border:1px solid #233554;border-radius:12px;padding:18px}
+.card h2{font-size:16px;font-weight:800;color:#5bc0eb;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+select,button{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;padding:11px 18px;border-radius:8px;border:none;cursor:pointer}
+select{background:#0b1320;color:#fff;border:2px solid #3a506b}
+.btn-connect{background:#00e676;color:#051b0e}
+.btn-connect:hover{background:#00c865}
+.btn-disconnect{background:#ff4d6d;color:#fff;display:none}
+.btn-copy{background:#ffcc00;color:#111}
+.btn-clear{background:#233554;color:#ccc}
+
+.live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px}
+.metric{background:#0b1320;border:1px solid #233554;border-radius:10px;padding:14px;text-align:center}
+.metric-label{font-size:12px;color:#8d99ae;font-weight:700;text-transform:uppercase}
+.metric-val{font-size:32px;font-weight:900;color:#ffcc00;margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+.log-box{background:#060b14;border:1px solid #1d3557;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;height:260px;overflow-y:auto;color:#a8dadc;white-space:pre-wrap;word-break:break-all}
+.hex-line{color:#ffd166;margin-bottom:4px}
+.ascii-line{color:#06d6a0;margin-bottom:10px;border-bottom:1px dashed #1d3557;padding-bottom:6px}
+
+.switch-row{display:flex;align-items:center;gap:12px;background:#1a0b12;border:2px solid #ff4d6d;padding:12px 16px;border-radius:10px}
+.switch-row.active{background:#082617;border-color:#00e676}
+input[type="checkbox"]{width:22px;height:22px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>🔌 Czytnik Tablicy 3D-Sport -> System Live</h1>
+            <div style="font-size:13px;color:#a8dadc;margin-top:2px">Odczyt z konwertera USB–RS485 (Web Serial API) i wysyłka na HiveMQ</div>
+        </div>
+        <div style="display:flex;gap:10px">
+            <span id="mqtt-badge" class="status-pill">MQTT: ŁĄCZENIE...</span>
+            <span id="serial-badge" class="status-pill">PORT USB: ROZŁĄCZONY</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>1. Połączenie z konwerterem USB–RS485</h2>
+        <div class="controls">
+            <label for="baud-select" style="font-size:13px;font-weight:700">Prędkość (Baudrate):</label>
+                <select id="baud-select">
+                <option value="9600">9600 bps</option>
+                <option value="19200">19200 bps</option>
+                <option value="38400" selected>38400 bps (Domyślna dla 3D-Sport)</option>
+                <option value="57600">57600 bps</option>
+                <option value="115200">115200 bps</option>
+                <option value="4800">4800 bps</option>
+            </select>
+            <button id="btn-connect" class="btn-connect" onclick="connectSerial()">🔌 POŁĄCZ Z PORTEM USB (COM)</button>
+            <button id="btn-disconnect" class="btn-disconnect" onclick="disconnectSerial()">✖ ROZŁĄCZ</button>
+        </div>
+        <p style="font-size:12px;color:#8d99ae;margin-top:10px">
+            Wskazówka: Jeśli po połączeniu i uruchomieniu zegara na tablicy pojawiają się krzaczki zamiast cyfr, rozłącz port, zmień prędkość i połącz ponownie.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>2. Tryb pracy (Bezpieczny test vs Wysyłka na żywo)</h2>
+        <div id="live-switch-box" class="switch-row">
+            <input type="checkbox" id="chk-live-broadcast" onchange="toggleBroadcastBox()">
+            <label for="chk-live-broadcast" style="font-weight:800;font-size:15px;cursor:pointer">
+                📡 WYSYŁAJ DANE NA ŻYWO DO SYSTEMU (TELEBIM + SCOREBOARD + ŚMIGIEL)
+            </label>
+        </div>
+
+        <div class="live-grid">
+            <div class="metric">
+                <div class="metric-label">Czas meczu</div>
+                <div class="metric-val" id="val-clock">--:--</div>
+                <!-- PODGLĄD POŁOWY I KAR 2-MINUTOWYCH -->
+<div style="margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+    <div style="background:#1e293b;border:1px solid #38bdf8;border-radius:8px;padding:4px 16px;font-size:16px;font-weight:900;color:#38bdf8;letter-spacing:1px;">
+        POŁOWA / SET: <span id="val-period" style="color:#ffffff;font-size:20px;">1</span>
+    </div>
+    <div style="display:flex;gap:12px;width:100%;justify-content:center;font-size:13px;font-weight:800;">
+        <div id="val-pen-home" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;padding:4px 10px;border-radius:6px;">
+            KARY GOSP: BRAK
+        </div>
+        <div id="val-pen-away" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;padding:4px 10px;border-radius:6px;">
+            KARY GOŚCIE: BRAK
+        </div>
+    </div>
+</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Gospodarze</div>
+                <div class="metric-val" id="val-home">-</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Goście</div>
+                <div class="metric-val" id="val-away">-</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Odebrane ramki</div>
+                <div class="metric-val" id="val-packets" style="color:#00e676">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <h2 style="margin:0">3. Podgląd surowych danych z kabla (HEX + ASCII)</h2>
+            <div style="display:flex;gap:8px">
+                <button class="btn-copy" onclick="copyLastFrames()">📋 KOPIUJ OSTATNIE RAMKI (DO ANALIZY)</button>
+                <button class="btn-clear" onclick="clearLogs()">🗑️ WYCZYŚĆ</button>
+            </div>
+        </div>
+        <div id="serial-log" class="log-box">Oczekiwanie na połączenie z konwerterem USB–RS485...</div>
+    </div>
+</div>
+<script>
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+let mqttClient = null;
+let port = null;
+let reader = null;
+let keepReading = false;
+let packetCounter = 0;
+let lastCapturedLog = "";
+
+const DIGIT_RING_3D = [0xFE, 0xE6, 0x9E, 0x86, 0x7E, 0x66, 0x1E, 0x06, 0xFE, 0xE6];
+const SINGLE_DIGIT_MAP = { 0xFE: 0, 0xE6: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+
+let trackedHomeScore = 0;
+let trackedAwayScore = 0;
+let lastHomeStepByte = 0xFE;
+let lastAwayStepByte = 0xFE;
+
+function appendLog(txt){
+    const logBox = document.getElementById('serial-log');
+    if(!logBox) return;
+    const div = document.createElement('div');
+    div.style.color = '#8ecae6';
+    div.innerText = txt;
+    logBox.appendChild(div);
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+function initMqtt(){
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    mqttClient = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
+    const badge = document.getElementById('mqtt-badge');
+
+    mqttClient.on("connect", () => {
+        badge.innerText = "MQTT: POŁĄCZONO";
+        badge.classList.add('ok');
+    });
+    mqttClient.on("offline", () => {
+        badge.innerText = "MQTT: ROZŁĄCZONO";
+        badge.classList.remove('ok');
+    });
+}
+
+function toggleBroadcastBox(){
+    const chk = document.getElementById('chk-live-broadcast');
+    const box = document.getElementById('live-switch-box');
+    box.classList.toggle('active', chk.checked);
+}
+
+async function connectSerial(){
+    if(!("serial" in navigator)){
+        alert("Twoja przeglądarka nie obsługuje Web Serial API. Otwórz ten plik w Google Chrome lub Microsoft Edge!");
+        return;
+    }
+    try {
+        port = await navigator.serial.requestPort();
+        const baudRate = parseInt(document.getElementById('baud-select').value, 10) || 38400;
+        await port.open({ baudRate: baudRate, dataBits: 8, stopBits: 1, parity: "none" });
+
+        document.getElementById('btn-connect').style.display = 'none';
+        document.getElementById('btn-disconnect').style.display = 'inline-block';
+        const sBadge = document.getElementById('serial-badge');
+        sBadge.innerText = `PORT USB: AKTYWNY (${baudRate} bps)`;
+        sBadge.classList.add('ok');
+
+        appendLog(`--- Połączono z portem szeregowym (${baudRate} bps) ---`);
+        keepReading = true;
+        readLoop();
+    } catch(err) {
+        console.error(err);
+        alert("Nie udało się otworzyć portu USB: " + err.message);
+    }
+}
+
+async function disconnectSerial(){
+    keepReading = false;
+    try {
+        if(reader){ await reader.cancel(); reader = null; }
+        if(port){ await port.close(); port = null; }
+    } catch(e){}
+    document.getElementById('btn-connect').style.display = 'inline-block';
+    document.getElementById('btn-disconnect').style.display = 'none';
+    const sBadge = document.getElementById('serial-badge');
+    sBadge.innerText = "PORT USB: ROZŁĄCZONY";
+    sBadge.classList.remove('ok');
+}
+
+async function readLoop(){
+    let byteBuffer = [];
+    let flushTimer = null;
+
+    const flushFrame = () => {
+        if(byteBuffer.length === 0) return;
+        const frame = byteBuffer.slice();
+        byteBuffer = [];
+        packetCounter++;
+        document.getElementById('val-packets').innerText = packetCounter;
+        processIncomingFrame(frame);
+    };
+
+    while(port && port.readable && keepReading){
+        reader = port.readable.getReader();
+        try {
+            while(true){
+                const { value, done } = await reader.read();
+                if(done) break;
+                if(value && value.length > 0){
+                    for(let i = 0; i < value.length; i++){
+                        byteBuffer.push(value.at(i));
+                    }
+                    clearTimeout(flushTimer);
+                    flushTimer = setTimeout(flushFrame, 25);
+                    if(byteBuffer.length >= 64) flushFrame();
+                }
+            }
+        } catch(error) {
+            appendLog(`[Błąd odczytu]: ${error.message}`);
+        } finally {
+            reader.releaseLock();
+        }
+    }
+}
+
+const MAP_3D_BASE = { 0xFE: 0, 0xE6: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+
+function decode3DDigit(bMain, bNext){
+    if(bMain === 0xFE) return (bNext === 0xFE) ? 8 : 0;
+    if(bMain === 0xE6) return (bNext === 0xFE) ? 9 : 1;
+    return MAP_3D_BASE[bMain] !== undefined ? MAP_3D_BASE[bMain] : null;
+}
+
+let trackedClockMins = 0;
+let trackedClockSecs = 0;
+
+function decodeClockDigit(bMain, bNext){
+    if(bMain === 0xFE) return (bNext === 0xF8 || bNext === 0xFE) ? 8 : 0;
+    if(bMain === 0xE6) return (bNext === 0xF8 || bNext === 0xFE) ? 9 : 1;
+    return MAP_3D_BASE[bMain] !== undefined ? MAP_3D_BASE[bMain] : null;
+}
+
+function updateClockDisplay(mins, secs){
+    const isNewSecond = (mins !== trackedClockMins || secs !== trackedClockSecs);
+    trackedClockMins = mins;
+    trackedClockSecs = secs;
+    const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    document.getElementById('val-clock').innerText = formatted;
+
+    // Odliczanie aktywnych kar 2-minutowych równo z zegarem meczu (1 sekunda meczu = -1 sekunda kary):
+    if(isNewSecond && !(mins === 0 && secs === 0)){
+        if(homePenaltySecondsLeft > 0){
+            homePenaltySecondsLeft--;
+            updatePenaltyBox('home', formatPenaltySeconds(homePenaltySecondsLeft));
+        }
+        if(awayPenaltySecondsLeft > 0){
+            awayPenaltySecondsLeft--;
+            updatePenaltyBox('away', formatPenaltySeconds(awayPenaltySecondsLeft));
+        }
+    }
+
+    if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+        mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+            source: '3d-sport',
+            clock: formatted
+        }));
+    }
+}
+
+function processIncomingFrame(bytes){
+    const hexStr = bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+    const asciiStr = bytes.map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
+
+    const logBox = document.getElementById('serial-log');
+    const entry = document.createElement('div');
+    entry.innerHTML = `<div class="hex-line">HEX [${bytes.length}B]: ${hexStr}</div><div class="ascii-line">TXT: ${asciiStr}</div>`;
+    logBox.appendChild(entry);
+
+    while(logBox.children.length > 40){
+        logBox.removeChild(logBox.firstChild);
+    }
+    logBox.scrollTop = logBox.scrollHeight;
+    lastCapturedLog = `HEX: ${hexStr}\nTXT: ${asciiStr}`;
+
+        // ROZCINANIE ZLEPIONYCH PAKIETÓW NA POJEDYNCZE RAMKI:
+    let start = 0;
+    for(let i = 1; i < bytes.length; i++){
+                    const isHeader = (bytes.at(i) === 0x66) && (
+            (bytes.at(i + 1) === 0x18 && bytes.at(i + 2) === 0x80) ||
+            (bytes.at(i + 1) === 0xF8 && bytes.at(i + 2) === 0x1E) ||
+            (bytes.at(i + 1) === 0x18 && bytes.at(i + 2) === 0x7E) ||
+            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) === 0x18) ||
+            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) === 0x60) ||
+            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) === 0xE6 && bytes.at(i + 3) === 0xE6) ||
+            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) !== 0x78 && bytes.at(i + 2) !== 0xE6 && i - start >= 7)
+        );
+        if(isHeader){
+            parse3DSportFrame(bytes.slice(start, i));
+            start = i;
+        }
+    }
+    parse3DSportFrame(bytes.slice(start));
+}
+
+let currentPenHome = null;
+let trackedHomePenMins = 1;
+let trackedHomePenSecs = 59;
+let currentPenAway = null;
+let homePenPlayer = '';
+let awayPenPlayer = '';
+
+function decodePlayerNumber(b1, b2, b3){
+    const d1 = decodeClockDigit(b1, b2);
+    const d2Idx = (b2 === 0xF8 || b2 === 0xFE) ? 2 : 1;
+    const d2 = (d2Idx === 2) ? decodeClockDigit(b3, 0x00) : decodeClockDigit(b2, b3);
+    if(d1 === 0 && d2 !== null) return `${d2}`;
+    if(d1 !== null && d2 !== null) return `${d1}${d2}`;
+    if(d1 !== null) return `${d1}`;
+    return '';
+}
+
+function updatePenaltyBox(team, timeStr, playerStr){
+    if(team === 'home'){
+        if(playerStr !== undefined) homePenPlayer = playerStr;
+        currentPenHome = timeStr ? (homePenPlayer ? `${homePenPlayer} (${timeStr})` : timeStr) : null;
+        const el = document.getElementById('val-pen-home');
+        if(el) el.innerText = currentPenHome ? `KARY GOSP: ${currentPenHome}` : 'KARY GOSP: BRAK';
+    } else {
+        if(playerStr !== undefined) awayPenPlayer = playerStr;
+        currentPenAway = timeStr ? (awayPenPlayer ? `${awayPenPlayer} (${timeStr})` : timeStr) : null;
+        const el = document.getElementById('val-pen-away');
+        if(el) el.innerText = currentPenAway ? `KARY GOŚCIE: ${currentPenAway}` : 'KARY GOŚCIE: BRAK';
+    }
+
+    if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+        mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+            source: '3d-sport',
+            homePenalty: currentPenHome,
+            awayPenalty: currentPenAway
+        }));
+    }
+}
+let homePenaltySecondsLeft = 0;
+let awayPenaltySecondsLeft = 0;
+
+function formatPenaltySeconds(totalSec){
+    if(totalSec <= 0) return null;
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+function parse3DSportFrame(bytes){
+    // 0A. Wyłącznie reset zegara na 00:00 (nie dotyka biegnącego zegara poniżej)
+    if(bytes.length >= 11 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x7E &&
+       bytes.at(3) === 0x86 && bytes.at(8) === 0xFE && bytes.at(9) === 0x7E){
+        updateClockDisplay(0, 0);
+        return;
+    }
+
+        // 0B. Wyłącznie zmiana połowy / okresu gry (6B..7B: 66 F8 F8 [CYFRA] ...)
+    if(bytes.length >= 6 && bytes.at(0) === 0x66 && bytes.at(1) === 0xF8 && bytes.at(2) === 0xF8){
+        let periodVal = null;
+        if(bytes.at(3) === 0xFE) periodVal = (bytes.at(5) === 0xFE) ? 8 : 0;
+        else if(bytes.at(3) === 0xE6) periodVal = (bytes.at(5) === 0xFE) ? 9 : 1;
+        else periodVal = MAP_3D_BASE[bytes.at(3)] !== undefined ? MAP_3D_BASE[bytes.at(3)] : null;
+
+        if(periodVal !== null){
+            const periodEl = document.getElementById('val-period');
+            if(periodEl) periodEl.innerText = periodVal;
+
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    period: periodVal
+                }));
+            }
+        }
+        return;
+    }
+    
+        // 0C. KARY 2-MINUTOWE (Gospodarze & Goście - zsynchronizowane 1:1 z zegarem głównym meczu!)
+    // 1) Skasowanie kary Gospodarzy (66 98 18 66...)
+    if(bytes.length >= 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x18 && bytes.at(3) === 0x66){
+        homePenaltySecondsLeft = 0;
+        updatePenaltyBox('home', null);
+        return;
+    }
+    // 2) Nabijanie nowej kary 2:00 Gospodarzy (66 98 18...)
+    if(bytes.length >= 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x18){
+        homePenaltySecondsLeft = 120;
+        updatePenaltyBox('home', '2:00');
+        return;
+    }
+    // 3) Nabijanie nowej kary 2:00 Gości (66 98 60...)
+    if(bytes.length >= 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x60){
+        awayPenaltySecondsLeft = 120;
+        updatePenaltyBox('away', '2:00');
+        return;
+    }
+    // 1. Zegar główny 1 Hz (ramka 12B..19B: 66 18 7E ...)
+    if(bytes.length >= 11 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x7E){
+        const secIdx = (bytes.at(3) === 0x86) ? 8 : 9;
+        const secOnes = decodeClockDigit(bytes.at(secIdx), bytes.at(secIdx + 1));
+
+        if(secOnes !== null){
+            const oldOnes = trackedClockSecs % 10;
+            let secTens = Math.floor(trackedClockSecs / 10);
+
+            if(oldOnes === 9 && secOnes === 0){
+                secTens++;
+                if(secTens >= 6){
+                    secTens = 0;
+                    trackedClockMins++;
+                }
+            } else if(oldOnes === 0 && secOnes === 9){
+                if(secTens > 0) secTens--;
+                else { secTens = 5; if(trackedClockMins > 0) trackedClockMins--; }
+            }
+            updateClockDisplay(trackedClockMins, (secTens * 10) + secOnes);
+        }
+        return;
+    }
+    // 2. Wynik GOSPODARZY (nagłówek 66 18 80) - NIETKNIĘTY
+    if(bytes.length >= 16 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x80){
+        let score = null;
+        const isOneDigit = (bytes.at(13) === 0x18 && bytes.at(14) === 0x9E && bytes.at(15) === 0xFE) ||
+                           (bytes.at(13) === 0x18 && bytes.at(14) === 0xF8 && bytes.at(15) === 0x9E && bytes.at(16) === 0xFE) ||
+                           (bytes.at(14) === 0x18 && bytes.at(15) === 0x9E && bytes.at(16) === 0xFE) ||
+                           (bytes.at(14) === 0x18 && bytes.at(15) === 0xF8 && bytes.at(16) === 0x9E && bytes.at(17) === 0xFE);
+        if(isOneDigit){
+            score = decode3DDigit(bytes.at(9), bytes.at(10));
+        } else {
+            const tens = decode3DDigit(bytes.at(9), bytes.at(10));
+            let onesIdx = 15;
+            for(let k = 11; k < bytes.length - 1; k++){
+                if(bytes.at(k) === 0x66 && bytes.at(k + 1) === 0x18){
+                    onesIdx = k + 2;
+                    break;
+                }
+            }
+            const ones = decode3DDigit(bytes.at(onesIdx), bytes.at(onesIdx + 1));
+            if(tens !== null && ones !== null) score = (tens * 10) + ones;
+        }
+
+        if(score !== null){
+            document.getElementById('val-home').innerText = score;
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    homeScore: score
+                }));
+            }
+        }
+        return;
+    }
+
+    // 3. Wynik GOŚCI (nagłówek 66 F8 1E) - NIETKNIĘTY
+    if(bytes.length >= 16 && bytes.at(0) === 0x66 && bytes.at(1) === 0xF8 && bytes.at(2) === 0x1E){
+        let score = null;
+        const isOneDigit = (bytes.at(14) === 0x9E && bytes.at(15) === 0xFE && bytes.at(16) === 0xFE) ||
+                           (bytes.at(15) === 0x9E && bytes.at(16) === 0xFE && bytes.at(17) === 0xFE);
+
+        if(isOneDigit){
+            score = decode3DDigit(bytes.at(9), bytes.at(10));
+        } else {
+            const tens = decode3DDigit(bytes.at(9), bytes.at(10));
+            const ones = decode3DDigit(bytes.at(14), bytes.at(15));
+            if(tens !== null && ones !== null) score = (tens * 10) + ones;
+        }
+
+        if(score !== null){
+            document.getElementById('val-away').innerText = score;
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    awayScore: score
+                }));
+            }
+        }
+        return;
+    }
+
+function clearLogs(){
+    document.getElementById('serial-log').innerHTML = '';
+    packetCounter = 0;
+    document.getElementById('val-packets').innerText = '0';
+    trackedClockMins = 0;
+    trackedClockSecs = 0;
+    document.getElementById('val-clock').innerText = '00:00';
+    document.getElementById('val-home').innerText = '0';
+    document.getElementById('val-away').innerText = '0';
+    updatePenaltyBox('home', null);
+    updatePenaltyBox('away', null);
+}
+}
+const mqttScript = document.createElement('script');
+mqttScript.src = "mqtt.min.js";
+mqttScript.onerror = () => {
+    const cdn = document.createElement('script');
+    cdn.src = "https://unpkg.com";
+    cdn.onload = initMqtt;
+    document.head.appendChild(cdn);
+};
+mqttScript.onload = initMqtt;
+document.head.appendChild(mqttScript);
+</script>
+</body>
+</html>
