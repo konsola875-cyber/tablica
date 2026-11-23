@@ -197,10 +197,10 @@ body.theme-tytani #tytani-video-section{display:block}
 .tb-header{font-family:'Roboto Slab',serif;font-size:68px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:8px;line-height:1.1}
 .tb-subheader{font-family:'Roboto Slab',serif;font-size:54px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 6px 14px rgba(0,0,0,0.9);margin-bottom:24px}
 .tb-list{display:flex;flex-direction:column;gap:22px;width:100%;max-width:1550px;margin-top:36px}
-.tb-match-row{font-family:'Roboto Slab',serif;font-size:48px;font-weight:900;color:#ffe600;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
+.tb-match-row{font-family:'Roboto Slab',serif;font-size:62px;font-weight:900;color:#ffe600;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
 .tb-match-num{margin-right:16px}
 .tb-match-score{color:#5bc0eb;margin-left:16px}
-.tb-rank-row{font-family:'Roboto Slab',serif;font-size:48px;font-weight:900;text-transform:uppercase;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
+.tb-rank-row{font-family:'Roboto Slab',serif;font-size:58px;font-weight:900;text-transform:uppercase;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px}
 .tb-rank-1{color:#ffe600}
 .tb-rank-2{color:#a8b2bd}
 .tb-rank-3{color:#d9822b}
@@ -573,6 +573,7 @@ body.theme-tytani #speaker-card{
             <div style="display:flex;gap:8px;margin-bottom:10px">
                 <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('matches')">📋 KOLEJNOŚĆ MECZÓW</button>
                 <button class="btn btn-blue" style="flex:1" onclick="switchTbTab('standings')">🏆 KLASYFIKACJA KOŃCOWA</button>
+                <button class="btn btn-blue" onclick="sendTournamentBoard('teams')">🏫 DRUŻYNY NA ZAWODACH</button>
             </div>
                 <div id="kisscam-pilot-box" style="margin-top:18px;padding-top:16px;border-top:2px solid #ff4d94">
         <h3 style="color:#ff4d94;margin-bottom:8px">💘 KISS CAM (PRZERWA W MECZU SZKOLNYM)</h3>
@@ -1773,6 +1774,16 @@ function applyTournamentBoard(d){
         subEl.innerText = d.sub || '';
         subEl.style.display = d.sub ? 'block' : 'none';
         const baseColor = d.color || '#ffe600';
+    if(d.mode === 'teams'){
+        titleEl.innerText = 'DRUŻYNY BIORĄCE UDZIAŁ W ZAWODACH:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+        const lines = (d.lines || d.text || '').split('\n').map(l => l.trim()).filter(Boolean);
+        listEl.innerHTML = lines.map((line, idx) => {
+            const cleanName = line.replace(/^\d+[\.\)\-]\s*/, '');
+            return `<div class="tb-rank-row tb-rank-1" style="font-size:58px;"><span style="color:#ffffff;margin-right:16px;">${idx + 1}.</span>${cleanName}</div>`;
+        }).join('');
+    }
 
         const colorMap = {
             'bialy': '#ffffff', 'biały': '#ffffff',
@@ -2508,6 +2519,46 @@ function sendPresetTechZone(){
             if(nextBtn) nextBtn.click();
         }
     });
+}
+function showTeamsListOnTelebim(){
+    const savedTeams = localStorage.getItem('pzs4_tournament_teams') || "PZS nr 4 Wejherowo, PZS nr 1 Wejherowo, PZS nr 2 Wejherowo, PZS nr 3 Wejherowo, PZS Reda, PZS Rumia";
+    const input = prompt("Wpisz nazwy drużyn / szkół biorących udział w zawodach (oddziel przecinkiem):", savedTeams);
+    if(input === null) return;
+
+    localStorage.setItem('pzs4_tournament_teams', input);
+    const teams = input.split(',').map(t => t.trim()).filter(Boolean);
+    if(teams.length === 0) return;
+
+    const listHtml = teams.map((team, idx) =>
+        `<div style="display:flex;align-items:center;gap:18px;background:rgba(15,23,42,0.88);border:2px solid #38bdf8;border-radius:14px;padding:16px 26px;font-size:32px;font-weight:900;color:#f8fafc;box-shadow:0 8px 24px rgba(0,0,0,0.45);">
+            <span style="background:#38bdf8;color:#090d16;width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;">${idx + 1}</span>
+            <span>${team}</span>
+        </div>`
+    ).join('');
+
+    const fullHtml = `
+        <div style="width:100%;max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+            <div style="font-size:42px;font-weight:900;color:#fbbf24;text-align:center;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;">
+                🏫 DRUŻYNY BIORĄCE UDZIAŁ W ZAWODACH
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(${teams.length > 5 ? 2 : 1}, 1fr);gap:14px;">
+                ${listHtml}
+            </div>
+        </div>
+    `;
+
+    // Wysyłamy przez Twoje istniejące połączenie MQTT / tryb HTML telebimu:
+    const prefix = (typeof TOPIC_PREFIX !== 'undefined') ? TOPIC_PREFIX : 'pzs4-wejherowo-av-2026/';
+    if(typeof client !== 'undefined' && client && client.connected){
+        client.publish(prefix + 'telebim', JSON.stringify({
+            mode: 'custom_html',
+            title: 'DRUŻYNY BIORĄCE UDZIAŁ W ZAWODACH',
+            html: fullHtml
+        }));
+    }
+    if(typeof renderCustomHtml === 'function'){
+        renderCustomHtml(fullHtml);
+    }
 }
 </script>
 </body>
