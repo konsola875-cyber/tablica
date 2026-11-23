@@ -571,9 +571,10 @@ body.theme-tytani #speaker-card{
                 <div id="tb-pilot-box" style="margin-top:18px;padding-top:16px;border-top:2px solid #ffcc00">
             <h3 style="color:#ffcc00;margin-bottom:10px">📋 ROZPISKA MECZÓW / KLASYFIKACJA NA TELEBIM</h3>
             <div style="display:flex;gap:8px;margin-bottom:10px">
-                <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('matches')">📋 KOLEJNOŚĆ MECZÓW</button>
-                <button class="btn btn-blue" style="flex:1" onclick="switchTbTab('standings')">🏆 KLASYFIKACJA KOŃCOWA</button>
-                <button class="btn btn-blue" onclick="sendTournamentBoard('teams')">🏫 DRUŻYNY NA ZAWODACH</button>
+             <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('matches')">📋 KOLEJNOŚĆ MECZÓW</button>
+             <button class="btn btn-blue" style="flex:1" onclick="switchTbTab('teams')">🏫 DRUŻYNY NA ZAWODACH</button>
+             <button class="btn btn-blue" style="flex:1" onclick="switchTbTab('standings')">🏅 KLASYFIKACJA KOŃCOWA</button>
+             <button class="btn btn-gold" style="flex:1" onclick="switchTbTab('bracket')">🏆 DRABINKA TURNIEJOWA</button>
             </div>
                 <div id="kisscam-pilot-box" style="margin-top:18px;padding-top:16px;border-top:2px solid #ff4d94">
         <h3 style="color:#ff4d94;margin-bottom:8px">💘 KISS CAM (PRZERWA W MECZU SZKOLNYM)</h3>
@@ -610,6 +611,78 @@ body.theme-tytani #speaker-card{
                 <input type="text" id="tb-rank-5" oninput="syncTbInputs()" placeholder="V MIEJSCE (np. PZS 3 WEJHEROWO)">
                 <input type="text" id="tb-rank-6" oninput="syncTbInputs()" placeholder="VI MIEJSCE (np. PZS 2 RUMIA)">
                 <button class="btn btn-gold" onclick="publishTournamentBoard('standings')">🏆 POKAŻ KLASYFIKACJĘ KOŃCOWĄ</button>
+            </div>
+                        <!-- ZAKŁADKA: DRUŻYNY NA ZAWODACH -->
+            <div id="tb-tab-teams" style="display:none">
+                <input type="text" id="tb-teams-sub" placeholder="Podtytuł opcjonalny (np. POWIATOWA LICEALIADA W PIŁCE RĘCZNEJ)...">
+                <textarea id="tb-teams-raw" rows="7" placeholder="Wpisuj nazwy szkół / drużyn linia po linii:
+PZS NR 4 WEJHEROWO
+PZS NR 1 WEJHEROWO
+PZS NR 2 WEJHEROWO
+ZSP NR 1 RUMIA
+ZSP REDA"></textarea>
+                <button class="btn btn-green" onclick="publishTournamentBoard('teams')">🏫 POKAŻ DRUŻYNY NA TELEBIMIE</button>
+            </div>
+
+                        <!-- ZAKŁADKA 4: DRABINKA TURNIEJOWA 16 DRUŻYN (BARWY SAMOCHODÓWKI) -->
+            <div id="tb-tab-bracket" style="display:none">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                    <div style="background:rgba(15,41,74,0.8);padding:8px;border-radius:8px;border:1px solid #38bdf8;">
+                        <b style="color:#38bdf8;font-size:12px;">LEWA STRONA – 1/8 FINAŁU (8 DRUŻYN)</b>
+                        <input type="text" id="tb-br-l1" placeholder="L1 (para 1 góra)">
+                        <input type="text" id="tb-br-l2" placeholder="L2 (para 1 dół)">
+                        <input type="text" id="tb-br-l3" placeholder="L3 (para 2 góra)">
+                        <input type="text" id="tb-br-l4" placeholder="L4 (para 2 dół)">
+                        <input type="text" id="tb-br-l5" placeholder="L5 (para 3 góra)">
+                        <input type="text" id="tb-br-l6" placeholder="L6 (para 3 dół)">
+                        <input type="text" id="tb-br-l7" placeholder="L7 (para 4 góra)">
+                        <input type="text" id="tb-br-l8" placeholder="L8 (para 4 dół)">
+                    </div>
+                    <div style="background:rgba(15,41,74,0.8);padding:8px;border-radius:8px;border:1px solid #38bdf8;">
+                        <b style="color:#38bdf8;font-size:12px;">PRAWA STRONA – 1/8 FINAŁU (8 DRUŻYN)</b>
+                        <input type="text" id="tb-br-r1" placeholder="P1 (para 1 góra)">
+                        <input type="text" id="tb-br-r2" placeholder="P2 (para 1 dół)">
+                        <input type="text" id="tb-br-r3" placeholder="P3 (para 2 góra)">
+                        <input type="text" id="tb-br-r4" placeholder="P4 (para 2 dół)">
+                        <input type="text" id="tb-br-r5" placeholder="P5 (para 3 góra)">
+                        <input type="text" id="tb-br-r6" placeholder="P6 (para 3 dół)">
+                        <input type="text" id="tb-br-r7" placeholder="P7 (para 4 góra)">
+                        <input type="text" id="tb-br-r8" placeholder="P8 (para 4 dół)">
+                    </div>
+                    <div style="background:rgba(234,179,8,0.22);padding:8px;border-radius:8px;border:1px solid #eab308;">
+                        <b style="color:#ffe600;font-size:12px;">LEWA STRONA – ĆWIERĆFINAŁY (4)</b>
+                        <input type="text" id="tb-br-lq1" placeholder="Ćwierćfinał L1">
+                        <input type="text" id="tb-br-lq2" placeholder="Ćwierćfinał L2">
+                        <input type="text" id="tb-br-lq3" placeholder="Ćwierćfinał L3">
+                        <input type="text" id="tb-br-lq4" placeholder="Ćwierćfinał L4">
+                    </div>
+                    <div style="background:rgba(234,179,8,0.22);padding:8px;border-radius:8px;border:1px solid #eab308;">
+                        <b style="color:#ffe600;font-size:12px;">PRAWA STRONA – ĆWIERĆFINAŁY (4)</b>
+                        <input type="text" id="tb-br-rq1" placeholder="Ćwierćfinał P1">
+                        <input type="text" id="tb-br-rq2" placeholder="Ćwierćfinał P2">
+                        <input type="text" id="tb-br-rq3" placeholder="Ćwierćfinał P3">
+                        <input type="text" id="tb-br-rq4" placeholder="Ćwierćfinał P4">
+                    </div>
+                    <div style="background:rgba(250,204,21,0.16);padding:8px;border-radius:8px;border:1px solid #fef08a;">
+                        <b style="color:#fef08a;font-size:12px;">LEWA STRONA – PÓŁFINAŁY (2)</b>
+                        <input type="text" id="tb-br-ls1" placeholder="Półfinał L1 (góra)">
+                        <input type="text" id="tb-br-ls2" placeholder="Półfinał L2 (dół)">
+                    </div>
+                    <div style="background:rgba(250,204,21,0.16);padding:8px;border-radius:8px;border:1px solid #fef08a;">
+                        <b style="color:#fef08a;font-size:12px;">PRAWA STRONA – PÓŁFINAŁY (2)</b>
+                        <input type="text" id="tb-br-rs1" placeholder="Półfinał P1 (góra)">
+                        <input type="text" id="tb-br-rs2" placeholder="Półfinał P2 (dół)">
+                    </div>
+                </div>
+                <div style="background:rgba(250,204,21,0.28);padding:8px;border-radius:8px;border:2px solid #facc15;margin-bottom:8px;">
+                    <b style="color:#ffe600;font-size:12px;">🏆 WIELKI FINAŁ I ZWYCIĘZCA TURNIEJU</b>
+                    <div style="display:flex;gap:8px;margin-top:6px;">
+                        <input type="text" id="tb-br-fl" placeholder="FINALISTA LEWY">
+                        <input type="text" id="tb-br-fr" placeholder="FINALISTA PRAWY">
+                    </div>
+                    <input type="text" id="tb-br-winner" placeholder="🏆 ZWYCIĘZCA TURNIEJU (np. PZS NR 4 WEJHEROWO)" style="margin-top:6px;border:2px solid #ffe600;">
+                </div>
+                <button class="btn btn-gold" onclick="publishTournamentBoard('bracket')">🏆 POKAŻ DRABINKĘ NA TELEBIMIE</button>
             </div>
 
             <div style="margin-top:8px">
@@ -1691,7 +1764,9 @@ function toggleAdMuteState(){
 
 function switchTbTab(tab){
     document.getElementById('tb-tab-matches').style.display = (tab === 'matches') ? 'block' : 'none';
+    document.getElementById('tb-tab-teams').style.display = (tab === 'teams') ? 'block' : 'none';
     document.getElementById('tb-tab-standings').style.display = (tab === 'standings') ? 'block' : 'none';
+    document.getElementById('tb-tab-bracket').style.display = (tab === 'bracket') ? 'block' : 'none';
 }
 
 let selectedTbColor = '#ffe600';
@@ -1734,140 +1809,67 @@ function fillTbPilotInputs(d){
     }
 }
 
+let isTournamentBoardOpen = false;
+
 function publishTournamentBoard(mode){
-    hideSlidesOnScreen();
     syncTbInputs();
+    const firstShow = !isTournamentBoardOpen;
+    isTournamentBoardOpen = true;
+
     const sendBoard = () => {
         if(mode === 'matches'){
             const sub = document.getElementById('tb-group-name').value.trim();
             const raw = document.getElementById('tb-matches-raw').value.trim();
             pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
+        } else if(mode === 'teams'){
+            const sub = (document.getElementById('tb-teams-sub')?.value || '').trim();
+            const raw = (document.getElementById('tb-teams-raw')?.value || '').trim();
+            pub("tournament", { action: 'show', mode: 'teams', sub: sub, raw: raw }, true);
+        } else if(mode === 'bracket'){
+            const val = (id) => (document.getElementById(id)?.value || '').trim();
+            const bracket = {
+                l1: val('tb-br-l1'), l2: val('tb-br-l2'), l3: val('tb-br-l3'), l4: val('tb-br-l4'),
+                l5: val('tb-br-l5'), l6: val('tb-br-l6'), l7: val('tb-br-l7'), l8: val('tb-br-l8'),
+                lq1: val('tb-br-lq1'), lq2: val('tb-br-lq2'), lq3: val('tb-br-lq3'), lq4: val('tb-br-lq4'),
+                ls1: val('tb-br-ls1'), ls2: val('tb-br-ls2'),
+                fl: val('tb-br-fl'), fr: val('tb-br-fr'),
+                winner: val('tb-br-winner'),
+                rs1: val('tb-br-rs1'), rs2: val('tb-br-rs2'),
+                rq1: val('tb-br-rq1'), rq2: val('tb-br-rq2'), rq3: val('tb-br-rq3'), rq4: val('tb-br-rq4'),
+                r1: val('tb-br-r1'), r2: val('tb-br-r2'), r3: val('tb-br-r3'), r4: val('tb-br-r4'),
+                r5: val('tb-br-r5'), r6: val('tb-br-r6'), r7: val('tb-br-r7'), r8: val('tb-br-r8')
+            };
+            pub("tournament", { action: 'show', mode: 'bracket', bracket: bracket }, true);
         } else {
             const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
             pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
         }
     };
-    setTimeout(sendBoard, 1000);
+
+        if(firstShow){
+        pub("pdf", { action: 'playStingerOnly' });
+        if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
+        setTimeout(() => {
+            currentSlideIdx = -1;
+            updateSlideSelectionUI();
+            pub("activeslide", { activeIdx: -1 }, true);
+            sendBoard();
+        }, 1350);
+    } else {
+        sendBoard();
+    }
 }
 
 function hideTournamentBoard(){
-    pub("tournament", { action: 'hide' }, true);
+    isTournamentBoardOpen = false;
+    pub("tournament", { action: 'hide', ts: Date.now() }, true);
     const board = document.getElementById('tournament-board');
-    if(board) board.classList.remove('active');
-}
-
-function applyTournamentBoard(d){
-    const board = document.getElementById('tournament-board');
-    const titleEl = document.getElementById('tb-disp-title');
-    const subEl = document.getElementById('tb-disp-sub');
-    const rowsEl = document.getElementById('tb-disp-rows');
-    if(!board || !rowsEl) return;
-
-    if(d.action === 'hide'){
+    if(board){
         board.classList.remove('active');
-        return;
+        board.style.opacity = '0';
+        board.style.pointerEvents = 'none';
     }
-
-    rowsEl.innerHTML = '';
-    if(d.mode === 'matches'){
-        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
-        subEl.innerText = d.sub || '';
-        subEl.style.display = d.sub ? 'block' : 'none';
-        const baseColor = d.color || '#ffe600';
-    if(d.mode === 'teams'){
-        titleEl.innerText = 'DRUŻYNY BIORĄCE UDZIAŁ W ZAWODACH:';
-        subEl.innerText = d.sub || '';
-        subEl.style.display = d.sub ? 'block' : 'none';
-        const lines = (d.lines || d.text || '').split('\n').map(l => l.trim()).filter(Boolean);
-        listEl.innerHTML = lines.map((line, idx) => {
-            const cleanName = line.replace(/^\d+[\.\)\-]\s*/, '');
-            return `<div class="tb-rank-row tb-rank-1" style="font-size:58px;"><span style="color:#ffffff;margin-right:16px;">${idx + 1}.</span>${cleanName}</div>`;
-        }).join('');
-    }
-
-        const colorMap = {
-            'bialy': '#ffffff', 'biały': '#ffffff',
-            'zolty': '#ffe600', 'żółty': '#ffe600', 'zloty': '#ffd700', 'złoty': '#ffd700',
-            'czerwony': '#ff4d6d',
-            'zielony': '#00e676',
-            'niebieski': '#5bc0eb',
-            'rozowy': '#ff66c4', 'różowy': '#ff66c4',
-            'pomaranczowy': '#ff9f1c', 'pomarańczowy': '#ff9f1c',
-            'fioletowy': '#b5179e',
-            'szary': '#adb5bd'
-        };
-
-        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
-        lines.forEach((line, idx) => {
-            let cleanLine = line;
-            let rowColor = baseColor;
-            const tagMatch = cleanLine.match(/\[([^\]]+)\]/);
-            if(tagMatch){
-                const key = tagMatch.at(1).trim().toLowerCase();
-                if(colorMap[key]) rowColor = colorMap[key];
-                else if(key.startsWith('#')) rowColor = key;
-                cleanLine = cleanLine.replace(/\[[^\]]+\]/, '');
-            }
-
-            const parts = cleanLine.split('|');
-            const teams = (parts.at(0) || '').trim();
-            const score = (parts.at(1) || '').trim();
-            const div = document.createElement('div');
-            div.className = 'tb-match-row';
-            div.style.color = rowColor;
-            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
-            rowsEl.appendChild(div);
-        });
-    } else if(d.mode === 'standings'){
-        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
-        subEl.style.display = 'none';
-        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
-        (d.ranks || Array.of()).forEach((team, idx) => {
-            if(!team) return;
-            const div = document.createElement('div');
-            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
-            div.className = `tb-rank-row ${cls}`;
-            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
-            rowsEl.appendChild(div);
-        });
-    }
-    board.classList.add('active');
-
-
-    rowsEl.innerHTML = '';
-    if(d.mode === 'matches'){
-        titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
-        subEl.innerText = d.sub || '';
-        subEl.style.display = d.sub ? 'block' : 'none';
-
-        const lines = (d.raw || '').split('\n').filter(l => l.trim() !== '');
-        lines.forEach((line, idx) => {
-            const parts = line.split('|');
-            const teams = (parts.at(0) || '').trim();
-            const score = (parts.at(1) || '').trim();
-            const div = document.createElement('div');
-            div.className = 'tb-match-row';
-            div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
-            rowsEl.appendChild(div);
-        });
-    } else if(d.mode === 'standings'){
-        titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
-        subEl.style.display = 'none';
-        const roman = Array.of('I', 'II', 'III', 'IV', 'V', 'VI');
-        (d.ranks || Array.of()).forEach((team, idx) => {
-            if(!team) return;
-            const div = document.createElement('div');
-            const cls = idx === 0 ? 'tb-rank-1' : idx === 1 ? 'tb-rank-2' : idx === 2 ? 'tb-rank-3' : 'tb-rank-other';
-            div.className = `tb-rank-row ${cls}`;
-            div.innerText = `${roman.at(idx)} MIEJSCE – ${team}`;
-            rowsEl.appendChild(div);
-        });
-    }
-    board.classList.add('active');
 }
-
-if(isPilotMode) renderSbPilotUI();
-selectedTbColor = '#ffe600';
 
 function setTbTextColor(hex){
     selectedTbColor = hex;
@@ -1903,28 +1905,23 @@ function fillTbPilotInputs(d){
     }
 }
 
-function publishTournamentBoard(mode){
-    hideSlidesOnScreen();
-    syncTbInputs();
-    if(mode === 'matches'){
-        const sub = document.getElementById('tb-group-name').value.trim();
-        const raw = document.getElementById('tb-matches-raw').value.trim();
-        pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
-    } else {
-        const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
-        pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
-    }
-}
 
 function applyTournamentBoard(d){
     const board = document.getElementById('tournament-board');
     const titleEl = document.getElementById('tb-disp-title');
     const subEl = document.getElementById('tb-disp-sub');
     const rowsEl = document.getElementById('tb-disp-rows');
+    if(d && d.action === 'stinger'){
+        const stVid = document.getElementById('stinger-vid');
+        if(stVid){ stVid.style.display = 'block'; stVid.style.zIndex = '9999'; stVid.currentTime = 0; stVid.play(); }
+        return;
+    }
     if(!board || !rowsEl) return;
 
-    if(d.action === 'hide'){
+    if(!d || d.action === 'hide'){
         board.classList.remove('active');
+        board.style.opacity = '0';
+        board.style.pointerEvents = 'none';
         return;
     }
 
@@ -1968,6 +1965,75 @@ function applyTournamentBoard(d){
             div.innerHTML = `<span class="tb-match-num">${idx + 1}.</span>${teams}${score ? `<span class="tb-match-score">${score}</span>` : ''}`;
             rowsEl.appendChild(div);
         });
+            } else if(d.mode === 'teams'){
+        titleEl.innerText = 'DRUŻYNY BIORĄCE UDZIAŁ W ZAWODACH:';
+        subEl.innerText = d.sub || '';
+        subEl.style.display = d.sub ? 'block' : 'none';
+        const lines = (d.raw || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+        // Wyśrodkowany kontener, ale wiersze wyrównane idealnie w jednej pionowej linii (1., 2., 3. pod sobą):
+        const itemsHtml = lines.map((line, idx) => {
+            const cleanName = line.replace(/^\d+[\.\)\-]\s*/, '');
+            return `<div style="display:flex;align-items:baseline;justify-content:flex-start;width:100%;font-family:'Roboto Slab',serif;font-size:58px;font-weight:900;color:#ffe600;text-shadow:0 4px 10px rgba(0,0,0,0.95);letter-spacing:1px;line-height:1.3;">
+                <span style="color:#ffffff;display:inline-block;width:95px;text-align:right;margin-right:22px;flex-shrink:0;">${idx + 1}.</span>
+                <span style="text-align:left;">${cleanName}</span>
+            </div>`;
+        }).join('');
+
+        rowsEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:flex-start;margin:0 auto;width:fit-content;max-width:1500px;gap:14px;">${itemsHtml}</div>`;
+        
+            } else if(d.mode === 'bracket'){
+        titleEl.innerText = 'DRABINKA TURNIEJOWA';
+        subEl.style.display = 'none';
+        const b = d.bracket || {};
+        const r1Box = (txt) => `<div style="background:#0f294a;border:2px solid #38bdf8;color:#ffffff;border-radius:8px;padding:7px 12px;font-family:'Roboto Slab',serif;font-size:18px;font-weight:900;text-align:center;min-width:190px;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 12px rgba(0,0,0,0.65);text-transform:uppercase;">${txt || '—'}</div>`;
+        const qfBox = (txt) => `<div style="background:#eab308;border:2px solid #fef08a;color:#090d16;border-radius:8px;padding:9px 12px;font-family:'Roboto Slab',serif;font-size:19px;font-weight:900;text-align:center;min-width:190px;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 12px rgba(0,0,0,0.65);text-transform:uppercase;">${txt || '—'}</div>`;
+        const sfBox = (txt) => `<div style="background:#fef08a;border:3px solid #facc15;color:#090d16;border-radius:10px;padding:11px 14px;font-family:'Roboto Slab',serif;font-size:20px;font-weight:900;text-align:center;min-width:190px;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 14px rgba(0,0,0,0.7);text-transform:uppercase;">${txt || '—'}</div>`;
+
+        rowsEl.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;gap:14px;width:100%;max-width:1860px;height:750px;margin:0 auto;">
+                <!-- LEWA: 1/8 FINAŁU (8) -->
+                <div style="display:flex;flex-direction:column;justify-content:space-between;height:710px;">
+                    ${r1Box(b.l1)}${r1Box(b.l2)}${r1Box(b.l3)}${r1Box(b.l4)}${r1Box(b.l5)}${r1Box(b.l6)}${r1Box(b.l7)}${r1Box(b.l8)}
+                </div>
+                <!-- LEWA: ĆWIERĆFINAŁY (4) -->
+                <div style="display:flex;flex-direction:column;justify-content:space-around;height:710px;">
+                    ${qfBox(b.lq1)}${qfBox(b.lq2)}${qfBox(b.lq3)}${qfBox(b.lq4)}
+                </div>
+                <!-- LEWA: PÓŁFINAŁY (2) -->
+                <div style="display:flex;flex-direction:column;justify-content:space-around;height:710px;">
+                    ${sfBox(b.ls1)}${sfBox(b.ls2)}
+                </div>
+
+                <!-- ŚRODEK: PUCHAR ZWYCIĘZCY + FINAŁ + BIAŁE LOGO SAMOCHODÓWKI -->
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-width:420px;">
+                    <div style="font-size:26px;font-weight:900;color:#ffe600;letter-spacing:3px;text-shadow:0 4px 10px #000;">🏆 ZWYCIĘZCA</div>
+                    <div style="font-size:82px;line-height:1;filter:drop-shadow(0 8px 20px rgba(250,204,21,0.65));">🏆</div>
+                    <div style="background:#facc15;border:4px solid #ffffff;color:#090d16;border-radius:14px;padding:15px 24px;font-family:'Roboto Slab',serif;font-size:28px;font-weight:900;text-align:center;min-width:300px;box-shadow:0 8px 24px rgba(0,0,0,0.8);text-transform:uppercase;">${b.winner || '???'}</div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;">
+                        <div style="background:#ffffff;border:3px solid #eab308;color:#090d16;border-radius:10px;padding:11px 12px;font-family:'Roboto Slab',serif;font-size:19px;font-weight:900;min-width:175px;text-align:center;text-transform:uppercase;">${b.fl || 'FINALISTA 1'}</div>
+                        <span style="font-size:24px;font-weight:900;color:#ffe600;">VS</span>
+                        <div style="background:#ffffff;border:3px solid #eab308;color:#090d16;border-radius:10px;padding:11px 12px;font-family:'Roboto Slab',serif;font-size:19px;font-weight:900;min-width:175px;text-align:center;text-transform:uppercase;">${b.fr || 'FINALISTA 2'}</div>
+                    </div>
+                    <div style="margin-top:42px;display:flex;align-items:center;justify-content:center;">
+                        <img src="logo.png" onerror="if(this.src.indexOf('logo_pzs4.png')===-1){this.src='logo_pzs4.png';}else{this.style.display='none';}" style="height:145px;width:auto;object-fit:contain;filter:brightness(0) invert(1) drop-shadow(0 6px 16px rgba(0,0,0,0.95));">
+                    </div>
+                </div>
+
+                <!-- PRAWA: PÓŁFINAŁY (2) -->
+                <div style="display:flex;flex-direction:column;justify-content:space-around;height:710px;">
+                    ${sfBox(b.rs1)}${sfBox(b.rs2)}
+                </div>
+                <!-- PRAWA: ĆWIERĆFINAŁY (4) -->
+                <div style="display:flex;flex-direction:column;justify-content:space-around;height:710px;">
+                    ${qfBox(b.rq1)}${qfBox(b.rq2)}${qfBox(b.rq3)}${qfBox(b.rq4)}
+                </div>
+                <!-- PRAWA: 1/8 FINAŁU (8) -->
+                <div style="display:flex;flex-direction:column;justify-content:space-between;height:710px;">
+                    ${r1Box(b.r1)}${r1Box(b.r2)}${r1Box(b.r3)}${r1Box(b.r4)}${r1Box(b.r5)}${r1Box(b.r6)}${r1Box(b.r7)}${r1Box(b.r8)}
+                </div>
+            </div>
+        `;
     } else if(d.mode === 'standings'){
         titleEl.innerText = 'KLASYFIKACJA KOŃCOWA';
         subEl.style.display = 'none';
@@ -1981,6 +2047,9 @@ function applyTournamentBoard(d){
             rowsEl.appendChild(div);
         });
     }
+    board.classList.add('active');
+    board.style.opacity = '1';
+    board.style.pointerEvents = 'auto';
     board.classList.add('active');
 }
 const savedLineupTxt = localStorage.getItem('pzs4_tytani_lineup');

@@ -570,6 +570,21 @@ mqttLib.onload = () => {
             if (d.action === 'playVideo' || d.action === 'ytPlay') ytControl('playVideo');
             if (d.action === 'pauseVideo' || d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
+                if (d.action === 'playStingerOnly'){
+                const vid = document.getElementById('stinger-vid');
+                const scr = document.getElementById('slide-screen');
+                if(vid){
+                    vid.pause();
+                    vid.currentTime = 0;
+                    vid.style.opacity = 1;
+                    vid.play().then(() => {
+                        setTimeout(() => {
+                            if(scr){ scr.style.transition = 'none'; scr.classList.remove('visible'); }
+                        }, 1350);
+                    }).catch(() => { vid.style.opacity = 0; });
+                    vid.onended = () => { vid.style.opacity = 0; };
+                }
+            }
             if (d.action === 'showAdVideo') showAdVideo(d.url, d.loop, d.muted);
             if (d.action === 'adPlay') controlAdVideo('play');
             if (d.action === 'adPause') controlAdVideo('pause');
