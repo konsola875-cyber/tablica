@@ -300,11 +300,11 @@ function hideSlideWithStinger(){
     }
     vid.pause();
     vid.currentTime = 0;
-    vid.style.opacity = 1;
 
     const playPromise = vid.play();
     if (playPromise !== undefined) {
         playPromise.then(() => {
+            vid.style.opacity = 1;
             setTimeout(cleanup, 1350);
         }).catch(() => {
             scr.style.transition = 'opacity 0.45s ease';
@@ -570,18 +570,13 @@ mqttLib.onload = () => {
             if (d.action === 'playVideo' || d.action === 'ytPlay') ytControl('playVideo');
             if (d.action === 'pauseVideo' || d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
-                if (d.action === 'playStingerOnly'){
+            if (d.action === 'playStingerOnly'){
                 const vid = document.getElementById('stinger-vid');
-                const scr = document.getElementById('slide-screen');
                 if(vid){
                     vid.pause();
                     vid.currentTime = 0;
                     vid.style.opacity = 1;
-                    vid.play().then(() => {
-                        setTimeout(() => {
-                            if(scr){ scr.style.transition = 'none'; scr.classList.remove('visible'); }
-                        }, 1350);
-                    }).catch(() => { vid.style.opacity = 0; });
+                    vid.play().catch(() => { vid.style.opacity = 0; });
                     vid.onended = () => { vid.style.opacity = 0; };
                 }
             }
