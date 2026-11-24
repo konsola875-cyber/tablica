@@ -158,14 +158,38 @@ function initMqtt(){
     mqttClient = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
     const badge = document.getElementById('mqtt-badge');
 
-    mqttClient.on("connect", () => {
-        badge.innerText = "MQTT: POŁĄCZONO";
-        badge.classList.add('ok');
-    });
-    mqttClient.on("offline", () => {
-        badge.innerText = "MQTT: ROZŁĄCZONO";
-        badge.classList.remove('ok');
-    });
+    const BRIDGE_SENDER_ID = "3d-sport-bridge-" + Math.random().toString(36).slice(2, 7);
+let cachedSbMeta = {
+    homeName: "GOSPODARZE",
+    awayName: "GOŚCIE",
+    homeLogo: "",
+    awayLogo: ""
+};
+
+mqttClient.on("connect", () => {
+    mqttClient.subscribe(TOPIC_PREFIX + "scoreboard");
+    badge.innerText = "MQTT: POŁĄCZONO";
+    badge.classList.add('ok');
+});
+
+mqttClient.on("message", (topic, message) => {
+    if (topic === TOPIC_PREFIX + "scoreboard") {
+        try {
+            const d = JSON.parse(message.toString());
+            if (d.sender !== BRIDGE_SENDER_ID && d.state) {
+                if (d.state.homeName !== undefined) cachedSbMeta.homeName = d.state.homeName;
+                if (d.state.awayName !== undefined) cachedSbMeta.awayName = d.state.awayName;
+                if (d.state.homeLogo !== undefined) cachedSbMeta.homeLogo = d.state.homeLogo;
+                if (d.state.awayLogo !== undefined) cachedSbMeta.awayLogo = d.state.awayLogo;
+            }
+        } catch (e) {}
+    }
+});
+
+mqttClient.on("offline", () => {
+    badge.innerText = "MQTT: ROZŁĄCZONO";
+    badge.classList.remove('ok');
+});
 }
 
 function toggleBroadcastBox(){
@@ -528,6 +552,75 @@ mqttScript.onerror = () => {
 };
 mqttScript.onload = initMqtt;
 document.head.appendChild(mqttScript);
+// === AUTOMATYCZNY MOSTEK 3D-SPORT -> BELKA OBS (WYNIK + CZAS + POŁOWA + KARY) ===
+const BRIDGE_SENDER_ID = "3d-sport-bridge-" + Math.random().toString(36).slice(2, 7);
+let cachedSbMeta = {
+    homeName: "GOSPODARZE",
+    awayName: "GOŚCIE",
+    homeLogo: "",
+    awayLogo: ""
+};
+let lastSentBelkiSnapshot = "";
+let penHomeId = Date.now();
+let penAwayId = Date.now() + 1;
+
+function parsePenaltySecondsFromBox(elId){
+    const txt = (document.getElementById(elId)?.innerText || '').trim();
+    const match = txt.match(/(\d+):(\d{2})/);
+    if(!match) return 0;
+    return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
+}
+
+setInterval(() => {
+    const chk = document.getElementById('chk-live-broadcast');
+    if (!chk || !chk.checked || typeof mqttClient === 'undefined' || !mqttClient || !mqttClient.connected) return;
+
+    const homeScore = parseInt(document.getElementById('val-home')?.innerText || '0', 10) || 0;
+    const awayScore = parseInt(document.getElementById('val-away')?.innerText || '0', 10) || 0;
+    const period = parseInt(document.getElementById('val-period')?.innerText || '1', 10) || 1;
+
+    const clockText = (document.getElementById('val-clock')?.innerText || '00:00').trim();
+    const parts = clockText.split(':');
+    const mins = parseInt(parts[0] || '0', 10) || 0;
+    const secs = parseInt(parts[1] || '0', 10) || 0;
+    const totalSeconds = (mins * 60) + secs;
+
+    // Odczyt aktualnych kar z kafelków 3D-Sport:
+    const penHomeSec = parsePenaltySecondsFromBox('val-pen-home');
+    const penAwaySec = parsePenaltySecondsFromBox('val-pen-away');
+
+    if(penHomeSec === 120) penHomeId = Date.now();
+    if(penAwaySec === 120) penAwayId = Date.now() + 1;
+
+    const penalties = [];
+    if(penHomeSec > 0){
+        penalties.push({ id: penHomeId, side: 'home', team: cachedSbMeta.homeName, num: '2 MIN', timeLeft: penHomeSec });
+    }
+    if(penAwaySec > 0){
+        penalties.push({ id: penAwayId, side: 'away', team: cachedSbMeta.awayName, num: '2 MIN', timeLeft: penAwaySec });
+    }
+
+    const snapshot = `${homeScore}|${awayScore}|${period}|${totalSeconds}|${penHomeSec}|${penAwaySec}|${cachedSbMeta.homeName}|${cachedSbMeta.awayName}`;
+    if (snapshot === lastSentBelkiSnapshot) return;
+    lastSentBelkiSnapshot = snapshot;
+
+    const payload = {
+        sender: BRIDGE_SENDER_ID,
+        state: {
+            homeName: cachedSbMeta.homeName,
+            awayName: cachedSbMeta.awayName,
+            homeLogo: cachedSbMeta.homeLogo,
+            awayLogo: cachedSbMeta.awayLogo,
+            homeScore: homeScore,
+            awayScore: awayScore,
+            period: period,
+            time: totalSeconds,
+            penalties: penalties
+        }
+    };
+
+    mqttClient.publish(TOPIC_PREFIX + "scoreboard", JSON.stringify(payload), { retain: true });
+}, 200);
 </script>
 </body>
 </html>
