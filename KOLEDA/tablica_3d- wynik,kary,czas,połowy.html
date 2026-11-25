@@ -289,22 +289,85 @@ function decodeClockDigit(bMain, bNext){
     return MAP_3D_BASE[bMain] !== undefined ? MAP_3D_BASE[bMain] : null;
 }
 
-function updateClockDisplay(mins, secs){
-    const isNewSecond = (mins !== trackedClockMins || secs !== trackedClockSecs);
+// Tablice do 3 jednoczesnych kar 2-minutowych dla każdej drużyny:
+let homePenaltiesList = []; // np. [{ id: 1, sec: 120 }, { id: 2, sec: 95 }]
+let awayPenaltiesList = [];
+
+function formatPenaltySeconds(totalSec){
+    if(totalSec <= 0) return null;
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function renderPenaltyBoxes(){
+    const hStr = homePenaltiesList.length > 0
+        ? homePenaltiesList.map(p => formatPenaltySeconds(p.sec)).join(' | ')
+        : null;
+    const aStr = awayPenaltiesList.length > 0
+        ? awayPenaltiesList.map(p => formatPenaltySeconds(p.sec)).join(' | ')
+        : null;
+    updatePenaltyBox('home', hStr);
+    updatePenaltyBox('away', aStr);
+}
+
+function updatePenaltyBox(team, timeStr){
+    const el = document.getElementById(team === 'home' ? 'val-pen-home' : 'val-pen-away');
+    if(!el) return;
+    if(timeStr){
+        el.innerText = team === 'home' ? `KARY GOSP: ${timeStr}` : `KARY GOŚCIE: ${timeStr}`;
+        el.style.display = 'inline-block';
+    } else {
+        el.innerText = team === 'home' ? 'KARY GOSP: BRAK' : 'KARY GOŚCIE: BRAK';
+    }
+}
+
+function processIncomingFrame(rawBytes){
+    if(!rawBytes || rawBytes.length === 0) return;
+    let start = 0;
+    for(let i = 1; i < rawBytes.length - 2; i++){
+        const isHeader = (rawBytes.at(i) === 0x66) && (
+            (rawBytes.at(i + 1) === 0x18 && rawBytes.at(i + 2) === 0x80) ||
+            (rawBytes.at(i + 1) === 0xF8 && rawBytes.at(i + 2) === 0x1E) ||
+            (rawBytes.at(i + 1) === 0x18 && rawBytes.at(i + 2) === 0x7E) ||
+            (rawBytes.at(i + 1) === 0xF8 && rawBytes.at(i + 2) === 0xF8) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0x18) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0x60) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0xE6 && rawBytes.at(i + 3) === 0xE6) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) !== 0x78 && rawBytes.at(i + 2) !== 0xE6 && i - start >= 7)
+        );
+        if(isHeader){
+            const chunk = rawBytes.slice(start, i);
+            appendLog(chunk);
+            parse3DSportFrame(chunk);
+            start = i;
+        }
+    }
+    const lastChunk = rawBytes.slice(start);
+    if(lastChunk.length > 0){
+        appendLog(lastChunk);
+        parse3DSportFrame(lastChunk);
+    }
+}
+function updateClockDisplay(mins, secs, isExplicitReset = false){
+    const isNewSecond = (!isExplicitReset) && (mins !== trackedClockMins || secs !== trackedClockSecs);
     trackedClockMins = mins;
     trackedClockSecs = secs;
-    const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    const formatted = `${String(trackedClockMins).padStart(2, '0')}:${String(trackedClockSecs).padStart(2, '0')}`;
     document.getElementById('val-clock').innerText = formatted;
 
-    // Odliczanie aktywnych kar 2-minutowych równo z zegarem meczu (1 sekunda meczu = -1 sekunda kary):
-    if(isNewSecond && !(mins === 0 && secs === 0)){
-        if(homePenaltySecondsLeft > 0){
-            homePenaltySecondsLeft--;
-            updatePenaltyBox('home', formatPenaltySeconds(homePenaltySecondsLeft));
+    // Odliczanie wszystkich aktywnych kar (maks. 3 na drużynę) równo co 1 sekundę meczu:
+    if(isNewSecond){
+        if(homePenaltiesList.length > 0){
+            homePenaltiesList.forEach(p => p.sec--);
+            homePenaltiesList = homePenaltiesList.filter(p => p.sec > 0);
+            renderPenaltyBoxes();
         }
-        if(awayPenaltySecondsLeft > 0){
-            awayPenaltySecondsLeft--;
-            updatePenaltyBox('away', formatPenaltySeconds(awayPenaltySecondsLeft));
+        if(awayPenaltiesList.length > 0){
+            awayPenaltiesList.forEach(p => p.sec--);
+            awayPenaltiesList = awayPenaltiesList.filter(p => p.sec > 0);
+            renderPenaltyBoxes();
         }
     }
 
@@ -316,97 +379,16 @@ function updateClockDisplay(mins, secs){
     }
 }
 
-function processIncomingFrame(bytes){
-    const hexStr = bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
-    const asciiStr = bytes.map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
-
-    const logBox = document.getElementById('serial-log');
-    const entry = document.createElement('div');
-    entry.innerHTML = `<div class="hex-line">HEX [${bytes.length}B]: ${hexStr}</div><div class="ascii-line">TXT: ${asciiStr}</div>`;
-    logBox.appendChild(entry);
-
-    while(logBox.children.length > 40){
-        logBox.removeChild(logBox.firstChild);
-    }
-    logBox.scrollTop = logBox.scrollHeight;
-    lastCapturedLog = `HEX: ${hexStr}\nTXT: ${asciiStr}`;
-
-        // ROZCINANIE ZLEPIONYCH PAKIETÓW NA POJEDYNCZE RAMKI:
-    let start = 0;
-    for(let i = 1; i < bytes.length; i++){
-                    const isHeader = (bytes.at(i) === 0x66) && (
-            (bytes.at(i + 1) === 0x18 && bytes.at(i + 2) === 0x80) ||
-            (bytes.at(i + 1) === 0xF8 && bytes.at(i + 2) === 0x1E) ||
-            (bytes.at(i + 1) === 0x18 && bytes.at(i + 2) === 0x7E) ||
-            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) === 0x18) ||
-            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) === 0x60) ||
-            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) === 0xE6 && bytes.at(i + 3) === 0xE6) ||
-            (bytes.at(i + 1) === 0x98 && bytes.at(i + 2) !== 0x78 && bytes.at(i + 2) !== 0xE6 && i - start >= 7)
-        );
-        if(isHeader){
-            parse3DSportFrame(bytes.slice(start, i));
-            start = i;
-        }
-    }
-    parse3DSportFrame(bytes.slice(start));
-}
-
-let currentPenHome = null;
-let trackedHomePenMins = 1;
-let trackedHomePenSecs = 59;
-let currentPenAway = null;
-let homePenPlayer = '';
-let awayPenPlayer = '';
-
-function decodePlayerNumber(b1, b2, b3){
-    const d1 = decodeClockDigit(b1, b2);
-    const d2Idx = (b2 === 0xF8 || b2 === 0xFE) ? 2 : 1;
-    const d2 = (d2Idx === 2) ? decodeClockDigit(b3, 0x00) : decodeClockDigit(b2, b3);
-    if(d1 === 0 && d2 !== null) return `${d2}`;
-    if(d1 !== null && d2 !== null) return `${d1}${d2}`;
-    if(d1 !== null) return `${d1}`;
-    return '';
-}
-
-function updatePenaltyBox(team, timeStr, playerStr){
-    if(team === 'home'){
-        if(playerStr !== undefined) homePenPlayer = playerStr;
-        currentPenHome = timeStr ? (homePenPlayer ? `${homePenPlayer} (${timeStr})` : timeStr) : null;
-        const el = document.getElementById('val-pen-home');
-        if(el) el.innerText = currentPenHome ? `KARY GOSP: ${currentPenHome}` : 'KARY GOSP: BRAK';
-    } else {
-        if(playerStr !== undefined) awayPenPlayer = playerStr;
-        currentPenAway = timeStr ? (awayPenPlayer ? `${awayPenPlayer} (${timeStr})` : timeStr) : null;
-        const el = document.getElementById('val-pen-away');
-        if(el) el.innerText = currentPenAway ? `KARY GOŚCIE: ${currentPenAway}` : 'KARY GOŚCIE: BRAK';
-    }
-
-    if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
-        mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
-            source: '3d-sport',
-            homePenalty: currentPenHome,
-            awayPenalty: currentPenAway
-        }));
-    }
-}
-let homePenaltySecondsLeft = 0;
-let awayPenaltySecondsLeft = 0;
-
-function formatPenaltySeconds(totalSec){
-    if(totalSec <= 0) return null;
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return `${m}:${String(s).padStart(2, '0')}`;
-}
 function parse3DSportFrame(bytes){
-    // 0A. Wyłącznie reset zegara na 00:00 (nie dotyka biegnącego zegara poniżej)
+    // 0A. Wyłącznie prawdziwy RESET zegara na 00:00 (gdy sekundy i dziesiątki sekund są zerami przy zatrzymanym czasie!)
     if(bytes.length >= 11 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x7E &&
-       bytes.at(3) === 0x86 && bytes.at(8) === 0xFE && bytes.at(9) === 0x7E){
-        updateClockDisplay(0, 0);
+       bytes.at(3) === 0x86 && bytes.at(8) === 0xFE && bytes.at(9) === 0x7E &&
+       trackedClockMins === 0 && trackedClockSecs === 0){
+        updateClockDisplay(0, 0, true);
         return;
     }
 
-        // 0B. Wyłącznie zmiana połowy / okresu gry (6B..7B: 66 F8 F8 [CYFRA] ...)
+    // 0B. Wyłącznie zmiana połowy / okresu gry (6B..7B: 66 F8 F8 [CYFRA] ...)
     if(bytes.length >= 6 && bytes.at(0) === 0x66 && bytes.at(1) === 0xF8 && bytes.at(2) === 0xF8){
         let periodVal = null;
         if(bytes.at(3) === 0xFE) periodVal = (bytes.at(5) === 0xFE) ? 8 : 0;
@@ -426,27 +408,36 @@ function parse3DSportFrame(bytes){
         }
         return;
     }
-    
-        // 0C. KARY 2-MINUTOWE (Gospodarze & Goście - zsynchronizowane 1:1 z zegarem głównym meczu!)
-    // 1) Skasowanie kary Gospodarzy (66 98 18 66...)
+
+    // 0C. KARY 2-MINUTOWE (Gospodarze & Goście - kolejka do 3 aktywnych kar jednocześnie!)
+    // 1) Skasowanie najstarszej kary Gospodarzy (66 98 18 66...)
     if(bytes.length >= 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x18 && bytes.at(3) === 0x66){
-        homePenaltySecondsLeft = 0;
-        updatePenaltyBox('home', null);
+        if(homePenaltiesList.length > 0) homePenaltiesList.shift();
+        renderPenaltyBoxes();
         return;
     }
-    // 2) Nabijanie nowej kary 2:00 Gospodarzy (66 98 18...)
+    // 2) Nabijanie nowej kary 2:00 Gospodarzy (maks. 3 jednocześnie)
     if(bytes.length >= 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x18){
-        homePenaltySecondsLeft = 120;
-        updatePenaltyBox('home', '2:00');
+        const lastPen = homePenaltiesList.at(-1);
+        if(!lastPen || lastPen.sec < 118){
+            if(homePenaltiesList.length >= 3) homePenaltiesList.shift();
+            homePenaltiesList.push({ id: Date.now() + Math.random(), sec: 120 });
+            renderPenaltyBoxes();
+        }
         return;
     }
-    // 3) Nabijanie nowej kary 2:00 Gości (66 98 60...)
+    // 3) Nabijanie nowej kary 2:00 Gości (maks. 3 jednocześnie)
     if(bytes.length >= 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x60){
-        awayPenaltySecondsLeft = 120;
-        updatePenaltyBox('away', '2:00');
+        const lastPen = awayPenaltiesList.at(-1);
+        if(!lastPen || lastPen.sec < 118){
+            if(awayPenaltiesList.length >= 3) awayPenaltiesList.shift();
+            awayPenaltiesList.push({ id: Date.now() + Math.random(), sec: 120 });
+            renderPenaltyBoxes();
+        }
         return;
     }
-    // 1. Zegar główny 1 Hz (ramka 12B..19B: 66 18 7E ...)
+
+    // 1. Zegar główny 1 Hz (ramka 12B..19B: 66 18 7E ...) - przechodzi gładko przez 00:59 -> 01:00 -> ... -> 30:00!
     if(bytes.length >= 11 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x7E){
         const secIdx = (bytes.at(3) === 0x86) ? 8 : 9;
         const secOnes = decodeClockDigit(bytes.at(secIdx), bytes.at(secIdx + 1));
@@ -454,18 +445,19 @@ function parse3DSportFrame(bytes){
         if(secOnes !== null){
             const oldOnes = trackedClockSecs % 10;
             let secTens = Math.floor(trackedClockSecs / 10);
+            let nextMins = trackedClockMins;
 
             if(oldOnes === 9 && secOnes === 0){
                 secTens++;
                 if(secTens >= 6){
                     secTens = 0;
-                    trackedClockMins++;
+                    nextMins++;
                 }
             } else if(oldOnes === 0 && secOnes === 9){
                 if(secTens > 0) secTens--;
-                else { secTens = 5; if(trackedClockMins > 0) trackedClockMins--; }
+                else { secTens = 5; if(nextMins > 0) nextMins--; }
             }
-            updateClockDisplay(trackedClockMins, (secTens * 10) + secOnes);
+            updateClockDisplay(nextMins, (secTens * 10) + secOnes, false);
         }
         return;
     }
@@ -538,8 +530,9 @@ function clearLogs(){
     document.getElementById('val-clock').innerText = '00:00';
     document.getElementById('val-home').innerText = '0';
     document.getElementById('val-away').innerText = '0';
-    updatePenaltyBox('home', null);
-    updatePenaltyBox('away', null);
+    homePenaltiesList = [];
+    awayPenaltiesList = [];
+    renderPenaltyBoxes();
 }
 }
 const mqttScript = document.createElement('script');
@@ -585,22 +578,21 @@ setInterval(() => {
     const secs = parseInt(parts[1] || '0', 10) || 0;
     const totalSeconds = (mins * 60) + secs;
 
-    // Odczyt aktualnych kar z kafelków 3D-Sport:
-    const penHomeSec = parsePenaltySecondsFromBox('val-pen-home');
-    const penAwaySec = parsePenaltySecondsFromBox('val-pen-away');
-
-    if(penHomeSec === 120) penHomeId = Date.now();
-    if(penAwaySec === 120) penAwayId = Date.now() + 1;
-
+    // Odczyt do 3 aktywnych kar na drużynę bezpośrednio z list homePenaltiesList / awayPenaltiesList:
     const penalties = [];
-    if(penHomeSec > 0){
-        penalties.push({ id: penHomeId, side: 'home', team: cachedSbMeta.homeName, num: '2 MIN', timeLeft: penHomeSec });
-    }
-    if(penAwaySec > 0){
-        penalties.push({ id: penAwayId, side: 'away', team: cachedSbMeta.awayName, num: '2 MIN', timeLeft: penAwaySec });
-    }
+    (homePenaltiesList || []).forEach(p => {
+        if(p.sec > 0){
+            penalties.push({ id: Math.floor(p.id), side: 'home', team: cachedSbMeta.homeName, num: '2 MIN', timeLeft: p.sec });
+        }
+    });
+    (awayPenaltiesList || []).forEach(p => {
+        if(p.sec > 0){
+            penalties.push({ id: Math.floor(p.id), side: 'away', team: cachedSbMeta.awayName, num: '2 MIN', timeLeft: p.sec });
+        }
+    });
 
-    const snapshot = `${homeScore}|${awayScore}|${period}|${totalSeconds}|${penHomeSec}|${penAwaySec}|${cachedSbMeta.homeName}|${cachedSbMeta.awayName}`;
+    const penSig = penalties.map(p => `${p.side}:${p.timeLeft}`).join(',');
+    const snapshot = `${homeScore}|${awayScore}|${period}|${totalSeconds}|${penSig}|${cachedSbMeta.homeName}|${cachedSbMeta.awayName}`;
     if (snapshot === lastSentBelkiSnapshot) return;
     lastSentBelkiSnapshot = snapshot;
 
@@ -621,6 +613,41 @@ setInterval(() => {
 
     mqttClient.publish(TOPIC_PREFIX + "scoreboard", JSON.stringify(payload), { retain: true });
 }, 200);
+function clearLogs(){
+    const logEl = document.getElementById('serial-log');
+    if(logEl) logEl.innerHTML = '';
+    packetCounter = 0;
+    const pktEl = document.getElementById('val-packets');
+    if(pktEl) pktEl.innerText = '0';
+    trackedClockMins = 0;
+    trackedClockSecs = 0;
+    const clkEl = document.getElementById('val-clock');
+    if(clkEl) clkEl.innerText = '00:00';
+    const homeEl = document.getElementById('val-home');
+    if(homeEl) homeEl.innerText = '0';
+    const awayEl = document.getElementById('val-away');
+    if(awayEl) awayEl.innerText = '0';
+    if(typeof homePenaltiesList !== 'undefined') homePenaltiesList = [];
+    if(typeof awayPenaltiesList !== 'undefined') awayPenaltiesList = [];
+    if(typeof renderPenaltyBoxes === 'function') renderPenaltyBoxes();
+}
+
+function copyLogs(){
+    const logEl = document.getElementById('serial-log');
+    if(!logEl) return;
+    const text = logEl.innerText || logEl.textContent || '';
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Skopiowano ramki do schowka!');
+    }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('Skopiowano ramki do schowka!');
+    });
+}
 </script>
 </body>
 </html>
