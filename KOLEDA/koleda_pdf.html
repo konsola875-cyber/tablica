@@ -25,7 +25,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
     <video id="ad-vid" src="" loop playsinline></video>
     <video id="ad-vid-b" src="" playsinline></video>
 </div>
-<video id="stinger-vid" src="stinger_samochodowka_pzs4.webm" preload="auto" muted playsinline></video>
+<video id="stinger-vid" src="stinger_samochodowka_pzs4.webm.webm" preload="auto" muted playsinline></video>
 <canvas id="tytani-stinger-canvas" width="1920" height="1080" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:60;pointer-events:none;display:none"></canvas>
 </div>
 </div>
@@ -278,7 +278,6 @@ function hideSlideWithStinger(){
     const frm=document.getElementById('web-frame');
     const imgA=document.getElementById('slide-img-a');
     const imgB=document.getElementById('slide-img-b');
-    if(!scr.classList.contains('visible')) return;
 
     const cleanup = () => {
         scr.style.transition = 'none';
@@ -298,24 +297,43 @@ function hideSlideWithStinger(){
         playTytaniCanvasStinger(cleanup);
         return;
     }
-    vid.pause();
+        vid.pause();
     vid.currentTime = 0;
+
+    let peakSent = false;
+    const sendPeak = () => {
+        if (peakSent) return;
+        peakSent = true;
+        if (typeof client !== 'undefined' && client.connected) {
+            client.publish(TOPIC_PREFIX + "stingerPeak", JSON.stringify({ ts: Date.now() }));
+        }
+    };
+
+    vid.ontimeupdate = () => {
+        if (vid.currentTime >= 0.85) sendPeak();
+    };
+
+    vid.onended = () => {
+        vid.ontimeupdate = null;
+        vid.style.opacity = 0;
+        cleanup();
+        vid.pause();
+        vid.currentTime = 0;
+    };
 
     const playPromise = vid.play();
     if (playPromise !== undefined) {
         playPromise.then(() => {
-            vid.style.opacity = 1;
-            setTimeout(cleanup, 1350);
+            requestAnimationFrame(() => { vid.style.opacity = 1; });
+            // Zabezpieczenie na wypadek bardzo krótkiego wideo:
+            setTimeout(sendPeak, 900);
         }).catch(() => {
+            vid.ontimeupdate = null;
+            vid.style.opacity = 0;
             scr.style.transition = 'opacity 0.45s ease';
             cleanup();
-            vid.style.opacity = 0;
         });
     }
-
-    vid.onended = () => {
-        vid.style.opacity = 0;
-    };
 }
 
 function showAdVideo(srcUrl, isLoop, isMuted, startTime){
@@ -570,6 +588,13 @@ mqttLib.onload = () => {
             if (d.action === 'playVideo' || d.action === 'ytPlay') ytControl('playVideo');
             if (d.action === 'pauseVideo' || d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
+            if (d.action === 'hideSlideSilent') {
+    const scr = document.getElementById('slide-screen');
+    if (scr) {
+        scr.style.transition = 'opacity 0.2s ease';
+        scr.classList.remove('visible');
+    }
+}
             if (d.action === 'playStingerOnly'){
                 const vid = document.getElementById('stinger-vid');
                 if(vid){

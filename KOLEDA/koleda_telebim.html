@@ -1228,43 +1228,61 @@ function ytCommand(cmd){
     pub("pdf", { action: cmd });
 }
 
-function sendSpeaker(name,role){
+function sendSpeaker(name, role){
+    if(isTournamentBoardOpen) hideTournamentBoard(true);
+    toggleClapScreen(false);
+    hideSlidesOnScreen();
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
     pub("belki", { action: 'showSpeaker', name: name, role: role });
 }
 
 function triggerSpeakerManual(){
-    const n=document.getElementById('in-sp-name').value.trim();
-    const r=document.getElementById('in-sp-role').value.trim()||"PZS nr 4 w Wejherowie";
-    if(!n) return alert("Wpisz imię i nazwisko osoby mówiącej!");
-    sendSpeaker(n,r);
+    const n = document.getElementById('in-sp-name').value.trim();
+    const r = document.getElementById('in-sp-role').value.trim() || "PZS nr 4 w Wejherowie";
+    if(!n) return alert("Wpisz nazwę występu lub osobę mówiącą!");
+    sendSpeaker(n, r);
 }
 
 function hideSpeakerNow(){
     pub("belki", { action: 'hideSpeaker' });
 }
+
 function buildSpeakersList(){
-    const raw=document.getElementById('speakers-raw').value.trim();
+    const raw = document.getElementById('speakers-raw').value.trim();
     renderSpeakersButtons(raw);
     pub("speakers", { raw: raw }, true);
 }
 
 function renderSpeakersButtons(raw){
-    const box=document.getElementById('speakers-buttons');
-    box.innerHTML='';
-    if(!raw)return;
-    raw.split('\n').forEach(line=>{
-        const parts=line.split(/\||-/);
-        const n=(parts.at(0)||'').trim();
-        const r=(parts.at(1)||'PZS nr 4 w Wejherowie').trim();
+    const box = document.getElementById('speakers-buttons');
+    box.innerHTML = '';
+    if(!raw) return;
+    raw.split('\n').forEach(line => {
+        const parts = line.split(/\||-/);
+        const n = (parts.at(0) || '').trim();
+        const r = (parts.at(1) || 'PZS nr 4 w Wejherowie').trim();
         if(n){
-            const row=document.createElement('div');row.className='song-item';
-            row.style.borderLeftColor='#c1121f';
-            row.innerHTML=`<div><strong style="color:#fff">${n}</strong><br><small style="color:#ffcc00">${r}</small></div>
-            <div><button class="btn btn-green" onclick="sendSpeaker('${n.replace(/'/g,"\\'")}','${r.replace(/'/g,"\\'")}')">🎤 POKAŻ</button></div>`;
+            const row = document.createElement('div');
+            row.className = 'song-item';
+            row.style.borderLeftColor = '#c1121f';
+
+            const infoDiv = document.createElement('div');
+            infoDiv.innerHTML = `<strong style="color:#fff">${n}</strong><br><small style="color:#ffcc00">${r}</small>`;
+
+            const btnWrap = document.createElement('div');
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-green';
+            btn.innerText = '🎤 POKAŻ';
+            btn.onclick = () => sendSpeaker(n, r);
+            btnWrap.appendChild(btn);
+
+            row.appendChild(infoDiv);
+            row.appendChild(btnWrap);
             box.appendChild(row);
         }
     });
 }
+
 
 function sendSong(title,artist,cls,pin,badge){
     hideSlidesOnScreen();
@@ -1498,6 +1516,7 @@ function startMqttEngine(){
         client.subscribe(TOPIC_PREFIX + "custombadge");
         client.subscribe(TOPIC_PREFIX + "tournament");
         client.subscribe(TOPIC_PREFIX + "tournament");
+        client.subscribe(TOPIC_PREFIX + "stingerPeak");
         client.subscribe(TOPIC_PREFIX + "clap");
         client.subscribe(TOPIC_PREFIX + "kisscam");
         client.subscribe(TOPIC_PREFIX + "blackout");
@@ -1532,6 +1551,12 @@ function startMqttEngine(){
             if (topic === TOPIC_PREFIX + "theme") applyThemeLocal(d.theme);
             if (topic === TOPIC_PREFIX + "mainslide") { savedMainSlide = d.img || ""; applyMainSlideLocal(savedMainSlide); }
             if (topic === TOPIC_PREFIX + "tournament") applyTournamentBoard(d);
+            if (topic === TOPIC_PREFIX + "stingerPeak" && window._pendingBoardSwap) {
+            clearTimeout(window._pendingBoardFallback);
+            const fn = window._pendingBoardSwap;
+            window._pendingBoardSwap = null;
+            fn();
+          }
             if (topic === TOPIC_PREFIX + "clap" && !isPilotMode) {
                 const cs = document.getElementById('clap-screen');
                 if(cs) cs.classList.toggle('active', !!d.active);
@@ -1907,20 +1932,16 @@ function publishTournamentBoard(mode){
     };
 
         const needHideSlide = firstShow || (currentSlideIdx !== -1);
-        if(needHideSlide){
-        savedSlideIdxBeforeTb = currentSlideIdx;
         toggleClapScreen(false);
-        pub("pdf", { action: 'hideSlide' });
-        if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
-        setTimeout(() => {
-            currentSlideIdx = -1;
-            updateSlideSelectionUI();
-            pub("activeslide", { activeIdx: -1 }, true);
-            sendBoard();
-        }, 900);
-    } else {
+    pub("pdf", { action: 'hideSlide' });
+    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
+
+    setTimeout(() => {
+        currentSlideIdx = -1;
+        updateSlideSelectionUI();
+        pub("activeslide", { activeIdx: -1 }, true);
         sendBoard();
-    }
+    }, 650);
 }
 
 function hideTournamentBoard(skipRestore = false){
