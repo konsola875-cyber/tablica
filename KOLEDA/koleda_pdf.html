@@ -627,5 +627,119 @@ mqttLib.onload = () => {
 };
 document.head.appendChild(mqttLib);
 </script>
+<div id="telebim-lightshow-layer" style="display:none; position:fixed; inset:0; z-index:999999; background:#000; overflow:hidden; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
+    <div id="lightshow-beam" style="display:none; position:absolute; top:-20%; bottom:-20%; width:38%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.95), rgba(0,245,212,0.9), transparent); filter:blur(25px);"></div>
+    <div id="lightshow-text" style="display:none; position:relative; z-index:2; color:#fff; font-family:sans-serif; font-weight:900; text-transform:uppercase; padding:20px;"></div>
+</div>
+
+<style>
+@keyframes lsScannerMove {
+    0%   { left: -40%; transform: skewX(-18deg); }
+    50%  { left: 105%; transform: skewX(18deg); }
+    100% { left: -40%; transform: skewX(-18deg); }
+}
+@keyframes lsFlashlightPulse {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 30px #ffbe0b, 0 0 80px #ffbe0b; }
+    50%      { transform: scale(1.08); text-shadow: 0 0 60px #ffffff, 0 0 140px #ffbe0b; }
+}
+</style>
+
+<script>
+(function(){
+    let lsTimer = null;
+    let lsStep = 0;
+
+    function stopLocalLightShow(){
+        clearInterval(lsTimer);
+        lsTimer = null;
+        const layer = document.getElementById('telebim-lightshow-layer');
+        const beam = document.getElementById('lightshow-beam');
+        const txt = document.getElementById('lightshow-text');
+        if(layer) layer.style.display = 'none';
+        if(beam){ beam.style.display = 'none'; beam.style.animation = 'none'; }
+        if(txt) txt.style.display = 'none';
+    }
+
+    function startLocalLightShow(mode, bpm){
+        stopLocalLightShow();
+        const layer = document.getElementById('telebim-lightshow-layer');
+        const beam = document.getElementById('lightshow-beam');
+        const txt = document.getElementById('lightshow-text');
+        if(!layer) return;
+
+        layer.style.display = 'flex';
+        layer.style.transition = 'background-color 0.08s ease';
+        const beatMs = Math.max(140, Math.round(60000 / (bpm || 128)));
+
+        if(mode === 'strobe'){
+            const palette = ['#ffffff', '#000000', '#ff002b', '#000000'];
+            lsTimer = setInterval(() => {
+                layer.style.backgroundColor = palette[lsStep % palette.length];
+                lsStep++;
+            }, Math.max(130, Math.round(beatMs / 2)));
+        }
+        else if(mode === 'colors'){
+            layer.style.transition = 'background-color 0.25s ease';
+            const palette = ['#d90429', '#ffb703', '#ffffff', '#111111'];
+            lsTimer = setInterval(() => {
+                layer.style.backgroundColor = palette[lsStep % palette.length];
+                lsStep++;
+            }, beatMs);
+        }
+        else if(mode === 'scanner'){
+            layer.style.backgroundColor = '#03071e';
+            beam.style.display = 'block';
+            const durSec = Math.max(1.2, (beatMs * 4) / 1000);
+            beam.style.animation = `lsScannerMove ${durSec}s ease-in-out infinite`;
+        }
+        else if(mode === 'pulse'){
+            const colors = ['#ff0054', '#00f5d4', '#ffbe0b', '#3a86ff'];
+            lsTimer = setInterval(() => {
+                const c = colors[lsStep % colors.length];
+                layer.style.transition = 'none';
+                layer.style.backgroundColor = c;
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        layer.style.transition = `background-color ${beatMs * 0.85}ms ease-out`;
+                        layer.style.backgroundColor = '#050505';
+                    });
+                });
+                lsStep++;
+            }, beatMs);
+        }
+        else if(mode === 'flashlights'){
+            layer.style.backgroundColor = '#000000';
+            txt.style.display = 'block';
+            txt.innerHTML = `
+                <div style="font-size:150px; line-height:1; animation: lsFlashlightPulse 1.2s infinite;">🔦📱</div>
+                <div style="font-size:82px; margin-top:20px; color:#ffbe0b; letter-spacing:3px; animation: lsFlashlightPulse 1.2s infinite;">WSZYSCY LATARKI W GÓRĘ!</div>
+            `;
+        }
+    }
+
+    function connectLightShowMqtt(){
+        if(typeof mqtt === 'undefined') return setTimeout(connectLightShowMqtt, 300);
+        const prefix = (typeof TOPIC_PREFIX !== 'undefined') ? TOPIC_PREFIX : "pzs4-wejherowo-av-2026/";
+        const lsClient = mqtt.connect({
+    host: "://hivemq.com",
+    port: 8884,
+    protocol: "wss",
+    path: "/mqtt",
+    reconnectPeriod: 2000
+});
+        lsClient.on("connect", () => lsClient.subscribe(prefix + "lightshow"));
+        lsClient.on("message", (topic, message) => {
+            if(topic === prefix + "lightshow"){
+                try {
+                    const d = JSON.parse(message.toString());
+                    if(d.action === 'start') startLocalLightShow(d.mode, d.bpm);
+                    else stopLocalLightShow();
+                } catch(e){}
+            }
+        });
+    }
+    connectLightShowMqtt();
+})();
+</script>
 </body>
 </html>
