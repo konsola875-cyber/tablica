@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Czytnik Tablicy 3D-Sport -> System AV (Web Serial + MQTT)</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;background:#0b1320;color:#fff;padding:24px;line-height:1.5}
+.container{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.header{background:linear-gradient(90deg,#112240,#1d3557);border:2px solid #ffcc00;border-radius:14px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:900;color:#ffcc00;text-transform:uppercase}
+.status-pill{padding:6px 14px;border-radius:50px;font-size:13px;font-weight:800;background:#2b090c;border:1px solid #ff4d6d;color:#ff4d6d}
+.status-pill.ok{background:#072b18;border-color:#00e676;color:#00e676}
+
+.card{background:#111c30;border:1px solid #233554;border-radius:12px;padding:18px}
+.card h2{font-size:16px;font-weight:800;color:#5bc0eb;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+select,button{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;padding:11px 18px;border-radius:8px;border:none;cursor:pointer}
+select{background:#0b1320;color:#fff;border:2px solid #3a506b}
+.btn-connect{background:#00e676;color:#051b0e}
+.btn-connect:hover{background:#00c865}
+.btn-disconnect{background:#ff4d6d;color:#fff;display:none}
+.btn-copy{background:#ffcc00;color:#111}
+.btn-clear{background:#233554;color:#ccc}
+
+.live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px}
+.metric{background:#0b1320;border:1px solid #233554;border-radius:10px;padding:14px;text-align:center}
+.metric-label{font-size:12px;color:#8d99ae;font-weight:700;text-transform:uppercase}
+.metric-val{font-size:32px;font-weight:900;color:#ffcc00;margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+.log-box{background:#060b14;border:1px solid #1d3557;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;height:260px;overflow-y:auto;color:#a8dadc;white-space:pre-wrap;word-break:break-all}
+.hex-line{color:#ffd166;margin-bottom:4px}
+.ascii-line{color:#06d6a0;margin-bottom:10px;border-bottom:1px dashed #1d3557;padding-bottom:6px}
+
+.switch-row{display:flex;align-items:center;gap:12px;background:#1a0b12;border:2px solid #ff4d6d;padding:12px 16px;border-radius:10px}
+.switch-row.active{background:#082617;border-color:#00e676}
+input[type="checkbox"]{width:22px;height:22px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>🔌 Czytnik Tablicy 3D-Sport -> System Live</h1>
+            <div style="font-size:13px;color:#a8dadc;margin-top:2px">Odczyt z konwertera USB–RS485 (Web Serial API) i wysyłka na HiveMQ</div>
+        </div>
+        <div style="display:flex;gap:10px">
+            <span id="mqtt-badge" class="status-pill">MQTT: ŁĄCZENIE...</span>
+            <span id="serial-badge" class="status-pill">PORT USB: ROZŁĄCZONY</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>1. Połączenie z konwerterem USB–RS485</h2>
+        <div class="controls">
+            <label for="baud-select" style="font-size:13px;font-weight:700">Prędkość (Baudrate):</label>
+                <select id="baud-select">
+                <option value="9600">9600 bps</option>
+                <option value="19200">19200 bps</option>
+                <option value="38400" selected>38400 bps (Domyślna dla 3D-Sport)</option>
+                <option value="57600">57600 bps</option>
+                <option value="115200">115200 bps</option>
+                <option value="4800">4800 bps</option>
+            </select>
+            <button id="btn-connect" class="btn-connect" onclick="connectSerial()">🔌 POŁĄCZ Z PORTEM USB (COM)</button>
+            <button id="btn-disconnect" class="btn-disconnect" onclick="disconnectSerial()">✖ ROZŁĄCZ</button>
+        </div>
+        <p style="font-size:12px;color:#8d99ae;margin-top:10px">
+            Wskazówka: Jeśli po połączeniu i uruchomieniu zegara na tablicy pojawiają się krzaczki zamiast cyfr, rozłącz port, zmień prędkość i połącz ponownie.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>2. Tryb pracy (Bezpieczny test vs Wysyłka na żywo)</h2>
+        <div id="live-switch-box" class="switch-row">
+            <input type="checkbox" id="chk-live-broadcast" onchange="toggleBroadcastBox()">
+            <label for="chk-live-broadcast" style="font-weight:800;font-size:15px;cursor:pointer">
+                📡 WYSYŁAJ DANE NA ŻYWO DO SYSTEMU (TELEBIM + SCOREBOARD + ŚMIGIEL)
+            </label>
+        </div>
+
+        <div class="live-grid">
+            <div class="metric">
+                <div class="metric-label">Czas meczu</div>
+                <div class="metric-val" id="val-clock">--:--</div>
+                <!-- PODGLĄD POŁOWY I KAR 2-MINUTOWYCH -->
+<div style="margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+    <div style="background:#1e293b;border:1px solid #38bdf8;border-radius:8px;padding:4px 16px;font-size:16px;font-weight:900;color:#38bdf8;letter-spacing:1px;">
+        POŁOWA / SET: <span id="val-period" style="color:#ffffff;font-size:20px;">1</span>
+    </div>
+    <div style="display:flex;gap:12px;width:100%;justify-content:center;font-size:13px;font-weight:800;">
+        <div id="val-pen-home" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;padding:4px 10px;border-radius:6px;">
+            KARY GOSP: BRAK
+        </div>
+        <div id="val-pen-away" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;padding:4px 10px;border-radius:6px;">
+            KARY GOŚCIE: BRAK
+        </div>
+    </div>
+</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Gospodarze</div>
+                <div class="metric-val" id="val-home">-</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Goście</div>
+                <div class="metric-val" id="val-away">-</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Odebrane ramki</div>
+                <div class="metric-val" id="val-packets" style="color:#00e676">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <h2 style="margin:0">3. Podgląd surowych danych z kabla (HEX + ASCII)</h2>
+            <div style="display:flex;gap:8px">
+                <button class="btn-copy" onclick="copyLastFrames()">📋 KOPIUJ OSTATNIE RAMKI (DO ANALIZY)</button>
+                <button class="btn-clear" onclick="clearLogs()">🗑️ WYCZYŚĆ</button>
+            </div>
+        </div>
+        <div id="serial-log" class="log-box">Oczekiwanie na połączenie z konwerterem USB–RS485...</div>
+    </div>
+</div>
+<script>
+const TOPIC_PREFIX = "pzs4-wejherowo-av-2026/";
+let mqttClient = null;
+let port = null;
+let reader = null;
+let keepReading = false;
+let packetCounter = 0;
+let lastCapturedLog = "";
+
+const DIGIT_RING_3D = [0xFE, 0xE6, 0x9E, 0x86, 0x7E, 0x66, 0x1E, 0x06, 0xFE, 0xE6];
+const SINGLE_DIGIT_MAP = { 0xFE: 0, 0xE6: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+
+let trackedHomeScore = 0;
+let trackedAwayScore = 0;
+let lastHomeStepByte = 0xFE;
+let lastAwayStepByte = 0xFE;
+
+function appendLog(txt){
+    const logBox = document.getElementById('serial-log');
+    if(!logBox) return;
+    const div = document.createElement('div');
+    div.style.color = '#8ecae6';
+    div.innerText = txt;
+    logBox.appendChild(div);
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+function initMqtt(){
+    const brokerUrl = ["wss", "://", "broker", ".", "hivemq", ".", "com", ":8884/mqtt"].join("");
+    mqttClient = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, keepalive: 30 });
+    const badge = document.getElementById('mqtt-badge');
+
+    const BRIDGE_SENDER_ID = "3d-sport-bridge-" + Math.random().toString(36).slice(2, 7);
+let cachedSbMeta = {
+    homeName: "GOSPODARZE",
+    awayName: "GOŚCIE",
+    homeLogo: "",
+    awayLogo: ""
+};
+
+mqttClient.on("connect", () => {
+    mqttClient.subscribe(TOPIC_PREFIX + "scoreboard");
+    badge.innerText = "MQTT: POŁĄCZONO";
+    badge.classList.add('ok');
+});
+
+mqttClient.on("message", (topic, message) => {
+    if (topic === TOPIC_PREFIX + "scoreboard") {
+        try {
+            const d = JSON.parse(message.toString());
+            if (d.sender !== BRIDGE_SENDER_ID && d.state) {
+                if (d.state.homeName !== undefined) cachedSbMeta.homeName = d.state.homeName;
+                if (d.state.awayName !== undefined) cachedSbMeta.awayName = d.state.awayName;
+                if (d.state.homeLogo !== undefined) cachedSbMeta.homeLogo = d.state.homeLogo;
+                if (d.state.awayLogo !== undefined) cachedSbMeta.awayLogo = d.state.awayLogo;
+            }
+        } catch (e) {}
+    }
+});
+
+mqttClient.on("offline", () => {
+    badge.innerText = "MQTT: ROZŁĄCZONO";
+    badge.classList.remove('ok');
+});
+}
+
+function toggleBroadcastBox(){
+    const chk = document.getElementById('chk-live-broadcast');
+    const box = document.getElementById('live-switch-box');
+    box.classList.toggle('active', chk.checked);
+}
+
+async function connectSerial(){
+    if(!("serial" in navigator)){
+        alert("Twoja przeglądarka nie obsługuje Web Serial API. Otwórz ten plik w Google Chrome lub Microsoft Edge!");
+        return;
+    }
+    try {
+        port = await navigator.serial.requestPort();
+        const baudRate = parseInt(document.getElementById('baud-select').value, 10) || 38400;
+        await port.open({ baudRate: baudRate, dataBits: 8, stopBits: 1, parity: "none" });
+
+        document.getElementById('btn-connect').style.display = 'none';
+        document.getElementById('btn-disconnect').style.display = 'inline-block';
+        const sBadge = document.getElementById('serial-badge');
+        sBadge.innerText = `PORT USB: AKTYWNY (${baudRate} bps)`;
+        sBadge.classList.add('ok');
+
+        appendLog(`--- Połączono z portem szeregowym (${baudRate} bps) ---`);
+        keepReading = true;
+        readLoop();
+    } catch(err) {
+        console.error(err);
+        alert("Nie udało się otworzyć portu USB: " + err.message);
+    }
+}
+
+async function disconnectSerial(){
+    keepReading = false;
+    try {
+        if(reader){ await reader.cancel(); reader = null; }
+        if(port){ await port.close(); port = null; }
+    } catch(e){}
+    document.getElementById('btn-connect').style.display = 'inline-block';
+    document.getElementById('btn-disconnect').style.display = 'none';
+    const sBadge = document.getElementById('serial-badge');
+    sBadge.innerText = "PORT USB: ROZŁĄCZONY";
+    sBadge.classList.remove('ok');
+}
+
+async function readLoop(){
+    let byteBuffer = [];
+    let flushTimer = null;
+
+    const flushFrame = () => {
+        if(byteBuffer.length === 0) return;
+        const frame = byteBuffer.slice();
+        byteBuffer = [];
+        packetCounter++;
+        document.getElementById('val-packets').innerText = packetCounter;
+        processIncomingFrame(frame);
+    };
+
+    while(port && port.readable && keepReading){
+        reader = port.readable.getReader();
+        try {
+            while(true){
+                const { value, done } = await reader.read();
+                if(done) break;
+                if(value && value.length > 0){
+                    for(let i = 0; i < value.length; i++){
+                        byteBuffer.push(value.at(i));
+                    }
+                    clearTimeout(flushTimer);
+                    flushTimer = setTimeout(flushFrame, 25);
+                    if(byteBuffer.length >= 64) flushFrame();
+                }
+            }
+        } catch(error) {
+            appendLog(`[Błąd odczytu]: ${error.message}`);
+        } finally {
+            reader.releaseLock();
+        }
+    }
+}
+
+const MAP_3D_BASE = { 0xFE: 0, 0xE6: 1, 0x9E: 2, 0x86: 3, 0x7E: 4, 0x66: 5, 0x1E: 6, 0x06: 7 };
+
+function decode3DDigit(bMain, bNext){
+    if(bMain === 0xFE) return (bNext === 0xFE) ? 8 : 0;
+    if(bMain === 0xE6) return (bNext === 0xFE) ? 9 : 1;
+    return MAP_3D_BASE[bMain] !== undefined ? MAP_3D_BASE[bMain] : null;
+}
+
+let trackedClockMins = 0;
+let trackedClockSecs = 0;
+
+function decodeClockDigit(bMain, bNext){
+    if(bMain === 0xFE) return (bNext === 0xF8 || bNext === 0xFE) ? 8 : 0;
+    if(bMain === 0xE6) return (bNext === 0xF8 || bNext === 0xFE) ? 9 : 1;
+    return MAP_3D_BASE[bMain] !== undefined ? MAP_3D_BASE[bMain] : null;
+}
+
+// 3 stałe sloty kar na drużynę (1:1 jak na tablicy 3D-Sport):
+let homeSlots = [null, null, null];
+let awaySlots = [null, null, null];
+
+let homePenaltiesList = [];
+let awayPenaltiesList = [];
+
+function syncSlotsToLists(){
+    homePenaltiesList = homeSlots.filter(Boolean);
+    awayPenaltiesList = awaySlots.filter(Boolean);
+    renderPenaltyBoxes();
+}
+
+function formatPenaltySeconds(totalSec){
+    if(totalSec <= 0) return null;
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function updatePenaltyBox(team, timeStr){
+    const el = document.getElementById(team === 'home' ? 'val-pen-home' : 'val-pen-away');
+    if(!el) return;
+    el.style.display = 'block';
+    if(timeStr){
+        el.innerText = team === 'home' ? `KARY GOSP: ${timeStr}` : `KARY GOŚCIE: ${timeStr}`;
+        el.style.color = '#ff4d6d';
+        el.style.fontWeight = '900';
+    } else {
+        el.innerText = team === 'home' ? 'KARY GOSP: BRAK' : 'KARY GOŚCIE: BRAK';
+        el.style.color = '';
+    }
+}
+
+function renderPenaltyBoxes(){
+    const hStr = homePenaltiesList.length > 0
+        ? homePenaltiesList.map(p => formatPenaltySeconds(p.sec)).join(' | ')
+        : null;
+    const aStr = awayPenaltiesList.length > 0
+        ? awayPenaltiesList.map(p => formatPenaltySeconds(p.sec)).join(' | ')
+        : null;
+    updatePenaltyBox('home', hStr);
+    updatePenaltyBox('away', aStr);
+}
+
+function updateClockDisplay(mins, secs, isExplicitReset = false){
+    const isNewSecond = (!isExplicitReset) && (mins !== trackedClockMins || secs !== trackedClockSecs);
+    trackedClockMins = mins;
+    trackedClockSecs = secs;
+
+    const formatted = `${String(trackedClockMins).padStart(2, '0')}:${String(trackedClockSecs).padStart(2, '0')}`;
+    document.getElementById('val-clock').innerText = formatted;
+
+    // Odliczanie wszystkich aktywnych kar (maks. 3 na drużynę) równo co 1 sekundę meczu:
+    if(isNewSecond){
+        if(homePenaltiesList.length > 0){
+            homePenaltiesList.forEach(p => p.sec--);
+            homePenaltiesList = homePenaltiesList.filter(p => p.sec > 0);
+            renderPenaltyBoxes();
+        }
+        if(awayPenaltiesList.length > 0){
+            awayPenaltiesList.forEach(p => p.sec--);
+            awayPenaltiesList = awayPenaltiesList.filter(p => p.sec > 0);
+            renderPenaltyBoxes();
+        }
+    }
+
+    if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+        mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+            source: '3d-sport',
+            clock: formatted
+        }));
+    }
+}
+
+// Prawdziwa mapa cyfr dla numerów zawodników w ramkach kar 3D-Sport:
+
+const PEN_NUM_MAP = {
+    0xFE: 0, 0x66: 1, 0x7E: 2, 0xE6: 3, 0x80: 7,
+    0x06: 7, 0x1E: 6, 0x86: 9
+};
+
+function decodePlayerNum3D(b1, b2, slotNumber){
+    const sNum = Number(slotNumber) || 1;
+    const prefix = `KARA ${sNum}`;
+    if(b1 === undefined || (b1 === 0x66 && b2 === 0x18)) return prefix;
+
+    // Dokładne pary z Twojej tablicy 3D-Sport:
+    if(b1 === 0xE6 && b2 === 0x86) return `${prefix} • 5`;   // 230, 134 -> 5
+    if(b1 === 0x9E && b2 === 0x86) return `${prefix} • 9`;   // 158, 134 -> 9
+    if(b1 === 0x78 && b2 === 0x98) return `${prefix} • 6`;   // 120, 152 -> 6
+    if(b1 === 0x9E && b2 === 0x1E) return `${prefix} • 6`;   // 158, 30  -> 6
+    if(b1 === 0xF8 && b2 === 0x86) return `${prefix} • 3`;   // 248, 134 -> 3
+    if(b1 === 0x9E && b2 === 0x06) return `${prefix} • 7`;   // 158, 6   -> 7
+    if(b1 === 0x66 && b2 === 0x06) return `${prefix} • 15`;  // 102, 6   -> 15
+    if(b1 === 0x80 && b2 === 0xE6) return `${prefix} • 78`;  // 128, 230 -> 78
+    if(b1 === 0x9E && b2 === 0x7E) return `${prefix} • 12`;  // 158, 126 -> 12
+    if(b1 === 0x66 && b2 === 0x18) return `${prefix} • 8`;   // 102, 24  -> 8
+
+    const d1 = PEN_NUM_MAP[b1];
+    const d2 = PEN_NUM_MAP[b2];
+    if((b1 === 0x9E || b1 === 0xFE) && d2 !== undefined && d2 > 0) return `${prefix} • ${d2}`;
+    if(d1 !== undefined && d1 > 0 && d2 !== undefined) return `${prefix} • ${d1}${d2}`;
+    if(d1 !== undefined && d1 > 0) return `${prefix} • ${d1}`;
+    return prefix;
+}
+
+function processIncomingFrame(rawBytes){
+    if(!rawBytes || rawBytes.length === 0) return;
+    let start = 0;
+    for(let i = 1; i < rawBytes.length - 2; i++){
+        const isPenaltyPack = (rawBytes.at(0) === 0x66) && (
+            (rawBytes.at(1) === 0x98 && rawBytes.at(2) === 0x9E) ||
+            ((rawBytes.at(1) === 0x98 || rawBytes.at(1) === 0x78 || rawBytes.at(1) === 0x18) &&
+             (rawBytes.at(2) === 0x18 || rawBytes.at(2) === 0x60))
+        );
+        if(isPenaltyPack) break;
+
+        const isHeader = (rawBytes.at(i) === 0x66) && (
+            (rawBytes.at(i + 1) === 0x18 && rawBytes.at(i + 2) === 0x80) ||
+            (rawBytes.at(i + 1) === 0xF8 && rawBytes.at(i + 2) === 0x1E) ||
+            (rawBytes.at(i + 1) === 0xF8 && rawBytes.at(i + 2) === 0x7E) ||
+            (rawBytes.at(i + 1) === 0x18 && rawBytes.at(i + 2) === 0x7E) ||
+            (rawBytes.at(i + 1) === 0xF8 && rawBytes.at(i + 2) === 0xF8) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0x18) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0x60) ||
+            (rawBytes.at(i + 1) === 0x78 && rawBytes.at(i + 2) === 0x60) ||
+            (rawBytes.at(i + 1) === 0x18 && rawBytes.at(i + 2) === 0x60) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0x80) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0x9E) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) === 0xE6 && rawBytes.at(i + 3) === 0xE6) ||
+            (rawBytes.at(i + 1) === 0x98 && rawBytes.at(i + 2) !== 0x78 && rawBytes.at(i + 2) !== 0xE6 && i - start >= 7)
+        );
+        if(isHeader){
+            const chunk = rawBytes.slice(start, i);
+            appendLog(chunk);
+            parse3DSportFrame(chunk);
+            start = i;
+        }
+    }
+    const lastChunk = rawBytes.slice(start);
+    if(lastChunk.length > 0){
+        appendLog(lastChunk);
+        parse3DSportFrame(lastChunk);
+    }
+}
+
+function parse3DSportFrame(bytes){
+    // 0A. DOKŁADNY RESET ZEGARA NA 00:00 (66 18 7E 86 7E 66 F8 E6 FE 7E 7E)
+    if(bytes.length === 11 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x7E &&
+       bytes.at(3) === 0x86 && bytes.at(4) === 0x7E && bytes.at(5) === 0x66 && bytes.at(6) === 0xF8 &&
+       bytes.at(7) === 0xE6 && bytes.at(8) === 0xFE && bytes.at(9) === 0x7E && bytes.at(10) === 0x7E){
+        updateClockDisplay(0, 0, true);
+        return;
+    }
+
+    // 0B. ZMIANA POŁOWY / SETU (66 F8 F8 [CYFRA] ...)
+    if(bytes.length >= 6 && bytes.at(0) === 0x66 && bytes.at(1) === 0xF8 && bytes.at(2) === 0xF8){
+        let periodVal = null;
+        if(bytes.at(3) === 0xFE) periodVal = (bytes.at(5) === 0xFE) ? 8 : 0;
+        else if(bytes.at(3) === 0xE6) periodVal = (bytes.at(5) === 0xFE) ? 9 : 1;
+        else periodVal = MAP_3D_BASE[bytes.at(3)] !== undefined ? MAP_3D_BASE[bytes.at(3)] : null;
+
+        if(periodVal !== null){
+            const periodEl = document.getElementById('val-period');
+            if(periodEl) periodEl.innerText = periodVal;
+        }
+        return;
+    }
+
+    // 0C. OBSŁUGA 3 SLOTÓW KAR GOSPODARZY I 3 SLOTÓW KAR GOŚCI
+    // 1) Kasowanie kar Gospodarzy (66 98 18 66 ...)
+    if(bytes.length >= 4 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x18 && bytes.at(3) === 0x66){
+        homeSlots = [null, null, null];
+        syncSlotsToLists();
+        return;
+    }
+
+    // 2) Gospodarze — Slot 1 (0x98), Slot 2 (0x78), Slot 3 (0x18)
+    if(bytes.length >= 3 && bytes.at(0) === 0x66 &&
+       (bytes.at(1) === 0x98 || bytes.at(1) === 0x78 || bytes.at(1) === 0x18) &&
+       bytes.at(2) === 0x18){
+        const slotIdx = (bytes.at(1) === 0x98) ? 0 : (bytes.at(1) === 0x78 ? 1 : 2);
+        const penSeconds = (bytes.at(5) === 0xE0 || bytes.at(5) === 0x60) ? 60 : 120;
+        const pNum = decodePlayerNum3D(bytes.at(3), bytes.at(4), slotIdx + 1);
+        homeSlots[slotIdx] = { id: 100 + slotIdx, num: pNum, sec: penSeconds };
+        syncSlotsToLists();
+        return;
+    }
+
+    // 3) Kasowanie kar Gości (krótka ramka <= 5 bajtów: 66 98 60 / 66 78 60 / 66 18 60)
+    if(bytes.length <= 5 && bytes.at(0) === 0x66 &&
+       (bytes.at(1) === 0x98 || bytes.at(1) === 0x78 || bytes.at(1) === 0x18) &&
+       bytes.at(2) === 0x60){
+        awaySlots = [null, null, null];
+        syncSlotsToLists();
+        return;
+    }
+
+    // 4) Goście — Slot 1 (0x98), Slot 2 (0x78), Slot 3 (0x18)
+    if(bytes.length >= 6 && bytes.at(0) === 0x66 &&
+       (bytes.at(1) === 0x98 || bytes.at(1) === 0x78 || bytes.at(1) === 0x18) &&
+       bytes.at(2) === 0x60){
+        const slotIdx = (bytes.at(1) === 0x98) ? 0 : (bytes.at(1) === 0x78 ? 1 : 2);
+        const penSeconds = (bytes.at(5) === 0xE0 || bytes.at(5) === 0x60) ? 60 : 120;
+        const pNum = decodePlayerNum3D(bytes.at(3), bytes.at(4), slotIdx + 1);
+        awaySlots[slotIdx] = { id: 200 + slotIdx, num: pNum, sec: penSeconds };
+        syncSlotsToLists();
+        return;
+    }
+
+    // 5) Koniec 2 minut kary / syrena (66 98 80 E6 00)
+    if(bytes.length === 5 && bytes.at(0) === 0x66 && bytes.at(1) === 0x98 && bytes.at(2) === 0x80 && bytes.at(3) === 0xE6){
+        for(let i = 0; i < 3; i++){
+            if(homeSlots[i] && homeSlots[i].sec <= 2) homeSlots[i] = null;
+            if(awaySlots[i] && awaySlots[i].sec <= 2) awaySlots[i] = null;
+        }
+        syncSlotsToLists();
+        return;
+    }
+    // 1. Zegar główny 1 Hz (ramka 18B: 66 18 7E ...) - przechodzi płynnie przez 00:59 -> 01:00 -> 30:00!
+    if(bytes.length >= 15 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x7E){
+        const secIdx = (bytes.at(3) === 0x86) ? 8 : 9;
+        const secOnes = decodeClockDigit(bytes.at(secIdx), bytes.at(secIdx + 1));
+
+        if(secOnes !== null){
+            const oldOnes = trackedClockSecs % 10;
+            let secTens = Math.floor(trackedClockSecs / 10);
+            let nextMins = trackedClockMins;
+
+            if(oldOnes === 9 && secOnes === 0){
+                secTens++;
+                if(secTens >= 6){
+                    secTens = 0;
+                    nextMins++;
+                }
+            } else if(oldOnes === 0 && secOnes === 9){
+                if(secTens > 0) secTens--;
+                else { secTens = 5; if(nextMins > 0) nextMins--; }
+            }
+            updateClockDisplay(nextMins, (secTens * 10) + secOnes, false);
+        }
+        return;
+    }
+    // 2. Wynik GOSPODARZY (nagłówek 66 18 80) - NIETKNIĘTY
+    if(bytes.length >= 16 && bytes.at(0) === 0x66 && bytes.at(1) === 0x18 && bytes.at(2) === 0x80){
+        let score = null;
+        const isOneDigit = (bytes.at(13) === 0x18 && bytes.at(14) === 0x9E && bytes.at(15) === 0xFE) ||
+                           (bytes.at(13) === 0x18 && bytes.at(14) === 0xF8 && bytes.at(15) === 0x9E && bytes.at(16) === 0xFE) ||
+                           (bytes.at(14) === 0x18 && bytes.at(15) === 0x9E && bytes.at(16) === 0xFE) ||
+                           (bytes.at(14) === 0x18 && bytes.at(15) === 0xF8 && bytes.at(16) === 0x9E && bytes.at(17) === 0xFE);
+        if(isOneDigit){
+            score = decode3DDigit(bytes.at(9), bytes.at(10));
+        } else {
+            const tens = decode3DDigit(bytes.at(9), bytes.at(10));
+            let onesIdx = 15;
+            for(let k = 11; k < bytes.length - 1; k++){
+                if(bytes.at(k) === 0x66 && bytes.at(k + 1) === 0x18){
+                    onesIdx = k + 2;
+                    break;
+                }
+            }
+            const ones = decode3DDigit(bytes.at(onesIdx), bytes.at(onesIdx + 1));
+            if(tens !== null && ones !== null) score = (tens * 10) + ones;
+        }
+
+        if(score !== null){
+            document.getElementById('val-home').innerText = score;
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    homeScore: score
+                }));
+            }
+        }
+        return;
+    }
+
+    // 3. Wynik GOŚCI (nagłówek 66 F8 1E) - NIETKNIĘTY
+    if(bytes.length >= 16 && bytes.at(0) === 0x66 && bytes.at(1) === 0xF8 && bytes.at(2) === 0x1E){
+        let score = null;
+        const isOneDigit = (bytes.at(14) === 0x9E && bytes.at(15) === 0xFE && bytes.at(16) === 0xFE) ||
+                           (bytes.at(15) === 0x9E && bytes.at(16) === 0xFE && bytes.at(17) === 0xFE);
+
+        if(isOneDigit){
+            score = decode3DDigit(bytes.at(9), bytes.at(10));
+        } else {
+            const tens = decode3DDigit(bytes.at(9), bytes.at(10));
+            const ones = decode3DDigit(bytes.at(14), bytes.at(15));
+            if(tens !== null && ones !== null) score = (tens * 10) + ones;
+        }
+
+        if(score !== null){
+            document.getElementById('val-away').innerText = score;
+            if(document.getElementById('chk-live-broadcast').checked && mqttClient && mqttClient.connected){
+                mqttClient.publish(TOPIC_PREFIX + "scoreboard_sync", JSON.stringify({
+                    source: '3d-sport',
+                    awayScore: score
+                }));
+            }
+        }
+        return;
+    }
+
+function clearLogs(){
+    document.getElementById('serial-log').innerHTML = '';
+    packetCounter = 0;
+    document.getElementById('val-packets').innerText = '0';
+    trackedClockMins = 0;
+    trackedClockSecs = 0;
+    document.getElementById('val-clock').innerText = '00:00';
+    document.getElementById('val-home').innerText = '0';
+    document.getElementById('val-away').innerText = '0';
+    homePenaltiesList = [];
+    awayPenaltiesList = [];
+    renderPenaltyBoxes();
+}
+}
+const mqttScript = document.createElement('script');
+mqttScript.src = "mqtt.min.js";
+mqttScript.onerror = () => {
+    const cdn = document.createElement('script');
+    cdn.src = "https://unpkg.com";
+    cdn.onload = initMqtt;
+    document.head.appendChild(cdn);
+};
+mqttScript.onload = initMqtt;
+document.head.appendChild(mqttScript);
+// === AUTOMATYCZNY MOSTEK 3D-SPORT -> BELKA OBS (WYNIK + CZAS + POŁOWA + KARY) ===
+const BRIDGE_SENDER_ID = "3d-sport-bridge-" + Math.random().toString(36).slice(2, 7);
+let cachedSbMeta = {
+    homeName: "GOSPODARZE",
+    awayName: "GOŚCIE",
+    homeLogo: "",
+    awayLogo: ""
+};
+let lastSentBelkiSnapshot = "";
+let penHomeId = Date.now();
+let penAwayId = Date.now() + 1;
+
+function parsePenaltySecondsFromBox(elId){
+    const txt = (document.getElementById(elId)?.innerText || '').trim();
+    const match = txt.match(/(\d+):(\d{2})/);
+    if(!match) return 0;
+    return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
+}
+
+setInterval(() => {
+    const chk = document.getElementById('chk-live-broadcast');
+    if (!chk || !chk.checked || typeof mqttClient === 'undefined' || !mqttClient || !mqttClient.connected) return;
+
+    const homeScore = parseInt(document.getElementById('val-home')?.innerText || '0', 10) || 0;
+    const awayScore = parseInt(document.getElementById('val-away')?.innerText || '0', 10) || 0;
+    const period = parseInt(document.getElementById('val-period')?.innerText || '1', 10) || 1;
+
+    const clockText = (document.getElementById('val-clock')?.innerText || '00:00').trim();
+    const parts = clockText.split(':');
+    const mins = parseInt(parts[0] || '0', 10) || 0;
+    const secs = parseInt(parts[1] || '0', 10) || 0;
+    const totalSeconds = (mins * 60) + secs;
+
+    // Odczyt do 3 aktywnych kar na drużynę bezpośrednio z list homePenaltiesList / awayPenaltiesList:
+    const penalties = [];
+    (homePenaltiesList || []).forEach(p => {
+        if(p.sec > 0){
+            penalties.push({ id: Math.floor(p.id), side: 'home', team: cachedSbMeta.homeName, num: p.num || '2 MIN', timeLeft: p.sec });
+        }
+    });
+    (awayPenaltiesList || []).forEach(p => {
+        if(p.sec > 0){
+            penalties.push({ id: Math.floor(p.id), side: 'away', team: cachedSbMeta.awayName, num: p.num || '2 MIN', timeLeft: p.sec });
+        }
+    });
+
+    const penSig = penalties.map(p => `${p.side}:${p.timeLeft}`).join(',');
+    const snapshot = `${homeScore}|${awayScore}|${period}|${totalSeconds}|${penSig}|${cachedSbMeta.homeName}|${cachedSbMeta.awayName}`;
+    if (snapshot === lastSentBelkiSnapshot) return;
+    lastSentBelkiSnapshot = snapshot;
+
+    const payload = {
+        sender: BRIDGE_SENDER_ID,
+        state: {
+            homeName: cachedSbMeta.homeName,
+            awayName: cachedSbMeta.awayName,
+            homeLogo: cachedSbMeta.homeLogo,
+            awayLogo: cachedSbMeta.awayLogo,
+            homeScore: homeScore,
+            awayScore: awayScore,
+            period: period,
+            time: totalSeconds,
+            penalties: penalties
+        }
+    };
+
+    mqttClient.publish(TOPIC_PREFIX + "scoreboard", JSON.stringify(payload), { retain: true });
+}, 200);
+function clearLogs(){
+    const logEl = document.getElementById('serial-log');
+    if(logEl) logEl.innerHTML = '';
+    packetCounter = 0;
+    const pktEl = document.getElementById('val-packets');
+    if(pktEl) pktEl.innerText = '0';
+    trackedClockMins = 0;
+    trackedClockSecs = 0;
+    const clkEl = document.getElementById('val-clock');
+    if(clkEl) clkEl.innerText = '00:00';
+    const homeEl = document.getElementById('val-home');
+    if(homeEl) homeEl.innerText = '0';
+    const awayEl = document.getElementById('val-away');
+    if(awayEl) awayEl.innerText = '0';
+    if(typeof homePenaltiesList !== 'undefined') homePenaltiesList = [];
+    if(typeof awayPenaltiesList !== 'undefined') awayPenaltiesList = [];
+    if(typeof renderPenaltyBoxes === 'function') renderPenaltyBoxes();
+}
+
+function copyLogs(){
+    const logEl = document.getElementById('serial-log');
+    if(!logEl) return;
+    const text = logEl.innerText || logEl.textContent || '';
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Skopiowano ramki do schowka!');
+    }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('Skopiowano ramki do schowka!');
+    });
+}
+// === REJESTRATOR RAMEK DO PLIKU .TXT (BEZ BIEGANIA PO SCHODACH) ===
+let fullSessionLog = [];
+
+const origAppendLog = typeof appendLog === 'function' ? appendLog : null;
+appendLog = function(bytes){
+    const ts = new Date().toISOString().substr(11, 12);
+    const hex = Array.from(bytes).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+    const dec = Array.from(bytes).join(',');
+    fullSessionLog.push(`[${ts}] HEX: ${hex} | DEC: ${dec}`);
+    if(fullSessionLog.length > 5000) fullSessionLog.shift();
+    if(origAppendLog) origAppendLog(bytes);
+};
+
+function downloadFullLog(){
+    if(fullSessionLog.length === 0) return alert("Brak zapisanych ramek!");
+    const blob = new Blob([fullSessionLog.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'log_3d_sport_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.txt';
+    a.click();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const btnCopy = document.querySelector('button[onclick*="copy"]');
+    if(btnCopy && btnCopy.parentNode){
+        const btnDl = document.createElement('button');
+        btnDl.innerText = '💾 POBIERZ CAŁY LOG (.TXT)';
+        btnDl.className = btnCopy.className;
+        btnDl.style.marginLeft = '8px';
+        btnDl.onclick = downloadFullLog;
+        btnCopy.parentNode.appendChild(btnDl);
+    }
+});
+</script>
+</body>
+</html>
