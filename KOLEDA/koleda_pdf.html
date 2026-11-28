@@ -272,68 +272,81 @@ function playTytaniCanvasStinger(onMidpoint){
     requestAnimationFrame(step);
 }
 
-function hideSlideWithStinger(){
-    const scr=document.getElementById('slide-screen');
-    const vid=document.getElementById('stinger-vid');
-    const frm=document.getElementById('web-frame');
-    const imgA=document.getElementById('slide-img-a');
-    const imgB=document.getElementById('slide-img-b');
-
-    const cleanup = () => {
-        scr.style.transition = 'none';
-        scr.classList.remove('visible');
-        frm.src = 'about:blank';
-        imgA.style.opacity = 0;
-        imgB.style.opacity = 0;
-        const adVid = document.getElementById('ad-vid');
-        if(adVid){
-            if(adActiveMemory && adVid.currentTime > 0) savedAdTime = adVid.currentTime;
-            adVid.pause();
-            adVid.style.display = 'none';
-        }
-    };
-
-        if(pdfCurrentTheme === 'tytani'){
-        playTytaniCanvasStinger(cleanup);
+function triggerFullStinger(onPeakCallback, onEndCallback) {
+    const vid = document.getElementById('stinger-vid');
+    if (!vid) {
+        if (onPeakCallback) onPeakCallback();
+        if (onEndCallback) onEndCallback();
         return;
     }
-        vid.pause();
-    vid.currentTime = 0;
 
-    let peakSent = false;
-    const sendPeak = () => {
-        if (peakSent) return;
-        peakSent = true;
+    vid.pause();
+    vid.currentTime = 0;
+    vid.style.background = 'transparent';
+    vid.style.transition = 'opacity 0.3s ease';
+    vid.style.opacity = 0;
+
+    let peakFired = false;
+    const firePeak = () => {
+        if (peakFired) return;
+        peakFired = true;
         if (typeof client !== 'undefined' && client.connected) {
             client.publish(TOPIC_PREFIX + "stingerPeak", JSON.stringify({ ts: Date.now() }));
         }
+        if (onPeakCallback) onPeakCallback();
     };
 
-    vid.ontimeupdate = () => {
-        if (vid.currentTime >= 0.85) sendPeak();
+    vid.onplaying = () => {
+        requestAnimationFrame(() => { vid.style.opacity = 1; });
     };
 
-    vid.onended = () => {
-        vid.ontimeupdate = null;
+    const peakTimer = setTimeout(firePeak, 1500);
+
+    // W 2650 ms zaczynamy płynne wygaszanie stingera, żeby nie było twardego cięcia granatowego tła:
+    const fadeOutTimer = setTimeout(() => {
         vid.style.opacity = 0;
-        cleanup();
+    }, 2650);
+
+    const endTimer = setTimeout(() => {
+        vid.onplaying = null;
+        vid.style.opacity = 0;
         vid.pause();
         vid.currentTime = 0;
+        if (onEndCallback) onEndCallback();
+    }, 3050);
+
+    vid.onended = () => {
+        clearTimeout(fadeOutTimer);
+        clearTimeout(endTimer);
+        vid.onplaying = null;
+        vid.style.opacity = 0;
+        vid.pause();
+        vid.currentTime = 0;
+        if (onEndCallback) onEndCallback();
     };
 
-    const playPromise = vid.play();
-    if (playPromise !== undefined) {
-        playPromise.then(() => {
-            requestAnimationFrame(() => { vid.style.opacity = 1; });
-            // Zabezpieczenie na wypadek bardzo krótkiego wideo:
-            setTimeout(sendPeak, 900);
-        }).catch(() => {
-            vid.ontimeupdate = null;
+    const p = vid.play();
+    if (p !== undefined) {
+        p.catch(() => {
+            clearTimeout(peakTimer);
+            clearTimeout(fadeOutTimer);
+            clearTimeout(endTimer);
+            vid.onplaying = null;
             vid.style.opacity = 0;
-            scr.style.transition = 'opacity 0.45s ease';
-            cleanup();
+            firePeak();
+            if (onEndCallback) onEndCallback();
         });
     }
+}
+
+function hideSlideWithStinger() {
+    const scr = document.getElementById('slide-screen');
+    triggerFullStinger(() => {
+        if (scr) {
+            scr.style.transition = 'none';
+            scr.classList.remove('visible');
+        }
+    });
 }
 
 function showAdVideo(srcUrl, isLoop, isMuted, startTime){
@@ -588,6 +601,16 @@ mqttLib.onload = () => {
             if (d.action === 'playVideo' || d.action === 'ytPlay') ytControl('playVideo');
             if (d.action === 'pauseVideo' || d.action === 'ytPause') ytControl('pauseVideo');
             if (d.action === 'hideSlide') hideSlideWithStinger();
+            if (d.action === 'playStinger') {
+            triggerFullStinger();
+}
+            if (d.action === 'hideSlideSilent') {
+    const scr = document.getElementById('slide-screen');
+    if (scr) {
+        scr.style.transition = 'none';
+        scr.classList.remove('visible');
+    }
+}
             if (d.action === 'hideSlideSilent') {
     const scr = document.getElementById('slide-screen');
     if (scr) {
@@ -627,16 +650,67 @@ mqttLib.onload = () => {
 };
 document.head.appendChild(mqttLib);
 </script>
-<div id="telebim-lightshow-layer" style="display:none; position:fixed; inset:0; z-index:999999; background:#000; overflow:hidden; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
-    <div id="lightshow-beam" style="display:none; position:absolute; top:-20%; bottom:-20%; width:38%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.95), rgba(0,245,212,0.9), transparent); filter:blur(25px);"></div>
+<div id="telebim-lightshow-layer" style="display:none; position:fixed; inset:0; z-index:999999; background:#000; overflow:hidden; align-items:center; justify-content:center; flex-direction:column; text-align:center; pointer-events:none;">
+    <div id="lightshow-beams-wrap" style="display:none; position:absolute; inset:-35%; pointer-events:none;">
+        <div class="ls-cone ls-cone-1"></div>
+        <div class="ls-cone ls-cone-2"></div>
+        <div class="ls-cone ls-cone-3"></div>
+        <div class="ls-cone ls-cone-4"></div>
+    </div>
     <div id="lightshow-text" style="display:none; position:relative; z-index:2; color:#fff; font-family:sans-serif; font-weight:900; text-transform:uppercase; padding:20px;"></div>
 </div>
 
 <style>
-@keyframes lsScannerMove {
-    0%   { left: -40%; transform: skewX(-18deg); }
-    50%  { left: 105%; transform: skewX(18deg); }
-    100% { left: -40%; transform: skewX(-18deg); }
+.ls-cone {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150vmax;
+    height: 150vmax;
+    margin-left: -75vmax;
+    margin-top: -75vmax;
+    mix-blend-mode: screen;
+    filter: blur(2px); /* ostre krawędzie wiązek bez mgły! */
+}
+.ls-cone-1 {
+    background: conic-gradient(from 0deg,
+        transparent 0deg, #ffd60a 5deg, transparent 11deg,
+        transparent 60deg, #ff0054 65deg, transparent 71deg,
+        transparent 120deg, #00f5d4 125deg, transparent 131deg,
+        transparent 180deg, #0077b6 185deg, transparent 191deg,
+        transparent 240deg, #ffbe0b 245deg, transparent 251deg,
+        transparent 300deg, #b5179e 305deg, transparent 311deg);
+    animation: lsOrbitCW var(--ls-dur, 4s) linear infinite;
+}
+.ls-cone-2 {
+    background: conic-gradient(from 25deg,
+        transparent 0deg, #ffffff 4deg, transparent 9deg,
+        transparent 90deg, #3a86ff 95deg, transparent 101deg,
+        transparent 180deg, #ffe600 185deg, transparent 191deg,
+        transparent 270deg, #ff006e 275deg, transparent 281deg);
+    animation: lsOrbitCCW calc(var(--ls-dur, 4s) * 1.25) linear infinite;
+}
+.ls-cone-3 {
+    background: conic-gradient(from 12deg,
+        transparent 0deg, #00e676 4deg, transparent 9deg,
+        transparent 120deg, #ffd60a 124deg, transparent 130deg,
+        transparent 240deg, #00bbf9 244deg, transparent 250deg);
+    animation: lsOrbitCW calc(var(--ls-dur, 4s) * 0.8) linear infinite;
+}
+.ls-cone-4 {
+    background: conic-gradient(from 40deg,
+        transparent 0deg, #ff4d6d 4deg, transparent 9deg,
+        transparent 180deg, #ffd60a 184deg, transparent 190deg);
+    animation: lsOrbitCCW calc(var(--ls-dur, 4s) * 1.6) linear infinite;
+}
+
+@keyframes lsOrbitCW {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes lsOrbitCCW {
+    0%   { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
 }
 @keyframes lsFlashlightPulse {
     0%, 100% { transform: scale(1); text-shadow: 0 0 30px #ffbe0b, 0 0 80px #ffbe0b; }
@@ -649,27 +723,63 @@ document.head.appendChild(mqttLib);
     let lsTimer = null;
     let lsStep = 0;
 
-    function stopLocalLightShow(){
+        function stopLocalLightShow(instant = false){
         clearInterval(lsTimer);
         lsTimer = null;
         const layer = document.getElementById('telebim-lightshow-layer');
-        const beam = document.getElementById('lightshow-beam');
-        const txt = document.getElementById('lightshow-text');
-        if(layer) layer.style.display = 'none';
-        if(beam){ beam.style.display = 'none'; beam.style.animation = 'none'; }
-        if(txt) txt.style.display = 'none';
-    }
-
-    function startLocalLightShow(mode, bpm){
-        stopLocalLightShow();
-        const layer = document.getElementById('telebim-lightshow-layer');
-        const beam = document.getElementById('lightshow-beam');
+        const wrap = document.getElementById('lightshow-beams-wrap');
         const txt = document.getElementById('lightshow-text');
         if(!layer) return;
 
+        if(instant){
+            layer.style.transition = 'none';
+            layer.style.opacity = '0';
+            layer.style.display = 'none';
+            if(wrap) wrap.style.display = 'none';
+            if(txt) txt.style.display = 'none';
+            return;
+        }
+
+        // Płynne przygasanie świateł przez 1.2 sekundy (odsłaniające Kolejność meczów pod spodem!):
+        layer.style.transition = 'opacity 1.2s ease-out';
+        layer.style.opacity = '0';
+        setTimeout(() => {
+            if(layer.style.opacity === '0'){
+                layer.style.display = 'none';
+                if(wrap) wrap.style.display = 'none';
+                if(txt) txt.style.display = 'none';
+            }
+        }, 1250);
+    }
+
+            function startLocalLightShow(mode, bpm){
+        stopLocalLightShow(true); // natychmiastowy reset przed startem nowego trybu
+        const layer = document.getElementById('telebim-lightshow-layer');
+        const wrap = document.getElementById('lightshow-beams-wrap');
+        const txt = document.getElementById('lightshow-text');
+        if(!layer) return;
+
+        layer.style.opacity = '1';
         layer.style.display = 'flex';
         layer.style.transition = 'background-color 0.08s ease';
         const beatMs = Math.max(140, Math.round(60000 / (bpm || 128)));
+        const durSec = Math.max(1.8, (beatMs * 8) / 1000);
+
+        // Lasery działają TYLKO gdy tryb !== 'flashlights':
+        if(wrap){
+            if(mode === 'flashlights'){
+                wrap.style.display = 'none';
+            } else {
+                wrap.style.setProperty('--ls-dur', `${durSec}s`);
+                wrap.style.display = 'block';
+            }
+        }
+
+        // Kręcące się ostre głowice działają w każdym trybie poza napisem Latarki:
+        if(wrap && mode !== 'flashlights'){
+            wrap.style.setProperty('--ls-dur', `${durSec}s`);
+            wrap.style.display = 'block';
+        }
 
         if(mode === 'strobe'){
             const palette = ['#ffffff', '#000000', '#ff002b', '#000000'];
@@ -679,20 +789,19 @@ document.head.appendChild(mqttLib);
             }, Math.max(130, Math.round(beatMs / 2)));
         }
         else if(mode === 'colors'){
-            layer.style.transition = 'background-color 0.25s ease';
-            const palette = ['#d90429', '#ffb703', '#ffffff', '#111111'];
+            // Barwy szkoły PZS 4: niebieski + dużo żółtego + akcent bieli + krążące promienie
+            layer.style.transition = 'background-color 0.22s ease';
+            const palette = ['#00509d', '#ffd60a', '#ffe600', '#0077b6', '#ffd60a', '#ffffff'];
             lsTimer = setInterval(() => {
                 layer.style.backgroundColor = palette[lsStep % palette.length];
                 lsStep++;
             }, beatMs);
         }
         else if(mode === 'scanner'){
-            layer.style.backgroundColor = '#03071e';
-            beam.style.display = 'block';
-            const durSec = Math.max(1.2, (beatMs * 4) / 1000);
-            beam.style.animation = `lsScannerMove ${durSec}s ease-in-out infinite`;
+            layer.style.backgroundColor = '#000000';
         }
         else if(mode === 'pulse'){
+            // Puls basu DJ-a + obracające się kolorowe promienie!
             const colors = ['#ff0054', '#00f5d4', '#ffbe0b', '#3a86ff'];
             lsTimer = setInterval(() => {
                 const c = colors[lsStep % colors.length];
@@ -717,16 +826,18 @@ document.head.appendChild(mqttLib);
         }
     }
 
-    function connectLightShowMqtt(){
+        function connectLightShowMqtt(){
+        // Nie odpalamy warstwy świateł na samym oknie pilota (tylko na ekranie telebimu / OBS):
+        if(document.getElementById('tb-pilot-box') && !location.search.includes('screen')) return;
         if(typeof mqtt === 'undefined') return setTimeout(connectLightShowMqtt, 300);
         const prefix = (typeof TOPIC_PREFIX !== 'undefined') ? TOPIC_PREFIX : "pzs4-wejherowo-av-2026/";
         const lsClient = mqtt.connect({
-    host: "://hivemq.com",
-    port: 8884,
-    protocol: "wss",
-    path: "/mqtt",
-    reconnectPeriod: 2000
-});
+            hostname: "broker.hivemq.com",
+            port: 8884,
+            protocol: "wss",
+            path: "/mqtt",
+            reconnectPeriod: 2000
+        });
         lsClient.on("connect", () => lsClient.subscribe(prefix + "lightshow"));
         lsClient.on("message", (topic, message) => {
             if(topic === prefix + "lightshow"){

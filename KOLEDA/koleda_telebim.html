@@ -775,7 +775,7 @@ PZS REDA - PZS 4 WEJHEROWO | 3:0"></textarea>
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px;">
         <button class="btn" style="background:#ffffff; color:#000; font-weight:900;" onclick="triggerLightShow('strobe')">⚡ STROBOSKOP</button>
         <button class="btn" style="background:#d90429; color:#fff; font-weight:900;" onclick="triggerLightShow('colors')">🔥 BARWY SZKOŁY</button>
-        <button class="btn" style="background:#3a86ff; color:#fff; font-weight:900;" onclick="triggerLightShow('scanner')">🌊 REFLEKTORY (SKANER)</button>
+        <button class="btn" style="background:#3a86ff; color:#fff; font-weight:900;" onclick="triggerLightShow('scanner')">🌀 GŁOWICE RUCHOME (WIR)</button>
         <button class="btn" style="background:#ffbe0b; color:#000; font-weight:900;" onclick="triggerLightShow('pulse')">💓 PULS BASU (DJ)</button>
         <button class="btn" style="background:#7209b7; color:#fff; font-weight:900; grid-column: span 2;" onclick="triggerLightShow('flashlights')">🔦 WSZYSCY LATARKI W GÓRĘ!</button>
     </div>
@@ -1244,12 +1244,17 @@ function ytCommand(cmd){
     pub("pdf", { action: cmd });
 }
 
-function sendSpeaker(name, role){
-    if(isTournamentBoardOpen) hideTournamentBoard(true);
-    toggleClapScreen(false);
-    hideSlidesOnScreen();
-    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
-    pub("belki", { action: 'showSpeaker', name: name, role: role });
+function sendSpeaker(name, role) {
+    runWithStinger(() => {
+        if (isTournamentBoardOpen) hideTournamentBoard(true);
+        toggleClapScreen(false);
+        pub("pdf", { action: 'hideSlideSilent' });
+        pub("msg", { action: 'hide' });
+        currentSlideIdx = -1;
+        updateSlideSelectionUI();
+        pub("activeslide", { activeIdx: -1 }, true);
+        pub("belki", { action: 'showSpeaker', name: name, role: role });
+    });
 }
 
 function triggerSpeakerManual(){
@@ -1259,8 +1264,8 @@ function triggerSpeakerManual(){
     sendSpeaker(n, r);
 }
 
-function hideSpeakerNow(){
-    pub("belki", { action: 'hideSpeaker' });
+function hideSpeakerNow() {
+    returnToAnchorScene(); // zawsze wraca ze stingerem do Kolejności meczów!
 }
 
 function buildSpeakersList(){
@@ -1368,12 +1373,17 @@ function renderPlaylistButtons(raw){
     });
 }
 
-function sendTelebimMsg(text){
-    if(isTournamentBoardOpen) hideTournamentBoard(true);
-    toggleClapScreen(false);
-    hideSlidesOnScreen();
-    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
-    pub("msg", { action: 'show', text: text });
+function sendTelebimMsg(text) {
+    runWithStinger(() => {
+        if (isTournamentBoardOpen) hideTournamentBoard(true);
+        toggleClapScreen(false);
+        pub("pdf", { action: 'hideSlideSilent' });
+        pub("belki", { action: 'hideSpeaker' });
+        currentSlideIdx = -1;
+        updateSlideSelectionUI();
+        pub("activeslide", { activeIdx: -1 }, true);
+        pub("msg", { action: 'show', text: text });
+    });
 }
 
 function triggerTelebimMsgManual(){
@@ -1382,13 +1392,8 @@ function triggerTelebimMsgManual(){
     sendTelebimMsg(t);
 }
 
-function hideTelebimMsgNow(){
-    if(currentTheme === 'tytani'){
-        pub("pdf", { action: 'resumeAd' });
-        setTimeout(() => pub("msg", { action: 'hide' }), 1350);
-    } else {
-        pub("msg", { action: 'hide' });
-    }
+function hideTelebimMsg() {
+    returnToAnchorScene(); // zawsze wraca ze stingerem do Kolejności meczów!
 }
 
 function hideWebUrlNow(){
@@ -1908,56 +1913,100 @@ function fillTbPilotInputs(d){
 
 let savedSlideIdxBeforeTb = -1;
 let isTournamentBoardOpen = false;
+// === SYSTEM PRZEJŚĆ ZE STINGEREM (3.0s, PODMIANA W 1.5s) + PUNKT ZACZEPIENIA ===
+let mainAnchorBoardMode = 'matches'; // Domyślny punkt zaczepienia w trybie Sport: 'matches' (Kolejność meczów)
+let isStingerTransitionBusy = false;
 
-function publishTournamentBoard(mode){
-    syncTbInputs();
-    const firstShow = !isTournamentBoardOpen;
-    isTournamentBoardOpen = true;
+function runWithStinger(swapActionFn) {
+    if (isStingerTransitionBusy) return; // blokada podwójnego kliknięcia podczas trwania 3s stingera
+    isStingerTransitionBusy = true;
 
-    const sendBoard = () => {
-        if(mode === 'matches'){
-            const sub = document.getElementById('tb-group-name').value.trim();
-            const raw = document.getElementById('tb-matches-raw').value.trim();
-            pub("tournament", { action: 'show', mode: 'matches', sub: sub, raw: raw, color: selectedTbColor }, true);
-        } else if(mode === 'finals'){
-            const raw = (document.getElementById('tb-finals-raw')?.value || '').trim();
-            pub("tournament", { action: 'show', mode: 'finals', raw: raw }, true);
-        } else if(mode === 'teams'){
-            const sub = (document.getElementById('tb-teams-sub')?.value || '').trim();
-            const raw = (document.getElementById('tb-teams-raw')?.value || '').trim();
-            pub("tournament", { action: 'show', mode: 'teams', sub: sub, raw: raw }, true);
-        } else if(mode === 'bracket'){
-            const val = (id) => (document.getElementById(id)?.value || '').trim();
-            const bracket = {
-                l1: val('tb-br-l1'), l2: val('tb-br-l2'), l3: val('tb-br-l3'), l4: val('tb-br-l4'),
-                l5: val('tb-br-l5'), l6: val('tb-br-l6'), l7: val('tb-br-l7'), l8: val('tb-br-l8'),
-                lq1: val('tb-br-lq1'), lq2: val('tb-br-lq2'), lq3: val('tb-br-lq3'), lq4: val('tb-br-lq4'),
-                ls1: val('tb-br-ls1'), ls2: val('tb-br-ls2'),
-                fl: val('tb-br-fl'), fr: val('tb-br-fr'),
-                winner: val('tb-br-winner'),
-                rs1: val('tb-br-rs1'), rs2: val('tb-br-rs2'),
-                rq1: val('tb-br-rq1'), rq2: val('tb-br-rq2'), rq3: val('tb-br-rq3'), rq4: val('tb-br-rq4'),
-                r1: val('tb-br-r1'), r2: val('tb-br-r2'), r3: val('tb-br-r3'), r4: val('tb-br-r4'),
-                r5: val('tb-br-r5'), r6: val('tb-br-r6'), r7: val('tb-br-r7'), r8: val('tb-br-r8')
-            };
-            pub("tournament", { action: 'show', mode: 'bracket', bracket: bracket }, true);
-        } else {
-            const ranks = Array.of(1, 2, 3, 4, 5, 6).map(i => document.getElementById('tb-rank-' + i).value.trim());
-            pub("tournament", { action: 'show', mode: 'standings', ranks: ranks }, true);
-        }
+    let swapped = false;
+    const doSwap = () => {
+        if (swapped) return;
+        swapped = true;
+        clearTimeout(fallbackTimer);
+        window._pendingBoardSwap = null;
+        if (typeof swapActionFn === 'function') swapActionFn();
     };
 
-        const needHideSlide = firstShow || (currentSlideIdx !== -1);
-        toggleClapScreen(false);
-    pub("pdf", { action: 'hideSlide' });
-    if(currentTheme === 'tytani') pub("pdf", { action: 'pauseAd' });
+    // Oczekiwanie na sygnał z 1500 ms stingera (zabezpieczenie awaryjne na 1600 ms):
+    window._pendingBoardSwap = doSwap;
+    const fallbackTimer = setTimeout(doSwap, 1600);
 
-    setTimeout(() => {
+    // Odblokowanie pilota po pełnych 3000 ms stingera:
+    setTimeout(() => { isStingerTransitionBusy = false; }, 3050);
+
+    // Wyzwolenie samego 3-sekundowego stingera na ekranie (stary obraz NIE znika przed 1500 ms!):
+    pub("pdf", { action: 'playStinger' });
+}
+
+// Powrót zawsze do głównego punktu zaczepienia (Kolejność meczów):
+function returnToAnchorScene() {
+    runWithStinger(() => {
+        pub("msg", { action: 'hide' });
+        pub("belki", { action: 'hideSpeaker' });
+        pub("timer", { action: 'stop' });
+        toggleClapScreen(false);
+        pub("pdf", { action: 'hideSlideSilent' });
         currentSlideIdx = -1;
         updateSlideSelectionUI();
         pub("activeslide", { activeIdx: -1 }, true);
-        sendBoard();
-    }, 650);
+        if (typeof publishTournamentBoardNow === 'function') {
+            publishTournamentBoardNow(mainAnchorBoardMode);
+        }
+    });
+}
+
+function publishTournamentBoardNow(mode) {
+    isTournamentBoardOpen = true;
+    const payload = { action: 'show', mode: mode, ts: Date.now() };
+
+    if (mode === 'matches') {
+        payload.sub = document.getElementById('tb-group-name')?.value || '';
+        payload.color = document.getElementById('tb-text-color')?.value || '#ffe600';
+        payload.raw = document.getElementById('tb-matches-raw')?.value || '';
+    } else if (mode === 'teams') {
+        payload.sub = document.getElementById('tb-teams-sub')?.value || '';
+        payload.raw = document.getElementById('tb-teams-raw')?.value || '';
+    } else if (mode === 'standings') {
+        payload.ranks = [
+            document.getElementById('tb-rank-1')?.value.trim() || '',
+            document.getElementById('tb-rank-2')?.value.trim() || '',
+            document.getElementById('tb-rank-3')?.value.trim() || '',
+            document.getElementById('tb-rank-4')?.value.trim() || '',
+            document.getElementById('tb-rank-5')?.value.trim() || '',
+            document.getElementById('tb-rank-6')?.value.trim() || ''
+        ];
+    } else if (mode === 'finals') {
+        const finalsTa = document.querySelector('#tb-tab-finals textarea');
+        payload.raw = finalsTa ? finalsTa.value : '';
+    } else if (mode === 'bracket') {
+        const bracket = {};
+        document.querySelectorAll('#tb-tab-bracket input').forEach(inp => {
+            const key = inp.id.replace(/^tb-(br-|bracket-)?/, '');
+            if (key) bracket[key] = inp.value || '';
+        });
+        payload.bracket = bracket;
+    }
+
+    pub("tournament", payload, true);
+    if (typeof applyTournamentBoard === 'function') applyTournamentBoard(payload);
+}
+function publishTournamentBoard(mode) {
+    if (mode === 'matches' || mode === 'standings' || mode === 'bracket' || mode === 'places') {
+        mainAnchorBoardMode = mode;
+    }
+    runWithStinger(() => {
+        pub("msg", { action: 'hide' });
+        pub("belki", { action: 'hideSpeaker' });
+        toggleClapScreen(false);
+        pub("pdf", { action: 'hideSlideSilent' });
+        currentSlideIdx = -1;
+        updateSlideSelectionUI();
+        pub("activeslide", { activeIdx: -1 }, true);
+        publishTournamentBoardNow(mode);
+    });
 }
 
 function hideTournamentBoard(skipRestore = false){
@@ -2041,6 +2090,8 @@ function applyTournamentBoard(d){
     }
 
     rowsEl.innerHTML = '';
+    rowsEl.innerHTML = '';
+    if(titleEl) titleEl.style.display = 'block';
     if(d.mode === 'matches'){
         titleEl.innerText = 'KOLEJNOŚĆ MECZÓW:';
         subEl.innerText = d.sub || '';
@@ -2799,123 +2850,22 @@ function updateLightSpeed(val){
 
 function stopLightShow(){
     activeLightMode = null;
-    pub("lightshow", { action: 'stop' }, true);
-    returnToMatchesBoard();
-}
-</script>
-<div id="telebim-lightshow-layer" style="display:none; position:fixed; inset:0; z-index:999999; background:#000; overflow:hidden; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
-    <div id="lightshow-beam" style="display:none; position:absolute; top:-20%; bottom:-20%; width:38%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.95), rgba(0,245,212,0.9), transparent); filter:blur(25px);"></div>
-    <div id="lightshow-text" style="display:none; position:relative; z-index:2; color:#fff; font-family:sans-serif; font-weight:900; text-transform:uppercase; padding:20px;"></div>
-</div>
-
-<style>
-@keyframes lsScannerMove {
-    0%   { left: -40%; transform: skewX(-18deg); }
-    50%  { left: 105%; transform: skewX(18deg); }
-    100% { left: -40%; transform: skewX(-18deg); }
-}
-@keyframes lsFlashlightPulse {
-    0%, 100% { transform: scale(1); text-shadow: 0 0 30px #ffbe0b, 0 0 80px #ffbe0b; }
-    50%      { transform: scale(1.08); text-shadow: 0 0 60px #ffffff, 0 0 140px #ffbe0b; }
-}
-</style>
-
-<script>
-(function(){
-    let lsTimer = null;
-    let lsStep = 0;
-
-    function stopLocalLightShow(){
-        clearInterval(lsTimer);
-        lsTimer = null;
-        const layer = document.getElementById('telebim-lightshow-layer');
-        const beam = document.getElementById('lightshow-beam');
-        const txt = document.getElementById('lightshow-text');
-        if(layer) layer.style.display = 'none';
-        if(beam){ beam.style.display = 'none'; beam.style.animation = 'none'; }
-        if(txt) txt.style.display = 'none';
+    if(typeof pub === 'function'){
+        const matchesPayload = {
+            action: 'show',
+            mode: 'matches',
+            sub: document.getElementById('tb-group-name')?.value || '',
+            color: document.getElementById('tb-text-color')?.value || '#ffe600',
+            raw: document.getElementById('tb-matches-raw')?.value || '',
+            ts: Date.now()
+        };
+        pub("tournament", matchesPayload, true);
+        if(typeof applyTournamentBoard === 'function'){
+            applyTournamentBoard(matchesPayload);
+        }
+        pub("lightshow", { action: 'stop' }, true);
     }
-
-    function startLocalLightShow(mode, bpm){
-        stopLocalLightShow();
-        const layer = document.getElementById('telebim-lightshow-layer');
-        const beam = document.getElementById('lightshow-beam');
-        const txt = document.getElementById('lightshow-text');
-        if(!layer) return;
-
-        layer.style.display = 'flex';
-        layer.style.transition = 'background-color 0.08s ease';
-        const beatMs = Math.max(140, Math.round(60000 / (bpm || 128)));
-
-        if(mode === 'strobe'){
-            const palette = ['#ffffff', '#000000', '#ff002b', '#000000'];
-            lsTimer = setInterval(() => {
-                layer.style.backgroundColor = palette[lsStep % palette.length];
-                lsStep++;
-            }, Math.max(130, Math.round(beatMs / 2)));
-        }
-        else if(mode === 'colors'){
-            layer.style.transition = 'background-color 0.25s ease';
-            const palette = ['#d90429', '#ffb703', '#ffffff', '#111111'];
-            lsTimer = setInterval(() => {
-                layer.style.backgroundColor = palette[lsStep % palette.length];
-                lsStep++;
-            }, beatMs);
-        }
-        else if(mode === 'scanner'){
-            layer.style.backgroundColor = '#03071e';
-            beam.style.display = 'block';
-            const durSec = Math.max(1.2, (beatMs * 4) / 1000);
-            beam.style.animation = `lsScannerMove ${durSec}s ease-in-out infinite`;
-        }
-        else if(mode === 'pulse'){
-            const colors = ['#ff0054', '#00f5d4', '#ffbe0b', '#3a86ff'];
-            lsTimer = setInterval(() => {
-                const c = colors[lsStep % colors.length];
-                layer.style.transition = 'none';
-                layer.style.backgroundColor = c;
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        layer.style.transition = `background-color ${beatMs * 0.85}ms ease-out`;
-                        layer.style.backgroundColor = '#050505';
-                    });
-                });
-                lsStep++;
-            }, beatMs);
-        }
-        else if(mode === 'flashlights'){
-            layer.style.backgroundColor = '#000000';
-            txt.style.display = 'block';
-            txt.innerHTML = `
-                <div style="font-size:150px; line-height:1; animation: lsFlashlightPulse 1.2s infinite;">🔦📱</div>
-                <div style="font-size:82px; margin-top:20px; color:#ffbe0b; letter-spacing:3px; animation: lsFlashlightPulse 1.2s infinite;">WSZYSCY LATARKI W GÓRĘ!</div>
-            `;
-        }
-    }
-
-    function connectLightShowMqtt(){
-        if(typeof mqtt === 'undefined') return setTimeout(connectLightShowMqtt, 300);
-        const prefix = (typeof TOPIC_PREFIX !== 'undefined') ? TOPIC_PREFIX : "pzs4-wejherowo-av-2026/";
-        const lsClient = mqtt.connect({
-    host: "://hivemq.com",
-    port: 8884,
-    protocol: "wss",
-    path: "/mqtt",
-    reconnectPeriod: 2000
-});
-        lsClient.on("connect", () => lsClient.subscribe(prefix + "lightshow"));
-        lsClient.on("message", (topic, message) => {
-            if(topic === prefix + "lightshow"){
-                try {
-                    const d = JSON.parse(message.toString());
-                    if(d.action === 'start') startLocalLightShow(d.mode, d.bpm);
-                    else stopLocalLightShow();
-                } catch(e){}
-            }
-        });
-    }
-    connectLightShowMqtt();
-})();
+}
 </script>
 </body>
 </html>
